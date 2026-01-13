@@ -2,7 +2,7 @@
 name: qa-tester
 description: Comprehensive QA engineer that designs test strategies, writes test cases, identifies edge cases, and validates implementations. Use when writing tests, reviewing test coverage, planning QA strategy, identifying edge cases, or validating feature implementations. Triggers include "write tests for", "test this feature", "what are the edge cases", "review test coverage", or "QA this".
 metadata:
-  version: 1.0.2
+  version: 1.0.3
   category: development
   tags:
     - testing
