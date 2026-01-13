@@ -2,6 +2,7 @@
 name: skill-author
 description: Creates production-grade Claude Code skills from natural language descriptions. Use when building new skills, requested with "build me a skill that...", "create a skill for...", or "I need a skill to...". Generates complete skill files with proper frontmatter, context references, and quality self-assessment.
 metadata:
+  version: 1.0.1
   category: development
   tags:
     - skill-creation
@@ -37,6 +38,7 @@ name: security-pr-reviewer
 description: Reviews pull requests for security vulnerabilities and OWASP Top 10 issues. Use when reviewing PRs, checking code for security, or auditing changes before merge. Triggers include "review PR for security", "check this PR", "security audit".
 
 metadata:
+  version: 1.0.1
   version: 1.0.0
   category: security
   tags:
@@ -109,6 +111,7 @@ name: kebab-case-name
 description: Third person description. Use when [triggers]. Triggers include "phrase 1", "phrase 2".
 
 metadata:
+  version: 1.0.1
   version: 1.0.0
   category: development|writing|security|testing|etc
   tags:
@@ -251,6 +254,7 @@ name: changelog-generator
 description: Generates changelog entries from git commit history. Use when preparing releases, writing release notes, or documenting changes. Triggers include "write changelog", "generate release notes", "what changed since".
 
 metadata:
+  version: 1.0.1
   version: 1.0.0
   category: development
   tags:
@@ -315,6 +319,7 @@ name: process-name
 description: [Third person]. Use when [triggers].
 
 metadata:
+  version: 1.0.1
   version: 1.0.0
   category: [category]
 ---
@@ -348,6 +353,7 @@ name: dialogue-name
 description: [Third person]. Use when [triggers].
 
 metadata:
+  version: 1.0.1
   version: 1.0.0
   category: [category]
 ---
@@ -381,6 +387,7 @@ name: audit-name
 description: [Third person]. Use when [triggers].
 
 metadata:
+  version: 1.0.1
   version: 1.0.0
   category: [category]
 ---

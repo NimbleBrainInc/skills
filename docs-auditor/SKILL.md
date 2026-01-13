@@ -2,6 +2,7 @@
 name: docs-auditor
 description: Systematically audit documentation against actual codebase to determine accuracy, staleness, and relevance. Use when auditing docs for accuracy, cleaning up stale docs after refactoring, validating docs match implementation, or building documentation health reports.
 metadata:
+  version: 1.0.1
   category: development
   tags:
     - documentation

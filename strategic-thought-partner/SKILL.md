@@ -2,6 +2,7 @@
 name: strategic-thought-partner
 description: Collaborative strategic thinking for founders, operators, and decision-makers. Use when someone needs help working through business strategy, product direction, positioning, prioritization, or major decisions. Triggers include requests to think through strategy, evaluate tradeoffs, pressure-test ideas, clarify direction, scope products, or navigate pivots. Not for execution, for clarification and decision-making.
 metadata:
+  version: 1.0.1
   category: consulting
   tags:
     - strategy
