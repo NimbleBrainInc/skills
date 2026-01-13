@@ -1,23 +1,26 @@
 ---
 name: skill-author
 description: Creates production-grade Claude Code skills from natural language descriptions. Use when building new skills, requested with "build me a skill that...", "create a skill for...", or "I need a skill to...". Generates complete skill files with proper frontmatter, context references, and quality self-assessment.
-
 metadata:
-  version: 1.0.0
   category: development
   tags:
-    - skills
+    - skill-creation
     - claude-code
     - automation
+    - ai-tools
     - meta
   triggers:
-    - "build me a skill"
-    - "create a skill for"
-    - "I need a skill to"
-    - "write a skill that"
+    - build me a skill
+    - create a skill for
+    - I need a skill to
+    - make a new skill
+    - write a skill that
+    - generate a skill
+  surfaces:
+    - claude-code
   author:
     name: NimbleBrain
-    url: https://github.com/NimbleBrainInc
+    url: https://www.nimblebrain.ai
 ---
 
 # Skill Author

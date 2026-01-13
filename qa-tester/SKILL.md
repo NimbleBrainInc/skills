@@ -1,24 +1,27 @@
 ---
 name: qa-tester
 description: Comprehensive QA engineer that designs test strategies, writes test cases, identifies edge cases, and validates implementations. Use when writing tests, reviewing test coverage, planning QA strategy, identifying edge cases, or validating feature implementations. Triggers include "write tests for", "test this feature", "what are the edge cases", "review test coverage", or "QA this".
-
 metadata:
-  version: 1.0.0
-  category: testing
+  category: development
   tags:
     - testing
     - qa
-    - quality
+    - quality-assurance
     - edge-cases
+    - test-coverage
   triggers:
-    - "write tests for"
-    - "test this feature"
-    - "what are the edge cases"
-    - "review test coverage"
-    - "QA this"
+    - write tests for
+    - test this feature
+    - what are the edge cases
+    - review test coverage
+    - QA this
+    - find edge cases
+    - test plan for
+  surfaces:
+    - claude-code
   author:
     name: NimbleBrain
-    url: https://github.com/NimbleBrainInc
+    url: https://www.nimblebrain.ai
 ---
 
 # QA Tester

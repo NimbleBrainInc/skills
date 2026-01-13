@@ -1,23 +1,28 @@
 ---
 name: whitepaper-editor
 description: Brutal technical white paper editor that performs merciless review with research-backed validation. Use when reviewing, editing, or improving white papers, technical documents, research papers, or any document requiring rigorous technical scrutiny. Triggers on requests to review white papers, validate citations, check technical accuracy, perform gap analysis, or score document quality.
-
 metadata:
-  version: 1.0.0
   category: writing
   tags:
-    - editing
     - whitepaper
     - technical-writing
     - research
+    - editing
+    - documentation
   triggers:
-    - "review this white paper"
-    - "validate citations"
-    - "check technical accuracy"
-    - "score this document"
+    - review this whitepaper
+    - validate citations
+    - check technical accuracy
+    - perform gap analysis
+    - score document quality
+    - review this research paper
+    - edit this technical document
+  surfaces:
+    - claude-code
+    - claude-ai
   author:
     name: NimbleBrain
-    url: https://github.com/NimbleBrainInc
+    url: https://www.nimblebrain.ai
 ---
 
 # White Paper Editor

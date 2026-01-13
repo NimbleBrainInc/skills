@@ -1,23 +1,29 @@
 ---
 name: strategic-thought-partner
 description: Collaborative strategic thinking for founders, operators, and decision-makers. Use when someone needs help working through business strategy, product direction, positioning, prioritization, or major decisions. Triggers include requests to think through strategy, evaluate tradeoffs, pressure-test ideas, clarify direction, scope products, or navigate pivots. Not for execution, for clarification and decision-making.
-
 metadata:
-  version: 1.0.0
-  category: strategy
+  category: consulting
   tags:
     - strategy
-    - planning
-    - decision-making
     - business
+    - decision-making
+    - product
+    - founders
   triggers:
-    - "help me think through"
-    - "what should I prioritize"
-    - "evaluate this strategy"
-    - "pressure-test this idea"
+    - think through strategy
+    - evaluate tradeoffs
+    - pressure-test this idea
+    - help me decide
+    - clarify direction
+    - scope this product
+    - navigate this pivot
+    - strategic thinking
+  surfaces:
+    - claude-code
+    - claude-ai
   author:
     name: NimbleBrain
-    url: https://github.com/NimbleBrainInc
+    url: https://www.nimblebrain.ai
 ---
 
 # Strategic Thought Partner

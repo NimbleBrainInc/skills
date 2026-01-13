@@ -1,24 +1,28 @@
 ---
 name: seo-optimizer
 description: Analyzes and optimizes content for search engine visibility. Use when reviewing blog posts for SEO, optimizing landing pages, checking meta descriptions, analyzing keyword usage, or improving content discoverability. Triggers include "optimize for SEO", "check SEO", "improve search ranking", or "keyword analysis".
-
 metadata:
-  version: 1.0.0
   category: marketing
   tags:
     - seo
     - content
     - marketing
     - optimization
+    - search
   triggers:
-    - "optimize for SEO"
-    - "check SEO"
-    - "improve search ranking"
-    - "keyword analysis"
-    - "review for search"
+    - optimize for SEO
+    - check SEO
+    - improve search ranking
+    - keyword analysis
+    - review for search
+    - SEO audit
+    - meta description
+  surfaces:
+    - claude-code
+    - claude-ai
   author:
     name: NimbleBrain
-    url: https://github.com/NimbleBrainInc
+    url: https://www.nimblebrain.ai
 ---
 
 # SEO Optimizer

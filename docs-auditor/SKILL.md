@@ -1,24 +1,26 @@
 ---
 name: docs-auditor
 description: Systematically audit documentation against actual codebase to determine accuracy, staleness, and relevance. Use when auditing docs for accuracy, cleaning up stale docs after refactoring, validating docs match implementation, or building documentation health reports.
-
 metadata:
-  version: 1.0.0
-  category: documentation
+  category: development
   tags:
-    - docs
+    - documentation
     - audit
-    - maintenance
     - code-quality
+    - maintenance
+    - accuracy
   triggers:
-    - "audit the docs"
-    - "check documentation accuracy"
-    - "find stale docs"
-    - "docs health check"
-    - "validate documentation"
+    - audit the docs
+    - check if docs are stale
+    - validate documentation
+    - docs match implementation
+    - documentation health report
+    - find outdated docs
+  surfaces:
+    - claude-code
   author:
     name: NimbleBrain
-    url: https://github.com/NimbleBrainInc
+    url: https://www.nimblebrain.ai
 ---
 
 # Documentation Auditor

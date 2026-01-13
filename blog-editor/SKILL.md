@@ -1,24 +1,28 @@
 ---
 name: blog-editor
 description: Brutal content editor that tears apart drafts for substance, readability, and voice alignment. Use when reviewing blog posts, articles, or marketing copy. Triggers include "review this draft", "edit my post", "check this article", "is this ready to publish", or "tear apart my writing".
-
 metadata:
-  version: 1.0.0
   category: writing
   tags:
     - editing
     - content
     - blog
-    - writing
+    - marketing
+    - copywriting
   triggers:
-    - "review this draft"
-    - "edit my post"
-    - "check this article"
-    - "is this ready to publish"
-    - "tear apart my writing"
+    - review this draft
+    - edit my post
+    - check this article
+    - is this ready to publish
+    - tear apart my writing
+    - review my blog post
+    - edit this content
+  surfaces:
+    - claude-code
+    - claude-ai
   author:
     name: NimbleBrain
-    url: https://github.com/NimbleBrainInc
+    url: https://www.nimblebrain.ai
 ---
 
 # Blog Editor
