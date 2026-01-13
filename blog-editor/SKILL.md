@@ -2,7 +2,7 @@
 name: blog-editor
 description: Brutal content editor that tears apart drafts for substance, readability, and voice alignment. Use when reviewing blog posts, articles, or marketing copy. Triggers include "review this draft", "edit my post", "check this article", "is this ready to publish", or "tear apart my writing".
 metadata:
-  version: 1.0.4
+  version: 1.0.5
   category: writing
   tags:
     - editing
