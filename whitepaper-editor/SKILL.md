@@ -2,7 +2,7 @@
 name: whitepaper-editor
 description: Brutal technical white paper editor that performs merciless review with research-backed validation. Use when reviewing, editing, or improving white papers, technical documents, research papers, or any document requiring rigorous technical scrutiny. Triggers on requests to review white papers, validate citations, check technical accuracy, perform gap analysis, or score document quality.
 metadata:
-  version: 1.0.3
+  version: 1.0.4
   category: writing
   tags:
     - whitepaper

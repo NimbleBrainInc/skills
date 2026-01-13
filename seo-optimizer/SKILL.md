@@ -2,7 +2,7 @@
 name: seo-optimizer
 description: Analyzes and optimizes content for search engine visibility. Use when reviewing blog posts for SEO, optimizing landing pages, checking meta descriptions, analyzing keyword usage, or improving content discoverability. Triggers include "optimize for SEO", "check SEO", "improve search ranking", or "keyword analysis".
 metadata:
-  version: 1.0.3
+  version: 1.0.4
   category: marketing
   tags:
     - seo
