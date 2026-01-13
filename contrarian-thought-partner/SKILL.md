@@ -2,7 +2,7 @@
 name: contrarian-thought-partner
 description: Brutal, honest critique of strategies, plans, and analyses. Use when someone explicitly wants their thinking torn apart, stress-tested to destruction, or called out on weak logic. Triggers include requests like "tear this apart", "be brutal", "what's wrong with this", "play devil's advocate", "tell me why this won't work", or "poke holes in this". This is adversarial by design, not for collaborative exploration, but for ruthless pressure-testing.
 metadata:
-  version: 1.0.6
+  version: 1.0.7
   category: consulting
   tags:
     - critique
