@@ -45,25 +45,108 @@ jobs:
       - name: Get release info
         id: info
         run: |
-          PATH_ESCAPED=$(echo "${{ matrix.path }}" | sed 's/\//_/g')
-          echo "skill=${{ matrix.path }}" >> $GITHUB_OUTPUT
-          echo "Looking for outputs with path: ${{ matrix.path }}"
-
-      - name: Get version from manifest
-        id: version
-        run: |
+          SKILL="${{ matrix.path }}"
           VERSION=$(jq -r '.["${{ matrix.path }}"]' .release-please-manifest.json)
+          TAG="${SKILL}/v${VERSION}"
+          echo "skill=$SKILL" >> $GITHUB_OUTPUT
           echo "version=$VERSION" >> $GITHUB_OUTPUT
-          echo "Version: $VERSION"
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
+          echo "Skill: $SKILL, Version: $VERSION, Tag: $TAG"
 
       - name: Sync version to SKILL.md
         run: |
-          SKILL="${{ steps.info.outputs.skill }}"
-          VERSION="${{ steps.version.outputs.version }}"
-          echo "Syncing version $VERSION to $SKILL/SKILL.md"
-          sed -i "s/version: .*/version: $VERSION/" "$SKILL/SKILL.md"
+          sed -i "s/version: .*/version: ${{ steps.info.outputs.version }}/" "${{ steps.info.outputs.skill }}/SKILL.md"
 
-      - name: Pack and publish skill
-        uses: NimbleBrainInc/skill-pack@v1
-        with:
-          directory: ${{ steps.info.outputs.skill }}
+      - name: Pack skill
+        run: |
+          SKILL="${{ steps.info.outputs.skill }}"
+          VERSION="${{ steps.info.outputs.version }}"
+          BUNDLE="${SKILL}-${VERSION}.skill"
+
+          echo "Packing $SKILL into $BUNDLE"
+          zip -r "$BUNDLE" "$SKILL" -x "*.git*" -x "*node_modules*" -x "*.DS_Store"
+
+          echo "bundle=$BUNDLE" >> $GITHUB_OUTPUT
+          ls -la "$BUNDLE"
+
+      - name: Upload to release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release upload "${{ steps.info.outputs.tag }}" *.skill --clobber
+
+      - name: Get OIDC token
+        id: oidc
+        run: |
+          TOKEN=$(curl -sS -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
+            "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=https://www.mpak.dev" | jq -r '.value')
+          echo "::add-mask::$TOKEN"
+          echo "token=$TOKEN" >> $GITHUB_OUTPUT
+
+      - name: Announce to registry
+        run: |
+          SKILL="${{ steps.info.outputs.skill }}"
+          VERSION="${{ steps.info.outputs.version }}"
+          TAG="${{ steps.info.outputs.tag }}"
+          BUNDLE="${SKILL}-${VERSION}.skill"
+
+          # Get repo owner for scoped name
+          OWNER=$(echo "${{ github.repository }}" | cut -d'/' -f1 | tr '[:upper:]' '[:lower:]')
+          SCOPED_NAME="@${OWNER}/${SKILL}"
+
+          # Extract frontmatter and convert to JSON
+          SKILL_JSON=$(awk '/^---$/{if(f)exit;f=1;next}f' "$SKILL/SKILL.md" | yq -o=json '.')
+
+          # Calculate SHA256 and size
+          SHA256=$(sha256sum "$BUNDLE" | cut -d' ' -f1)
+          SIZE=$(stat -c%s "$BUNDLE")
+
+          # Build payload
+          PAYLOAD=$(jq -n \
+            --arg name "$SCOPED_NAME" \
+            --arg version "$VERSION" \
+            --argjson skill "$SKILL_JSON" \
+            --arg release_tag "$TAG" \
+            --arg filename "$BUNDLE" \
+            --arg sha256 "$SHA256" \
+            --argjson size "$SIZE" \
+            '{
+              name: $name,
+              version: $version,
+              skill: $skill,
+              release_tag: $release_tag,
+              prerelease: false,
+              artifact: {
+                filename: $filename,
+                sha256: $sha256,
+                size: $size
+              }
+            }')
+
+          echo "Announcing $SCOPED_NAME@$VERSION"
+          echo "$PAYLOAD" | jq .
+
+          # Announce with retry
+          for i in 1 2 3; do
+            RESPONSE=$(curl -s -w "\n%{http_code}" -X POST "https://api.mpak.dev/v1/skills/announce" \
+              -H "Content-Type: application/json" \
+              -H "Authorization: Bearer ${{ steps.oidc.outputs.token }}" \
+              -d "$PAYLOAD")
+
+            HTTP_CODE=$(echo "$RESPONSE" | tail -1)
+            BODY=$(echo "$RESPONSE" | sed '$d')
+
+            if [ "$HTTP_CODE" -ge 200 ] && [ "$HTTP_CODE" -lt 300 ]; then
+              echo "Successfully announced $SCOPED_NAME@$VERSION"
+              exit 0
+            elif [ "$HTTP_CODE" -eq 409 ]; then
+              echo "Already announced $SCOPED_NAME@$VERSION"
+              exit 0
+            fi
+
+            echo "Attempt $i failed (HTTP $HTTP_CODE), retrying..."
+            sleep $((i * 5))
+          done
+
+          echo "Failed to announce after 3 attempts"
+          exit 1
