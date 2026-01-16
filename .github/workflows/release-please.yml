@@ -1,4 +1,4 @@
-name: Release Please
+name: Release
 
 on:
   push:
@@ -7,12 +7,61 @@ on:
 permissions:
   contents: write
   pull-requests: write
+  id-token: write
 
 jobs:
   release-please:
     runs-on: ubuntu-latest
+    outputs:
+      releases_created: ${{ steps.release.outputs.releases_created }}
+      paths_released: ${{ steps.release.outputs.paths_released }}
     steps:
       - uses: googleapis/release-please-action@v4
+        id: release
         with:
           config-file: release-please-config.json
           manifest-file: .release-please-manifest.json
+
+      # Output which skills were released (for debugging)
+      - name: Show release outputs
+        if: ${{ steps.release.outputs.releases_created == 'true' }}
+        run: |
+          echo "Releases created: ${{ steps.release.outputs.releases_created }}"
+          echo "Paths released: ${{ steps.release.outputs.paths_released }}"
+          echo "All outputs: ${{ toJSON(steps.release.outputs) }}"
+
+  publish:
+    needs: release-please
+    if: ${{ needs.release-please.outputs.releases_created == 'true' }}
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        path: ${{ fromJSON(needs.release-please.outputs.paths_released) }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Get release info
+        id: info
+        run: |
+          PATH_ESCAPED=$(echo "${{ matrix.path }}" | sed 's/\//_/g')
+          echo "skill=${{ matrix.path }}" >> $GITHUB_OUTPUT
+          echo "Looking for outputs with path: ${{ matrix.path }}"
+
+      - name: Get version from manifest
+        id: version
+        run: |
+          VERSION=$(jq -r '.["${{ matrix.path }}"]' .release-please-manifest.json)
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Version: $VERSION"
+
+      - name: Sync version to SKILL.md
+        run: |
+          SKILL="${{ steps.info.outputs.skill }}"
+          VERSION="${{ steps.version.outputs.version }}"
+          echo "Syncing version $VERSION to $SKILL/SKILL.md"
+          sed -i "s/version: .*/version: $VERSION/" "$SKILL/SKILL.md"
+
+      - name: Pack and publish skill
+        uses: NimbleBrainInc/skill-pack@v1
+        with:
+          directory: ${{ steps.info.outputs.skill }}
