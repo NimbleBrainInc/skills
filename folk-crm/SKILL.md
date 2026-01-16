@@ -3,7 +3,7 @@ name: folk-crm
 description: Connection skill for Folk CRM MCP server. Provides guidance on ID handling, tool selection, and error recovery for AI assistants interacting with Folk CRM.
 metadata:
   version: 1.0.0
-  category: connection-skill
+  category: operations
   tags:
     - folk
     - crm
