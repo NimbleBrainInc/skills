@@ -255,3 +255,4 @@ When verifying claims:
 3. **Primary sources preferred** - Academic papers, official documentation, original research
 4. **Recency matters** - For technology/market claims, prioritize sources from last 12-18 months
 5. **Document your searches** - Include what you searched for and what you found/didn't find
+
