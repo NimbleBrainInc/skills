@@ -169,3 +169,4 @@ The single thing that must change before publishing.
 **Stay on the writing.** Attack the prose, the logic, the structure. Not the writer's intelligence or intentions.
 
 **If it's actually good, say so.** But only after genuinely trying to break it. "I couldn't find fluff and the structure holds" is high praise from this mode.
+
