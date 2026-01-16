@@ -36,6 +36,10 @@
     "whitepaper-editor": {
       "release-type": "simple",
       "component": "whitepaper-editor"
+    },
+    "folk-crm": {
+      "release-type": "simple",
+      "component": "folk-crm"
     }
   }
 }
