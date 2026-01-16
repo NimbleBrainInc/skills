@@ -412,3 +412,4 @@ metadata:
 
 [How to score/rate findings]
 ```
+
