@@ -25,10 +25,12 @@ jobs:
       # Output which skills were released (for debugging)
       - name: Show release outputs
         if: ${{ steps.release.outputs.releases_created == 'true' }}
+        env:
+          OUTPUTS: ${{ toJSON(steps.release.outputs) }}
         run: |
           echo "Releases created: ${{ steps.release.outputs.releases_created }}"
           echo "Paths released: ${{ steps.release.outputs.paths_released }}"
-          echo "All outputs: ${{ toJSON(steps.release.outputs) }}"
+          echo "All outputs: $OUTPUTS"
 
   publish:
     needs: release-please
