@@ -52,25 +52,34 @@ Build me a skill that reviews PRs for security issues
 
 Or follow the [Agent Skills Specification](https://agentskills.io/specification).
 
-## Publishing Skills
+## Versioning
 
-This repository uses the [skill-pack](https://github.com/NimbleBrainInc/skill-pack) GitHub Action to automatically:
+This repository uses **independent versioning** with [release-please](https://github.com/googleapis/release-please). Each skill has its own version and releases independently.
 
-1. Validate skills on push
-2. Package skills into `.skill` bundles on release
-3. Upload bundles to GitHub releases
-4. Announce to the mpak registry
+### How It Works
 
-### Creating a Release
+1. Make changes to a skill
+2. Commit with [conventional commits](https://www.conventionalcommits.org/):
+   ```bash
+   git commit -m "feat(blog-editor): add tone detection"
+   ```
+3. Push to main
+4. release-please creates a PR for that skill (e.g., "chore(main): release blog-editor 1.2.0")
+5. Merge the PR to publish
 
-```bash
-# Tag a release
-git tag v1.0.0
-git push origin v1.0.0
+### Conventional Commits
 
-# Create release on GitHub (triggers skill-pack)
-gh release create v1.0.0 --generate-notes
-```
+| Commit Type | Version Bump | Example |
+|-------------|--------------|---------|
+| `fix(skill):` | Patch (1.0.0 -> 1.0.1) | `fix(blog-editor): typo in prompt` |
+| `feat(skill):` | Minor (1.0.0 -> 1.1.0) | `feat(blog-editor): add tone analysis` |
+| `feat(skill)!:` | Major (1.0.0 -> 2.0.0) | `feat(blog-editor)!: new output format` |
+
+### Tag Format
+
+Tags follow the pattern `{skill-name}/v{version}`:
+- `blog-editor/v1.2.0`
+- `skill-author/v2.0.0`
 
 ## Contributing
 
@@ -88,14 +97,22 @@ Each skill must have:
   - `name` (must match directory name)
   - `description` (what it does and when to use it)
   - `metadata.version` (semver)
+- A `version.txt` file with the current version
 
-Example:
+Example structure:
+
+```
+my-skill/
+├── SKILL.md
+└── version.txt
+```
+
+Example SKILL.md:
 
 ```markdown
 ---
 name: my-skill
 description: Does X when Y. Use when Z. Triggers include "phrase 1", "phrase 2".
-
 metadata:
   version: 1.0.0
   category: development
