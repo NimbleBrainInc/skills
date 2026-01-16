@@ -10,8 +10,6 @@ metadata:
     - contacts
     - companies
     - mcp
-  surfaces:
-    - nimblebrain-studio
   author:
     name: NimbleBrain
     url: https://www.nimblebrain.ai
