@@ -1,4 +1,4 @@
-name: Publish Skills
+name: Publish Skill
 
 on:
   release:
@@ -14,5 +14,33 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Pack and publish skills
+      - name: Parse tag
+        id: parse
+        run: |
+          TAG="${{ github.event.release.tag_name }}"
+          echo "Tag: $TAG"
+
+          # Parse tag format: skill-name/vX.Y.Z
+          if [[ "$TAG" =~ ^([^/]+)/v([0-9]+\.[0-9]+\.[0-9]+)$ ]]; then
+            SKILL_NAME="${BASH_REMATCH[1]}"
+            VERSION="${BASH_REMATCH[2]}"
+            echo "skill=$SKILL_NAME" >> $GITHUB_OUTPUT
+            echo "version=$VERSION" >> $GITHUB_OUTPUT
+            echo "Parsed: skill=$SKILL_NAME, version=$VERSION"
+          else
+            echo "::error::Tag format not recognized: $TAG (expected: skill-name/vX.Y.Z)"
+            exit 1
+          fi
+
+      - name: Sync version to SKILL.md
+        run: |
+          SKILL="${{ steps.parse.outputs.skill }}"
+          VERSION="${{ steps.parse.outputs.version }}"
+          echo "Syncing version $VERSION to $SKILL/SKILL.md"
+          sed -i "s/version: .*/version: $VERSION/" "$SKILL/SKILL.md"
+          cat "$SKILL/SKILL.md" | head -30
+
+      - name: Pack and publish skill
         uses: NimbleBrainInc/skill-pack@v1
+        with:
+          directory: ${{ steps.parse.outputs.skill }}

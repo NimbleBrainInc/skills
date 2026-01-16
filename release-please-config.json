@@ -1,0 +1,41 @@
+{
+  "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
+  "separate-pull-requests": true,
+  "include-component-in-tag": true,
+  "include-v-in-tag": true,
+  "tag-separator": "/",
+  "packages": {
+    "blog-editor": {
+      "release-type": "simple",
+      "component": "blog-editor"
+    },
+    "contrarian-thought-partner": {
+      "release-type": "simple",
+      "component": "contrarian-thought-partner"
+    },
+    "docs-auditor": {
+      "release-type": "simple",
+      "component": "docs-auditor"
+    },
+    "qa-tester": {
+      "release-type": "simple",
+      "component": "qa-tester"
+    },
+    "seo-optimizer": {
+      "release-type": "simple",
+      "component": "seo-optimizer"
+    },
+    "skill-author": {
+      "release-type": "simple",
+      "component": "skill-author"
+    },
+    "strategic-thought-partner": {
+      "release-type": "simple",
+      "component": "strategic-thought-partner"
+    },
+    "whitepaper-editor": {
+      "release-type": "simple",
+      "component": "whitepaper-editor"
+    }
+  }
+}
