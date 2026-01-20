@@ -40,6 +40,10 @@
     "folk-crm": {
       "release-type": "simple",
       "component": "folk-crm"
+    },
+    "pdfco": {
+      "release-type": "simple",
+      "component": "pdfco"
     }
   }
 }
