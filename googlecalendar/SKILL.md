@@ -2,7 +2,7 @@
 name: googlecalendar
 description: Manages Google Calendar events with proper timezone handling. Use when scheduling, updating, or patching calendar events. Triggers include "schedule meeting", "update event", "change meeting time", "reschedule", "make it 30 minutes".
 metadata:
-  version: 1.0.0
+  version: 1.1.0
   category: operations
   tags:
     - calendar
