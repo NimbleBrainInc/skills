@@ -48,6 +48,10 @@
     "zoom": {
       "release-type": "simple",
       "component": "zoom"
+    },
+    "googlesheets": {
+      "release-type": "simple",
+      "component": "googlesheets"
     }
   }
 }
