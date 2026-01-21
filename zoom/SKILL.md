@@ -3,7 +3,7 @@ name: zoom
 description: Handles Zoom meeting creation with proper invitation delivery. Use when scheduling Zoom meetings or when user mentions meeting participants. Triggers include "schedule zoom", "create meeting with", "zoom call with".
 metadata:
   version: 1.0.0
-  category: communication
+  category: operations
   tags:
     - zoom
     - meetings
