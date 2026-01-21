@@ -121,25 +121,6 @@ Converts HTML content to a downloadable PDF document.
 </div>
 ```
 
-## Response Handling
-
-**You do not need to handle file URLs.** The system automatically:
-1. Detects file URLs in tool results
-2. Downloads and stores files securely
-3. Displays a download card to the user
-
-**Correct response pattern:**
-```
-User: "Convert this quote to PDF"
-You: [Call html_to_pdf with the HTML]
-You: "Done! Your quote PDF is ready." (download card appears automatically)
-```
-
-**Do NOT:**
-- Paste URLs in your response
-- Say "Here's the download link: ..."
-- Try to construct download URLs
-
 ## pdf_to_text
 
 Extracts text content from PDF documents.
