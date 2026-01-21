@@ -1,5 +1,7 @@
 # Agent Skills
 
+[![Validate Skills](https://github.com/NimbleBrainInc/skills/actions/workflows/validate.yml/badge.svg)](https://github.com/NimbleBrainInc/skills/actions/workflows/validate.yml)
+
 A collection of production-ready skills for Claude Code and other AI coding assistants.
 
 ## Available Skills
