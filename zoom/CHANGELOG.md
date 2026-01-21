@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.1](https://github.com/NimbleBrainInc/skills/compare/zoom/v1.1.0...zoom/v1.1.1) (2026-01-21)
+
+
+### Bug Fixes
+
+* **zoom:** use valid category (operations) ([a54e801](https://github.com/NimbleBrainInc/skills/commit/a54e801a620bc8b276149d3cbaf49c5345b100ef))
+
 ## [1.1.0](https://github.com/NimbleBrainInc/skills/compare/zoom/v1.0.0...zoom/v1.1.0) (2026-01-21)
 
 
