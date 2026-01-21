@@ -9,11 +9,14 @@ A collection of production-ready skills for Claude Code and other AI coding assi
 | [blog-editor](./blog-editor) | Brutal content editor for blog posts and articles |
 | [contrarian-thought-partner](./contrarian-thought-partner) | Adversarial critique for stress-testing ideas |
 | [docs-auditor](./docs-auditor) | Audit documentation against codebase for accuracy |
+| [folk-crm](./folk-crm) | Folk CRM integration with ID handling and tool guidance |
+| [pdfco](./pdfco) | PDF.co integration for HTML-to-PDF and document manipulation |
 | [qa-tester](./qa-tester) | Comprehensive QA engineer for test design and edge cases |
 | [seo-optimizer](./seo-optimizer) | SEO analysis and optimization for content |
 | [skill-author](./skill-author) | Create new skills from natural language descriptions |
 | [strategic-thought-partner](./strategic-thought-partner) | Collaborative strategic thinking for decision-makers |
 | [whitepaper-editor](./whitepaper-editor) | Technical white paper review with source verification |
+| [zoom](./zoom) | Zoom meeting creation with proper calendar integration |
 
 ## Installation
 
@@ -54,32 +57,9 @@ Or follow the [Agent Skills Specification](https://agentskills.io/specification)
 
 ## Versioning
 
-This repository uses **independent versioning** with [release-please](https://github.com/googleapis/release-please). Each skill has its own version and releases independently.
+Each skill versions independently using [release-please](https://github.com/googleapis/release-please) with [conventional commits](https://www.conventionalcommits.org/).
 
-### How It Works
-
-1. Make changes to a skill
-2. Commit with [conventional commits](https://www.conventionalcommits.org/):
-   ```bash
-   git commit -m "feat(blog-editor): add tone detection"
-   ```
-3. Push to main
-4. release-please creates a PR for that skill (e.g., "chore(main): release blog-editor 1.2.0")
-5. Merge the PR to publish
-
-### Conventional Commits
-
-| Commit Type | Version Bump | Example |
-|-------------|--------------|---------|
-| `fix(skill):` | Patch (1.0.0 -> 1.0.1) | `fix(blog-editor): typo in prompt` |
-| `feat(skill):` | Minor (1.0.0 -> 1.1.0) | `feat(blog-editor): add tone analysis` |
-| `feat(skill)!:` | Major (1.0.0 -> 2.0.0) | `feat(blog-editor)!: new output format` |
-
-### Tag Format
-
-Tags follow the pattern `{skill-name}/v{version}`:
-- `blog-editor/v1.2.0`
-- `skill-author/v2.0.0`
+See [CLAUDE.md](./CLAUDE.md) for detailed workflow documentation.
 
 ## Contributing
 

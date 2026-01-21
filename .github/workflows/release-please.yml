@@ -144,9 +144,9 @@ jobs:
               exit 0
             fi
 
-            echo "Attempt $i failed (HTTP $HTTP_CODE), retrying..."
+            echo "Attempt $i failed (HTTP $HTTP_CODE): $BODY"
             sleep $((i * 5))
           done
 
-          echo "Failed to announce after 3 attempts"
+          echo "Failed to announce after 3 attempts. Last response: $BODY"
           exit 1
