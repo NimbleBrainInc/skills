@@ -2,6 +2,16 @@
 
 Production-ready Agent Skills for Claude Code and AI coding assistants.
 
+## Before Starting Work
+
+**Always pull latest before making changes:**
+
+```bash
+git pull
+```
+
+This prevents conflicts with release-please commits that may have been merged.
+
 ## Before Pushing
 
 **Always validate skills before pushing:**
@@ -37,6 +47,16 @@ skills/
 
 ## Versioning Workflow
 
+### Version Ownership (Who Updates What)
+
+| File | Updated By | When |
+|------|------------|------|
+| `version.txt` | **release-please only** | When release PR merges |
+| `.release-please-manifest.json` | **release-please only** | When release PR merges |
+| `SKILL.md` `metadata.version` | **publish workflow** | At publish time (syncs from manifest) |
+
+**IMPORTANT: Never manually bump versions.** release-please handles ALL version updates automatically based on your commit messages.
+
 ### Making Changes
 
 1. **Edit the skill** (SKILL.md or supporting files)
@@ -47,6 +67,8 @@ skills/
 3. **Push to main**
 4. **release-please creates a PR** titled "chore(main): release skill-name X.Y.Z"
 5. **Merge the PR** to publish
+
+That's it. Do not touch version files after step 2.
 
 ### Conventional Commits
 
@@ -59,11 +81,12 @@ The commit scope MUST match the skill directory name:
 | `feat(blog-editor)!: breaking change` | Major bump (1.0.0 -> 2.0.0) |
 | `chore(blog-editor): update deps` | No release (chore is ignored) |
 
-### Version Files
+### Never Do This
 
-- **`version.txt`**: Source of truth for release-please
-- **`SKILL.md` metadata.version**: Synced at publish time
-- **`.release-please-manifest.json`**: Tracks all skill versions
+- Manually edit `version.txt` after initial creation
+- Manually edit `.release-please-manifest.json` after adding a skill
+- Manually edit `SKILL.md` version field
+- Commit version bumps (e.g., "chore: bump version to X.Y.Z")
 
 ## Adding a New Skill
 
