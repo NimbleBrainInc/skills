@@ -2,6 +2,16 @@
 
 Production-ready Agent Skills for Claude Code and AI coding assistants.
 
+## Before Pushing
+
+**Always validate skills before pushing:**
+
+```bash
+./scripts/validate.sh
+```
+
+This checks all skill frontmatter against the registry schema. Catches invalid categories, malformed metadata, etc.
+
 ## Architecture
 
 This is a **monorepo with independent versioning**. Each skill:
