@@ -3,7 +3,7 @@ name: googlesheets
 description: Connection skill for Google Sheets MCP integration. Provides guidance on spreadsheet ID extraction, tool chaining, and avoiding common hallucination patterns. Use when searching sheets, listing tables, or reading data.
 metadata:
   version: 1.0.0
-  category: productivity
+  category: data
   tags:
     - google-sheets
     - spreadsheets
