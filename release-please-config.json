@@ -44,6 +44,10 @@
     "pdfco": {
       "release-type": "simple",
       "component": "pdfco"
+    },
+    "zoom": {
+      "release-type": "simple",
+      "component": "zoom"
     }
   }
 }
