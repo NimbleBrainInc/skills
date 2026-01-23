@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.1](https://github.com/NimbleBrainInc/skills/compare/folk-crm/v1.3.0...folk-crm/v1.3.1) (2026-01-23)
+
+
+### Bug Fixes
+
+* **folk-crm:** replace real-looking example IDs with obviously fake ones ([294a081](https://github.com/NimbleBrainInc/skills/commit/294a081a7e29d297c59a889b5a769febc1176712))
+
 ## [1.3.0](https://github.com/NimbleBrainInc/skills/compare/folk-crm/v1.2.0...folk-crm/v1.3.0) (2026-01-16)
 
 
