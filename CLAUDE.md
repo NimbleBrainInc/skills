@@ -22,6 +22,17 @@ This prevents conflicts with release-please commits that may have been merged.
 
 This checks all skill frontmatter against the registry schema. Catches invalid categories, malformed metadata, etc.
 
+## DO NOT Manually Edit Version Files
+
+**These files are managed automatically by release-please. Never edit them:**
+
+- `version.txt` - updated when release PR merges
+- `CHANGELOG.md` - auto-generated from commits
+- `SKILL.md` `metadata.version` - synced at publish time
+- `.release-please-manifest.json` - updated when release PR merges
+
+If you accidentally edit these, **revert the changes** before committing. Only commit content changes to SKILL.md, not version bumps.
+
 ## Architecture
 
 This is a **monorepo with independent versioning**. Each skill:
@@ -68,7 +79,14 @@ skills/
 4. **release-please creates a PR** titled "chore(main): release skill-name X.Y.Z"
 5. **Merge the PR** to publish
 
-That's it. Do not touch version files after step 2.
+That's it. Do not touch version files.
+
+### If Skill is Referenced in mcp-registry
+
+Some skills are linked to MCP servers in `apps/mcp-registry`. After the release PR merges:
+
+1. Update `servers/{server}/server.json` → `_meta["ai.nimbletools.mcp/v1"].skill.version`
+2. Commit and push to mcp-registry
 
 ### Conventional Commits
 
