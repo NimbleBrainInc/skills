@@ -24,8 +24,8 @@ This skill provides behavioral guidance for interacting with the Folk CRM MCP se
 Folk uses opaque UUIDs for all entities. These IDs are **not memorable, not reconstructible, and must never be guessed**.
 
 **ID Format Examples:**
-- Person: `per_8475e434-0dd0-41e2-954a-d96b3bc6020e`
-- Company: `com_3f2a1b9c-8d7e-4f6a-b5c4-1a2b3c4d5e6f`
+- Person: `per_00000000-0000-0000-0000-example00001`
+- Company: `com_00000000-0000-0000-0000-example00001`
 
 ### The Cardinal Rule
 
@@ -33,8 +33,8 @@ Folk uses opaque UUIDs for all entities. These IDs are **not memorable, not reco
 
 Common mistake (DO NOT DO THIS):
 ```
-find_person returns: per_8475e434-0dd0-41e2-954a-d96b3bc6020e
-You use:             per_8475e434-5a4f-4ba8-8f5b-f6e3fd3d8dab  ← WRONG
+find_person returns: per_00000000-0000-0000-0000-example00001
+You use:             per_00000000-0000-0000-0000-example99999  ← WRONG
 ```
 
 The second half looks plausible but is hallucinated. This will fail silently or affect the wrong record.
@@ -53,10 +53,10 @@ User: "Add a note to John Smith's profile"
 Step 1: find_person("John Smith")
 Response: {
   "found": true,
-  "matches": [{"id": "per_8475e434-0dd0-41e2-954a-d96b3bc6020e", "name": "John Smith", "email": "john@example.com"}]
+  "matches": [{"id": "per_00000000-0000-0000-0000-example00001", "name": "John Smith", "email": "john@example.com"}]
 }
 
-Step 2: add_note(person_id="per_8475e434-0dd0-41e2-954a-d96b3bc6020e", content="...")
+Step 2: add_note(person_id="per_00000000-0000-0000-0000-example00001", content="...")
 ```
 
 ### Disambiguation
