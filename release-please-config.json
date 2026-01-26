@@ -56,6 +56,10 @@
     "googlecalendar": {
       "release-type": "simple",
       "component": "googlecalendar"
+    },
+    "openweathermap": {
+      "release-type": "simple",
+      "component": "openweathermap"
     }
   }
 }
