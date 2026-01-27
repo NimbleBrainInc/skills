@@ -60,6 +60,10 @@
     "openweathermap": {
       "release-type": "simple",
       "component": "openweathermap"
+    },
+    "ipinfo": {
+      "release-type": "simple",
+      "component": "ipinfo"
     }
   }
 }
