@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.4.0](https://github.com/NimbleBrainInc/skills/compare/folk-crm/v1.3.1...folk-crm/v1.4.0) (2026-01-27)
+
+
+### Features
+
+* **folk-crm:** add group tools and situational routing to skill ([664f140](https://github.com/NimbleBrainInc/skills/commit/664f14063b896c2e88093f0e65788850391cf77d))
+
 ## [1.3.1](https://github.com/NimbleBrainInc/skills/compare/folk-crm/v1.3.0...folk-crm/v1.3.1) (2026-01-23)
 
 
