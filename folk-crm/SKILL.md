@@ -1,14 +1,15 @@
 ---
 name: folk-crm
-description: Connection skill for Folk CRM MCP server. Provides guidance on ID handling, tool selection, and error recovery for AI assistants interacting with Folk CRM.
+description: Guides Folk CRM tool usage with correct routing for groups, people, and companies. Use when interacting with Folk CRM tools. Triggers include "folk", "group", "leads", "contacts", "CRM".
 metadata:
-  version: 1.0.0
+  version: 1.1.0
   category: operations
   tags:
     - folk
     - crm
     - contacts
     - companies
+    - groups
     - mcp
   author:
     name: NimbleBrain
@@ -17,146 +18,107 @@ metadata:
 
 # Folk CRM Integration
 
-This skill provides behavioral guidance for interacting with the Folk CRM MCP server.
+## Quick Start: Querying a Group
 
-## ID Handling (CRITICAL)
+When user asks about contacts in a group, pipeline, or filtered by status:
 
-Folk uses opaque UUIDs for all entities. These IDs are **not memorable, not reconstructible, and must never be guessed**.
-
-**ID Format Examples:**
-- Person: `per_00000000-0000-0000-0000-example00001`
-- Company: `com_00000000-0000-0000-0000-example00001`
-
-### The Cardinal Rule
-
-**NEVER fabricate, guess, or partially reconstruct an ID.**
-
-Common mistake (DO NOT DO THIS):
 ```
-find_person returns: per_00000000-0000-0000-0000-example00001
-You use:             per_00000000-0000-0000-0000-example99999  ← WRONG
+User: "Show leads in Demo Management with status Follow up 1"
+
+Step 1: find_people_in_group("Demo Management", status="Follow up 1")
+
+Done. One call.
 ```
 
-The second half looks plausible but is hallucinated. This will fail silently or affect the wrong record.
+Do NOT start with `find_person` or `browse_people` for group queries.
 
-### Required Workflow
+## Critical Rule: IDs Must Never Be Guessed
 
-1. **Search first** - Call `find_person("Name")` or `find_company("Name")`
-2. **Extract the exact ID** - Copy the ID verbatim from the response
-3. **Use immediately** - Pass that exact ID to subsequent operations
-4. **Never cache mentally** - If unsure, search again
+Folk uses opaque UUIDs (e.g., `per_00000000-0000-0000-0000-example00001`). Never fabricate or partially reconstruct an ID. Always get the exact ID from a search result before using it in subsequent calls.
 
-**Correct pattern:**
+If unsure of an ID, search again.
+
+## Situational Handling
+
+### Situation: User asks about a group, pipeline, view, or status
+
+Trigger phrases: "in the X group", "leads with status Y", "show me the pipeline", "Demo Management", "follow-up list"
+
+**Required action:** Use group tools directly.
+
 ```
-User: "Add a note to John Smith's profile"
+Step 1: find_people_in_group(group_name, status=...)
+```
 
+If you don't know the group name, call `list_groups()` first.
+
+If looking for companies in a group, use `find_companies_in_group` instead.
+
+### Situation: User asks about a specific person by name
+
+Trigger phrases: "find John Smith", "look up Sarah", "what's Alice's email"
+
+**Required action:** Search, then optionally get details.
+
+```
 Step 1: find_person("John Smith")
-Response: {
-  "found": true,
-  "matches": [{"id": "per_00000000-0000-0000-0000-example00001", "name": "John Smith", "email": "john@example.com"}]
-}
-
-Step 2: add_note(person_id="per_00000000-0000-0000-0000-example00001", content="...")
+Step 2 (only if full details needed): get_person_details(person_id)
 ```
 
-### Disambiguation
+Use `find_person` for existence checks. Only call `get_person_details` when the user needs complete information.
 
-When multiple matches are returned, **always confirm with the user** before proceeding:
+### Situation: User wants to act on a person (note, reminder, update)
+
+**Required action:** Search first, then act with the exact ID.
 
 ```
-find_person("John") returns 3 matches:
-- John Smith (john@acme.com)
-- John Doe (john.doe@example.com)
-- Johnny Walker (johnny@drinks.com)
-
-Ask: "I found 3 people named John. Which one did you mean?"
+Step 1: find_person("Sarah") → get ID
+Step 2: add_note(person_id="per_...", content="...")
 ```
 
-Never assume. The cost of affecting the wrong record is high.
+### Situation: User asks to create a contact
 
-## Tool Selection Guide
+**Required action:** Search first to avoid duplicates, then create.
 
-Folk tools are organized in tiers. Use the right tier for the task:
+```
+Step 1: find_person("New Name") → confirm no match
+Step 2: add_person(first_name="New", last_name="Name", ...)
+```
 
-### Tier 1: Search (Start Here)
-- `find_person(name)` - Find people by name
-- `find_company(name)` - Find companies by name
+### Situation: User asks to delete or update
 
-**Always start with search.** These return minimal payloads (id, name, email) to save tokens.
+**Required action:** Always confirm with the user before proceeding.
 
-### Tier 2: Details (After Finding)
-- `get_person_details(person_id)` - Full person info
-- `get_company_details(company_id)` - Full company info
+### Situation: Multiple search matches
 
-Only call these when you need complete information. Don't fetch full details just to check if someone exists.
+**Required action:** Ask the user to choose. Never assume.
 
-### Tier 3: Browse (Exploration)
-- `browse_people(page, per_page)` - Paginated list
-- `browse_companies(page, per_page)` - Paginated list
-
-Use sparingly. Prefer search over browsing.
-
-### Tier 4: Mutations (With Caution)
-- `add_person(...)` - Create new person
-- `add_company(...)` - Create new company
-- `update_person(person_id, ...)` - Update existing
-- `update_company(company_id, ...)` - Update existing
-- `delete_person(person_id)` - Delete (confirm first!)
-- `delete_company(company_id)` - Delete (confirm first!)
-
-**Before creating:** Always search first to avoid duplicates.
-**Before deleting:** Always confirm with user.
-
-### Tier 5: Notes & Reminders
-- `add_note(person_id, content)` - Add a note
-- `get_notes(person_id)` - Retrieve notes
-- `set_reminder(person_id, reminder, when)` - Set reminder
-- `log_interaction(person_id, type, when)` - Log interaction
-
-These require a valid person_id. Search first.
+```
+find_person("John") returns 3 matches → list them, ask which one.
+```
 
 ## Date Handling
 
-All date/time parameters use ISO 8601 format:
+All date/time parameters use ISO 8601: `2026-01-15T14:30:00Z`
 
-- **Date only:** `2026-01-15`
-- **Date and time:** `2026-01-15T14:30:00Z`
-- **With timezone:** `2026-01-15T14:30:00-10:00`
-
-When the user says "tomorrow" or "next week", calculate the actual date and use ISO format.
-
-**Example:**
-```
-User: "Remind me to follow up with Sarah next Tuesday"
-
-1. Calculate: next Tuesday = 2026-01-21
-2. find_person("Sarah") → get ID
-3. set_reminder(person_id="per_...", reminder="Follow up", when="2026-01-21")
-```
+When user says "tomorrow" or "next Tuesday", calculate the actual date.
 
 ## Error Recovery
 
-### "Person not found"
-- Check spelling in search query
-- Try partial name (first name only)
-- Ask user to clarify
+| Error | Cause | Fix |
+|-------|-------|-----|
+| "Group not found" | Wrong group name | Check `available_groups` in response, or call `list_groups()` |
+| "Person not found" | Spelling mismatch | Try partial name (first name only), ask user |
+| "Invalid ID format" | Hallucinated or truncated ID | Search again, use exact ID from response |
+| "Duplicate detected" | Person already exists | Confirm with user before creating |
+| "Rate limited" | Too many requests | Wait, reduce batch size |
 
-### "Invalid ID format"
-- You likely hallucinated or truncated the ID
-- Search again and use the exact ID from response
+## Anti-Patterns
 
-### "Duplicate detected"
-- Search returned existing match
-- Confirm with user before creating duplicate
-
-### "Rate limited"
-- Wait a moment and retry
-- Reduce batch size if doing bulk operations
-
-## Best Practices
-
-1. **Token efficiency** - Use find_* for existence checks, not get_*_details
-2. **Confirm destructive actions** - Always ask before delete/update
-3. **Handle ambiguity** - Multiple matches = ask user to choose
-4. **Provide context** - When reporting results, include name and email for verification
-5. **Chain thoughtfully** - Find → Confirm → Act, never skip steps
+| Wrong | Right |
+|-------|-------|
+| `find_person` or `browse_people` then manually filter for group/status | `find_people_in_group` with status parameter |
+| Fetching `get_person_details` on multiple people to find custom fields | `find_people_in_group` returns status and custom fields directly |
+| Guessing or reconstructing an ID from memory | Always use the exact ID from a search result |
+| Calling `get_person_details` just to check if someone exists | Use `find_person` (minimal payload) |
+| Creating a person without searching first | Always `find_person` first to avoid duplicates |
