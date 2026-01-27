@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.5.0](https://github.com/NimbleBrainInc/skills/compare/folk-crm/v1.4.0...folk-crm/v1.5.0) (2026-01-27)
+
+
+### Features
+
+* **folk-crm:** clarify ID format and add reminder guidance ([7a60136](https://github.com/NimbleBrainInc/skills/commit/7a601366c47a86336749e49be4d6910b35350b96))
+
 ## [1.4.0](https://github.com/NimbleBrainInc/skills/compare/folk-crm/v1.3.1...folk-crm/v1.4.0) (2026-01-27)
 
 
