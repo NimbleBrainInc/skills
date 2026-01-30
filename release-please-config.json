@@ -64,6 +64,10 @@
     "ipinfo": {
       "release-type": "simple",
       "component": "ipinfo"
+    },
+    "asana": {
+      "release-type": "simple",
+      "component": "asana"
     }
   }
 }
