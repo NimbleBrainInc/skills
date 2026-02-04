@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.6.0](https://github.com/NimbleBrainInc/skills/compare/folk-crm/v1.5.0...folk-crm/v1.6.0) (2026-02-04)
+
+
+### Features
+
+* **folk-crm:** clarify when to fetch notes for full profile lookups ([de469ce](https://github.com/NimbleBrainInc/skills/commit/de469ce3ed1ea1baf72c9ded19eaf65b0ddca35b))
+
 ## [1.5.0](https://github.com/NimbleBrainInc/skills/compare/folk-crm/v1.4.0...folk-crm/v1.5.0) (2026-01-27)
 
 
