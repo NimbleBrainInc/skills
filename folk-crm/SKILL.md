@@ -66,18 +66,27 @@ If you don't know the group name, call `list_groups()` first.
 
 If looking for companies in a group, use `find_companies_in_group` instead.
 
-### Situation: User asks about a specific person by name
+### Situation: Quick lookup (email, phone, exists?)
 
-Trigger phrases: "find John Smith", "look up Sarah", "what's Alice's email"
+Trigger phrases: "what's X's email", "find X", "do we have X"
 
-**Required action:** Search, then optionally get details.
+**Required action:** Search only.
 
 ```
-Step 1: find_person("John Smith")
-Step 2 (only if full details needed): get_person_details(person_id)
+find_person("John Smith")
 ```
 
-Use `find_person` for existence checks. Only call `get_person_details` when the user needs complete information.
+### Situation: Full profile ("tell me about X", "what do you know about X")
+
+**Required action:** Search, details, and notes.
+
+```
+Step 1: find_person("Sarah") -> get person_id
+Step 2: get_person_details(person_id)
+Step 3: get_notes(person_id)
+```
+
+Notes contain interaction history. Always include when user wants the full picture.
 
 ### Situation: User wants to act on a person (note, reminder, update)
 
@@ -142,3 +151,4 @@ find_person("John") returns 3 matches -> list them, ask which one.
 | Fetching `get_person_details` on multiple people to find custom fields | `find_people_in_group` returns status and custom fields directly |
 | Calling `get_person_details` just to check if someone exists | Use `find_person` (minimal payload) |
 | Creating a person without searching first | Always `find_person` first to avoid duplicates |
+| "Tell me about X" without calling `get_notes` | `get_person_details` + `get_notes` for full profile |
