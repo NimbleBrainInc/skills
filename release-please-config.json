@@ -68,6 +68,10 @@
     "asana": {
       "release-type": "simple",
       "component": "asana"
+    },
+    "zoho-crm": {
+      "release-type": "simple",
+      "component": "zoho-crm"
     }
   }
 }
