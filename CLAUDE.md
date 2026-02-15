@@ -81,6 +81,13 @@ skills/
 
 That's it. Do not touch version files.
 
+### If Skill is Embedded in an MCP Server
+
+Some skills are embedded directly in MCP servers as `skill://` resources (e.g., `ipinfo` skill is embedded in `mcp-servers/ipinfo/src/mcp_ipinfo/server.py` as `SKILL_CONTENT`). When updating these skills, update both:
+
+1. The `SKILL.md` in this repo (source of truth for mpak registry)
+2. The `SKILL_CONTENT` constant in the MCP server's `server.py`
+
 ### If Skill is Referenced in mcp-registry
 
 Some skills are linked to MCP servers in `apps/mcp-registry`. After the release PR merges:
