@@ -1,113 +1,41 @@
-# Agent Skills
+# NimbleBrain Skills
 
-[![Validate Skills](https://github.com/NimbleBrainInc/skills/actions/workflows/validate.yml/badge.svg)](https://github.com/NimbleBrainInc/skills/actions/workflows/validate.yml)
+Agent Skills for building on and working with NimbleBrain — installable into Claude Code, Cursor, and any agent that supports the [Agent Skills standard](https://agentskills.io).
 
-A collection of production-ready skills for Claude Code and other AI coding assistants.
+Each skill is a self-contained directory (`skills/<name>/SKILL.md` + optional `references/`). Skills are coarse and named for what you're doing — you install the one that matches your task, not a pile of micro-skills.
 
-## Available Skills
-
-| Skill | Description |
-|-------|-------------|
-| [blog-editor](./blog-editor) | Brutal content editor for blog posts and articles |
-| [contrarian-thought-partner](./contrarian-thought-partner) | Adversarial critique for stress-testing ideas |
-| [docs-auditor](./docs-auditor) | Audit documentation against codebase for accuracy |
-| [folk-crm](./folk-crm) | Folk CRM integration with ID handling and tool guidance |
-| [pdfco](./pdfco) | PDF.co integration for HTML-to-PDF and document manipulation |
-| [qa-tester](./qa-tester) | Comprehensive QA engineer for test design and edge cases |
-| [seo-optimizer](./seo-optimizer) | SEO analysis and optimization for content |
-| [skill-author](./skill-author) | Create new skills from natural language descriptions |
-| [strategic-thought-partner](./strategic-thought-partner) | Collaborative strategic thinking for decision-makers |
-| [whitepaper-editor](./whitepaper-editor) | Technical white paper review with source verification |
-| [zoom](./zoom) | Zoom meeting creation with proper calendar integration |
-
-## Installation
-
-### Using mpak CLI
+## Install
 
 ```bash
-# Install a skill
-mpak skill install @nimblebraininc/blog-editor
+# one skill (the common case)
+npx skills add nimblebraininc/skills --skill synapse
 
-# List available skills
-mpak skill search
+# the whole set
+npx skills add nimblebraininc/skills
+
+# list what's available
+npx skills add nimblebraininc/skills --list
 ```
 
-### Manual Installation
-
-Copy the skill folder to your project's `.claude/skills/` directory:
+Or as a Claude Code plugin marketplace:
 
 ```bash
-cp -r blog-editor /path/to/project/.claude/skills/
+claude plugin marketplace add nimblebraininc/skills
 ```
 
-## Usage
+## Available skills
 
-Once installed, skills are automatically available in Claude Code. Invoke them by:
-
-1. Using the Skill tool directly
-2. Triggering with natural language (e.g., "review this draft" triggers blog-editor)
-
-## Creating Your Own Skills
-
-Use the `skill-author` skill to create new skills:
-
-```
-Build me a skill that reviews PRs for security issues
-```
-
-Or follow the [Agent Skills Specification](https://agentskills.io/specification).
-
-## Versioning
-
-Each skill versions independently using [release-please](https://github.com/googleapis/release-please) with [conventional commits](https://www.conventionalcommits.org/).
-
-See [CLAUDE.md](./CLAUDE.md) for detailed workflow documentation.
+| Skill | Install | What it does |
+|-------|---------|--------------|
+| [`synapse`](./skills/synapse) | `--skill synapse` | Build a Synapse UI for an MCP server — a React app that renders in the NimbleBrain host. |
+| [`mcpb`](./skills/mcpb) | `--skill mcpb` | Build an MCP server end-to-end: scaffold from API docs → implement → validate the bundle → release to mpak. |
+| [`contributor`](./skills/contributor) | `--skill contributor` | Get started contributing to NimbleBrain open source: find work, set up your env, file issues, check on your work. |
 
 ## Contributing
 
-1. Fork this repository
-2. Create a new skill in its own directory
-3. Include a `SKILL.md` with proper frontmatter
-4. Submit a pull request
+A skill is a directory `skills/<name>/` containing a `SKILL.md` with YAML frontmatter:
+- **`name`** — kebab-case, must equal the directory name.
+- **`description`** — what it does *and* when to use it, with trigger phrases (this is the activation surface).
+- Optional `license`, `compatibility`, `allowed-tools`, and free-form `metadata` (`area`, `version`, `author`).
 
-### Skill Requirements
-
-Each skill must have:
-
-- A directory named after the skill (kebab-case)
-- A `SKILL.md` file with YAML frontmatter containing:
-  - `name` (must match directory name)
-  - `description` (what it does and when to use it)
-  - `metadata.version` (semver)
-- A `version.txt` file with the current version
-
-Example structure:
-
-```
-my-skill/
-├── SKILL.md
-└── version.txt
-```
-
-Example SKILL.md:
-
-```markdown
----
-name: my-skill
-description: Does X when Y. Use when Z. Triggers include "phrase 1", "phrase 2".
-metadata:
-  version: 1.0.0
-  category: development
-  tags:
-    - tag1
-    - tag2
----
-
-# My Skill
-
-[Skill content...]
-```
-
-## License
-
-MIT
+Keep the `SKILL.md` body focused; push depth into `references/`. See [`CONTRIBUTING.md`](./CONTRIBUTING.md).

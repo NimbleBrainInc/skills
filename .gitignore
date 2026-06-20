@@ -19,3 +19,6 @@ node_modules/
 # Temporary files
 *.tmp
 *.temp
+
+# Archived pre-restructure skills + old release tooling (kept locally, untracked)
+archive/
