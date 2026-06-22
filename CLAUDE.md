@@ -2,7 +2,12 @@
 
 Public Agent Skills, distributed on the open [Agent Skills standard](https://agentskills.io) (`npx skills add nimblebraininc/skills`). Skills are plain markdown — no registry, no build step required to consume them.
 
-> **Restructure in progress.** This repo is being moved off the old per-skill release-please + mpak-announce flow onto the open standard. The previous skills and release tooling are preserved under a gitignored `archive/`; the old workflows are disabled (`.github/workflows/*.disabled`). Don't revive them without a decision.
+> **Restructure in progress.** This repo is being moved off the old per-skill release-please + mpak-announce flow onto the open standard. The old workflows are disabled (`.github/workflows/*.disabled`). Don't revive them without a decision.
+>
+> **Old skills are archived at the tag [`archive/skills-pre-restructure`](https://github.com/NimbleBrainInc/skills/tree/archive/skills-pre-restructure)** — the durable snapshot of all 17 pre-restructure skills. (A local gitignored `archive/` dir mirrors them for convenience, but the **tag** is the source of truth — the gitignored copy is never pushed.) To reintroduce one:
+> ```bash
+> git checkout archive/skills-pre-restructure -- <skill>/   # then move it into skills/<name>/ and align frontmatter
+> ```
 
 ## Layout
 
