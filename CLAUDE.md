@@ -1,239 +1,39 @@
-# Skills Repository
+# NimbleBrain Skills — repo conventions
 
-Production-ready Agent Skills for Claude Code and AI coding assistants.
+Public Agent Skills, distributed on the open [Agent Skills standard](https://agentskills.io) (`npx skills add nimblebraininc/skills`). Skills are plain markdown — no registry, no build step required to consume them.
 
-## Before Starting Work
+> **Restructure in progress.** This repo is being moved off the old per-skill release-please + mpak-announce flow onto the open standard. The old workflows are disabled (`.github/workflows/*.disabled`). Don't revive them without a decision.
+>
+> **Old skills are archived at the tag [`archive/skills-pre-restructure`](https://github.com/NimbleBrainInc/skills/tree/archive/skills-pre-restructure)** — the durable snapshot of all 17 pre-restructure skills. (A local gitignored `archive/` dir mirrors them for convenience, but the **tag** is the source of truth — the gitignored copy is never pushed.) To reintroduce one:
+> ```bash
+> git checkout archive/skills-pre-restructure -- <skill>/   # then move it into skills/<name>/ and align frontmatter
+> ```
 
-**Always pull latest before making changes:**
-
-```bash
-git pull
-```
-
-This prevents conflicts with release-please commits that may have been merged.
-
-## Before Pushing
-
-**Always validate skills before pushing:**
-
-```bash
-./scripts/validate.sh
-```
-
-This checks all skill frontmatter against the registry schema. Catches invalid categories, malformed metadata, etc.
-
-## DO NOT Manually Edit Version Files
-
-**These files are managed automatically by release-please. Never edit them:**
-
-- `version.txt` - updated when release PR merges
-- `CHANGELOG.md` - auto-generated from commits
-- `SKILL.md` `metadata.version` - synced at publish time
-- `.release-please-manifest.json` - updated when release PR merges
-
-If you accidentally edit these, **revert the changes** before committing. Only commit content changes to SKILL.md, not version bumps.
-
-## Architecture
-
-This is a **monorepo with independent versioning**. Each skill:
-- Has its own version (in `version.txt` and `SKILL.md` metadata)
-- Releases independently via release-please
-- Gets its own tag (e.g., `blog-editor/v1.2.0`)
-- Is announced separately to mpak.dev registry
-
-## Directory Structure
+## Layout
 
 ```
-skills/
-├── .github/workflows/
-│   ├── release-please.yml  # Creates releases + publishes
-│   └── validate.yml        # Validates on PRs
-├── release-please-config.json
-├── .release-please-manifest.json
-├── {skill-name}/
-│   ├── SKILL.md           # Skill definition (frontmatter + content)
-│   ├── version.txt        # Current version (managed by release-please)
-│   └── CHANGELOG.md       # Auto-generated changelog
+skills/<name>/
+├── SKILL.md            # required — frontmatter + concise body
+└── references/         # optional — detail pulled out of SKILL.md (progressive disclosure)
 ```
 
-## Versioning Workflow
+**Flat and coarse.** One skill per area/role, named for the task (`synapse`, `mcpb`, `contributor`) — so `npx skills add nimblebraininc/skills --skill synapse` reads naturally. The install grain is the *area*, not a micro-task. The area also rides in `metadata.area`. Grouping several areas into one installable collection is a future `.claude-plugin/marketplace.json` plugin — **not** category folders or separate repos.
 
-### Version Ownership (Who Updates What)
+## SKILL.md rules (Agent Skills spec)
 
-| File | Updated By | When |
-|------|------------|------|
-| `version.txt` | **release-please only** | When release PR merges |
-| `.release-please-manifest.json` | **release-please only** | When release PR merges |
-| `SKILL.md` `metadata.version` | **publish workflow** | At publish time (syncs from manifest) |
+- **`name`** — kebab-case, **must equal the directory name**.
+- **`description`** — the activation surface. Say *what it does* AND *when to use it*, with trigger phrases. This is load-bearing; the agent decides whether to read the skill from this alone.
+- Optional: `license`, `compatibility` (env needs), `allowed-tools` (space-separated), and `metadata` (free-form — put `area`, `version`, `author` here). **No top-level `category`/`tags`/`version`** — those aren't in the standard.
+- **Progressive disclosure:** keep the `SKILL.md` body tight (aim well under ~500 lines). Push reference detail, long examples, and gotchas into `references/*.md` and link them. The body gets the agent oriented; references load only when needed.
 
-**IMPORTANT: Never manually bump versions.** release-please handles ALL version updates automatically based on your commit messages.
+## Hygiene (this is a public repo)
 
-### Making Changes
+- **No private monorepo paths or internal product references** (no `platform/…`, `products/nimblebrain/code/…`, internal app names, tenant ids). Cite only public sources: the `@nimblebrain/synapse` package (npm / `github.com/NimbleBrainInc/synapse`), public specs, RFCs. Use neutral placeholder names in examples.
+- Each skill must stand alone for an external builder who installed it via `npx skills` — they don't have the monorepo.
 
-1. **Edit the skill** (SKILL.md or supporting files)
-2. **Commit with conventional commit format**:
-   ```bash
-   git commit -m "feat(skill-name): description of change"
-   ```
-3. **Push to main**
-4. **release-please creates a PR** titled "chore(main): release skill-name X.Y.Z"
-5. **Merge the PR** to publish
+## Phase status
 
-That's it. Do not touch version files.
-
-### If Skill is Embedded in an MCP Server
-
-Some skills are embedded directly in MCP servers as `skill://` resources (e.g., `ipinfo` skill is embedded in `mcp-servers/ipinfo/src/mcp_ipinfo/server.py` as `SKILL_CONTENT`). When updating these skills, update both:
-
-1. The `SKILL.md` in this repo (source of truth for mpak registry)
-2. The `SKILL_CONTENT` constant in the MCP server's `server.py`
-
-### If Skill is Referenced in mcp-registry
-
-Some skills are linked to MCP servers in `apps/mcp-registry`. After the release PR merges:
-
-1. Update `servers/{server}/server.json` → `_meta["ai.nimbletools.mcp/v1"].skill.version`
-2. Commit and push to mcp-registry
-
-### Conventional Commits
-
-The commit scope MUST match the skill directory name:
-
-| Commit | Result |
-|--------|--------|
-| `fix(blog-editor): typo` | Patch bump (1.0.0 -> 1.0.1) |
-| `feat(blog-editor): new feature` | Minor bump (1.0.0 -> 1.1.0) |
-| `feat(blog-editor)!: breaking change` | Major bump (1.0.0 -> 2.0.0) |
-| `chore(blog-editor): update deps` | No release (chore is ignored) |
-
-### Never Do This
-
-- Manually edit `version.txt` after initial creation
-- Manually edit `.release-please-manifest.json` after adding a skill
-- Manually edit `SKILL.md` version field
-- Commit version bumps (e.g., "chore: bump version to X.Y.Z")
-
-## Adding a New Skill
-
-1. **Create directory**:
-   ```bash
-   mkdir new-skill
-   ```
-
-2. **Create SKILL.md** with frontmatter:
-   ```markdown
-   ---
-   name: new-skill
-   description: What it does. When to use it. Triggers include "phrase".
-   metadata:
-     version: 1.0.0
-     category: category-name
-     tags:
-       - tag1
-   ---
-
-   # New Skill
-
-   [Content...]
-   ```
-
-3. **Create version.txt**:
-   ```
-   1.0.0
-   ```
-
-4. **Add to release-please-config.json**:
-   ```json
-   "new-skill": {
-     "release-type": "simple",
-     "component": "new-skill"
-   }
-   ```
-
-5. **Add to .release-please-manifest.json**:
-   ```json
-   "new-skill": "1.0.0"
-   ```
-
-6. **Commit**:
-   ```bash
-   git add .
-   git commit -m "feat(new-skill): initial skill"
-   git push
-   ```
-
-## Common Tasks
-
-### Check Current Versions
-
-```bash
-cat .release-please-manifest.json | jq .
-```
-
-### Check Pending Release PRs
-
-```bash
-gh pr list --label "autorelease: pending"
-```
-
-### View Recent Releases
-
-```bash
-gh release list --limit 10
-```
-
-### Validate All Skills Locally
-
-The validate workflow runs on PRs. To validate locally:
-
-```bash
-# Check SKILL.md exists and has required fields
-for dir in */; do
-  if [ -f "$dir/SKILL.md" ]; then
-    echo "Checking $dir..."
-    # Extract and validate frontmatter
-    awk '/^---$/{if(f)exit;f=1;next}f' "$dir/SKILL.md" | yq .
-  fi
-done
-```
-
-## Workflow Files
-
-### release-please.yml
-
-Triggers on push to main. Two jobs:
-1. **release-please**: Analyzes commits, creates/updates release PRs, creates releases
-2. **publish**: When release created, packs skill into `.skill` bundle, uploads to release, announces to registry
-
-### validate.yml
-
-Triggers on push/PR to main. Validates all SKILL.md files have required frontmatter.
-
-## Registry Announcement
-
-Skills are announced to `https://api.mpak.dev/v1/skills/announce` with:
-- Scoped name: `@nimblebraininc/{skill-name}`
-- Version from manifest
-- SKILL.md frontmatter as metadata
-- SHA256 of the `.skill` bundle
-
-## Troubleshooting
-
-### Release PR Not Created
-
-- Ensure commit uses conventional format with skill name as scope
-- Check that the commit touched files in the skill directory
-- Verify skill is listed in `release-please-config.json`
-
-### Publish Failed
-
-- Check workflow logs: `gh run view <run-id> --log-failed`
-- Common issues:
-  - OIDC token failure (permissions)
-  - Registry announcement failure (retry usually works)
-
-### Version Mismatch
-
-- `version.txt` is source of truth
-- `SKILL.md` metadata.version is synced at publish time
-- If they drift, the publish workflow corrects it
+- ✅ Flat coarse structure + first set: `synapse`, `mcpb`, `contributor` (ported from `contributor-toolkit`).
+- ⬜ Archive `NimbleBrainInc/contributor-toolkit` (its two skills now live here).
+- ⬜ `.claude-plugin/marketplace.json`, `dist/index.json` build, CI lint (`skills-ref validate`), CONTRIBUTING.md.
+- ⬜ Migrate further areas (running on the platform, integrations) as needed.
