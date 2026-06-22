@@ -28,6 +28,7 @@ Work through each phase in order. Read the linked workflow file for detailed ins
 
 ## References
 
-- `references/CONVENTIONS.md` — Naming, manifest format, versioning, build system, entry points
-- `references/PATTERNS.md` — Complete code patterns, directory structures, CI workflows
-- `references/SKILL_FORMAT.md` — Embedded skill resource format and wiring patterns
+Load the `{lang}`-appropriate file based on the language established in Phase 0c (`PY` for Python, `TS` for TypeScript).
+- `references/CONVENTIONS-PY.md` / `CONVENTIONS-TS.md` — Naming, manifest, concept mapping, build system, entry points, template substitutions
+- `references/PATTERNS-PY.md` / `PATTERNS-TS.md` — Implementation order, code patterns, directory structure, test patterns, CI workflows
+- `references/SKILL_FORMAT-PY.md` / `SKILL_FORMAT-TS.md` — Embedded skill resource format, file location, wiring pattern

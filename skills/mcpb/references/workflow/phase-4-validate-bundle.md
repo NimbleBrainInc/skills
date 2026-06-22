@@ -4,7 +4,7 @@ Validate the manifest, build the project, create the bundle, run MTF compliance 
 
 ## 4a: Manifest Validation
 
-Check `manifest.json` against the mpak registry schema. See `references/CONVENTIONS.md` for the full manifest format per language.
+Check `manifest.json` against the mpak registry schema. See `references/CONVENTIONS-{lang}.md` for the full manifest format.
 
 **Registry validation checklist** (read `manifest.json` and verify each):
 
@@ -20,8 +20,8 @@ Check `manifest.json` against the mpak registry schema. See `references/CONVENTI
    - `sensitive: true` for secrets (API keys, tokens)
    - Referenced via `${user_config.<field>}` in `server.mcp_config.env`
 6. **tools array** — each entry needs `name` (required) and `description` (recommended)
-7. **Python-specific:** `server.type: "python"`, `entry_point` is module path
-8. **TypeScript-specific:** `server.type: "node"`, `entry_point: "build/index.js"`, `${__dirname}` prefix in args
+7. **Language-specific fields:** See `references/CONVENTIONS-{lang}.md` → "Manifest"
+   for `server.type`, `entry_point` format, and runtime-path variables.
 
 **mpak.json check** — verify `mpak.json` exists in repo root with:
 ```json
@@ -37,11 +37,12 @@ This file is required for package claiming on the registry. The `name` must matc
 - **Python:** `uv sync` succeeds, entry point module is importable
 - **TypeScript:** `npm run build` succeeds, `build/index.js` exists
 
+See `references/PATTERNS-{lang}.md` → "Build & Test Commands" for the full set.
+
 ## 4c: Bundle Inspection
 
-- **Python:** `make bundle` (vendors deps into `deps/`, packs with `npx @anthropic-ai/mcpb pack`)
-- **TypeScript:** `make bundle` (builds, prunes dev deps, packs)
-- Both: no accidental large files (.git, node_modules), manifest.json present in bundle root
+Run `make bundle`. See `references/PATTERNS-{lang}.md` → "`bundle` Target" for the Makefile recipe.
+Verify: no large files (`.git`, `node_modules`), `manifest.json` present in bundle root.
 
 ## 4d: MTF Compliance (if mpak-scanner available)
 
@@ -51,19 +52,17 @@ mpak-scanner scan .
 
 ## 4e: Runtime Validation
 
-The MCP protocol requires an initialize handshake before any method calls. Send `initialize`, then `notifications/initialized`, then `tools/list`:
+The MCP protocol requires an initialize handshake before any method calls. Send `initialize`, `notifications/initialized`, `tools/list`. The printf payload is identical — only the executor differs:
 
-**Python:**
+- **Python:** `... | uv run python -m mcp_<name>.server 2>/dev/null`
+- **TypeScript:** `... | node build/index.js --stdio 2>/dev/null`
+
+Full command:
 ```bash
-printf '{"jsonrpc":"2.0","method":"initialize","id":1,"params":{"protocolVersion":"2025-03-26","capabilities":{},"clientInfo":{"name":"test","version":"0.1.0"}}}\n{"jsonrpc":"2.0","method":"notifications/initialized"}\n{"jsonrpc":"2.0","method":"tools/list","id":2}\n' | uv run python -m mcp_<name>.server 2>/dev/null
+printf '{"jsonrpc":"2.0","method":"initialize","id":1,"params":{"protocolVersion":"2025-03-26","capabilities":{},"clientInfo":{"name":"test","version":"0.1.0"}}}\n{"jsonrpc":"2.0","method":"notifications/initialized"}\n{"jsonrpc":"2.0","method":"tools/list","id":2}\n' | <executor> 2>/dev/null
 ```
 
-**TypeScript:**
-```bash
-printf '{"jsonrpc":"2.0","method":"initialize","id":1,"params":{"protocolVersion":"2025-03-26","capabilities":{},"clientInfo":{"name":"test","version":"0.1.0"}}}\n{"jsonrpc":"2.0","method":"notifications/initialized"}\n{"jsonrpc":"2.0","method":"tools/list","id":2}\n' | node build/index.js --stdio 2>/dev/null
-```
-
-Both: server responds with valid JSON-RPC `initialize` result followed by `tools/list` result. No garbage on stdout (logs go to stderr).
+Server responds with valid JSON-RPC `initialize` result followed by `tools/list` result. No garbage on stdout (logs go to stderr).
 
 ## Gate
 

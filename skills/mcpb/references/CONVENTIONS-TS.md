@@ -1,4 +1,4 @@
-# MCP Server Conventions
+# MCP Server Conventions (TypeScript)
 
 ## Critical
 
@@ -12,12 +12,23 @@ Registry rejects other formats (e.g., `ai.nimbletools/name`, underscores in name
 
 ## Naming
 
-| Aspect | Python | TypeScript |
-|--------|--------|------------|
-| Package scope | `@<github_owner>/<name>` | `@<github_owner>/<name>` |
-| Module / package | `mcp_<name>` (underscores) | `mcp-<name>` (hyphens) |
-| Source directory | `src/mcp_<name>/` | `src/` |
-| Environment variable | `<NAME>_API_KEY` | `<NAME>_API_KEY` |
+| Aspect | Value |
+|--------|-------|
+| Package scope | `@<github_owner>/<name>` |
+| Module / package | `mcp-<name>` (hyphens) |
+| Source directory | `src/` |
+| Environment variable | `<NAME>_API_KEY` |
+
+## Concept Mapping
+
+| Concept | TypeScript |
+|---------|------------|
+| Response models | Zod `z.object()` in `types.ts` |
+| Tool input validation | Zod schemas in `schemas.ts` |
+| HTTP client | `fetch()` built-in |
+| Tool registration | `server.registerTool()` call |
+| Response formatting | `formatters.ts` → JSON.stringify |
+| Error handling | `try/catch` → `errorResponse()` |
 
 ## Manifest (MCPB v0.4)
 
@@ -46,7 +57,7 @@ Registry rejects other formats (e.g., `ai.nimbletools/name`, underscores in name
 ### Variable Resolution
 
 - `${user_config.<field>}` — resolves to the user's configured value for that field (used in `server.mcp_config.env`)
-- `${__dirname}` — resolves to the bundle's install directory at runtime (TypeScript only; never use for Python)
+- `${__dirname}` — resolves to the bundle's install directory at runtime (use this for the entry point path)
 
 ### mpak.json
 
@@ -61,58 +72,7 @@ Required for package claiming on the mpak registry. Must exist in the repo root:
 
 The `name` field must exactly match the `name` in `manifest.json`.
 
-### Python
-
-```json
-{
-  "manifest_version": "0.4",
-  "name": "@<github_owner>/<name>",
-  "version": "0.1.0",
-  "description": "...",
-  "author": { "name": "NimbleBrain Inc" },
-  "user_config": {
-    "api_key": {
-      "type": "string",
-      "title": "API Key",
-      "description": "Your API key from...",
-      "sensitive": true,
-      "required": true
-    }
-  },
-  "server": {
-    "type": "python",
-    "entry_point": "mcp_<name>.server",
-    "mcp_config": {
-      "command": "python",
-      "args": ["-m", "mcp_<name>.server"],
-      "env": {
-        "<NAME>_API_KEY": "${user_config.api_key}"
-      }
-    }
-  },
-  "tools": [
-    { "name": "tool_name", "description": "What it does" }
-  ],
-  "_meta": {
-    "org.mpaktrust": {
-      "mtf_version": "0.1",
-      "permissions": {
-        "network": "outbound",
-        "filesystem": "none",
-        "subprocess": "none",
-        "environment": "read",
-        "native": "none"
-      }
-    }
-  }
-}
-```
-
-Never use file paths (`${__dirname}/...`) for Python — breaks after bundling.
-
-`server.mcp_config` is **required** — the registry uses it to generate the MCP client configuration. Both `command` and `args` must be present.
-
-### TypeScript
+### manifest.json Example
 
 ```json
 {
@@ -171,7 +131,9 @@ Never use file paths (`${__dirname}/...`) for Python — breaks after bundling.
 }
 ```
 
-TypeScript uses `${__dirname}/build/index.js` — this resolves correctly after bundling.
+`${__dirname}/build/index.js` resolves correctly after bundling.
+
+`server.mcp_config` is **required** — the registry uses it to generate the MCP client configuration. Both `command` and `args` must be present.
 
 ## user_config (API Keys)
 
@@ -197,7 +159,7 @@ Required format for `mpak config set` compatibility:
 
 ## server.json
 
-All servers (Python and TypeScript) require a `server.json` for registry metadata. This is what mpak uses to ingest and announce bundles.
+All servers require a `server.json` for registry metadata. This is what mpak uses to ingest and announce bundles.
 
 ```json
 {
@@ -215,10 +177,10 @@ All servers (Python and TypeScript) require a `server.json` for registry metadat
     {
       "registryType": [
         "mcpb",
-        "<see table below>"
+        "npm"
       ],
-      "registryBaseUrl": "<see table below>",
-      "identifier": "<see table below>",
+      "registryBaseUrl": "https://registry.npmjs.org",
+      "identifier": "@<github_owner>/<name>",
       "version": "0.1.0",
       "transport": { "type": "stdio" },
       "environmentVariables": [
@@ -248,35 +210,11 @@ All servers (Python and TypeScript) require a `server.json` for registry metadat
 }
 ```
 
-**Package fields by language:**
-
-| Field | Python | TypeScript |
-|-------|--------|------------|
-| `registryType[1]` | `pypi` | `npm` |
-| `registryBaseUrl` | `https://pypi.org` | `https://registry.npmjs.org` |
-| `identifier` | `mcp-<name>` | `@<github_owner>/<name>` |
+After editing `manifest.json`, always run `make sync` to propagate the version to `package.json`, `server.json`, and `src/constants.ts`.
 
 ## Entry Points
 
-### Python — dual transport
-
-```python
-# ASGI entrypoint (container deployment)
-app = mcp.http_app()
-
-# Stdio entrypoint (mpak / Claude Desktop)
-if __name__ == "__main__":
-    mcp.run()
-```
-
-| Context | Command | Entrypoint |
-|---------|---------|------------|
-| Containers | `uvicorn module.server:app` | `app = mcp.http_app()` |
-| mpak / Claude Desktop | `python -m module.server` | `__main__` block |
-
-Both entrypoints are required. The `app` object must exist at module level.
-
-### TypeScript — stdio only
+TypeScript uses stdio only:
 
 ```typescript
 const transport = new StdioServerTransport();
@@ -289,23 +227,6 @@ await server.connect(transport);
 | Local dev | `npm run dev` (uses tsx) |
 
 ## Build System
-
-### Python
-
-`pyproject.toml` with hatchling:
-
-```toml
-[build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
-
-[tool.hatch.build.targets.wheel]
-packages = ["src/mcp_<name>"]
-```
-
-Without this, `uv sync` won't install the package and module imports silently fail.
-
-### TypeScript
 
 `tsconfig.json` with `outDir: "build"`. Key npm scripts:
 
@@ -329,17 +250,7 @@ Entry point is `build/` not `dist/`.
 
 ## Version Management
 
-### Python — 3 files must stay in sync
-
-| File | Field |
-|------|-------|
-| `manifest.json` | `version` |
-| `pyproject.toml` | `version` |
-| `src/<package>/__init__.py` | `__version__` |
-
-Bump all at once: `make bump VERSION=0.2.0`
-
-### TypeScript — manifest.json is single source of truth
+`manifest.json` is the single source of truth:
 
 | File | Synced by |
 |------|-----------|
@@ -370,26 +281,18 @@ gh release create v0.2.0 --title "v0.2.0" --notes "- changelog"
 
 ## Tooling
 
-| Aspect | Python | TypeScript |
-|--------|--------|------------|
-| Package manager | uv | npm |
-| Linting | ruff | Biome |
-| Formatting | ruff | Biome |
-| Type checking | ty | tsc --noEmit |
-| Testing | pytest + pytest-asyncio | Vitest |
-| Dev runner | — | tsx |
-
-### Dependency versions (TypeScript)
-
-Use exact versions (no `^` or `~`) in `package.json`. Range specifiers are L2 MTF security findings.
-
-### .js imports (TypeScript)
-
-Node ESM requires the `.js` extension in imports: `import ... from "./foo.js"`
+| Aspect | Tool |
+|--------|------|
+| Package manager | npm |
+| Linting | Biome |
+| Formatting | Biome |
+| Type checking | tsc --noEmit |
+| Testing | Vitest |
+| Dev runner | tsx |
 
 ## Build Workflow (CI)
 
-Uses mcpb-pack v2 with release trigger. Both languages use the same matrix:
+Uses mcpb-pack v2 with release trigger. Build matrix:
 
 ```yaml
 strategy:
@@ -406,5 +309,27 @@ strategy:
         runner: macos-latest
 ```
 
-Python CI: `uv sync --dev` → ruff format --check → ruff check → ty check → pytest
-TypeScript CI: `npm ci` → format:check → lint → typecheck → test → build → bundle test
+CI pipeline: `npm ci` → `format:check` → `lint` → `typecheck` → `test` → `build` → bundle test
+
+## Critical Notes
+
+- Use **exact dependency versions** (no `^` or `~`) in `package.json` — range specifiers are L2 MTF security findings
+- Use `.js` extensions in all imports (Node ESM requirement): `import ... from "./foo.js"`
+- Never edit `src/constants.ts` manually — use `make sync`
+- Never edit `.github/workflows/` — shared infrastructure
+- The embedded SKILL.md lives in `src/` and is copied to `build/` during compilation
+
+## Template Substitutions
+
+Immediately after cloning, `cd` into `mcp-<name>` and replace all template placeholders across `*.ts`, `*.json`, `*.md`, `Makefile`, `CLAUDE.md`:
+
+- `YOUR_SERVER_NAME` → `<name>`
+- `YOUR_DISPLAY_NAME` → `<display>`
+- `YOUR_REPO_NAME` → `mcp-<name>`
+- `YOUR_API_KEY_ENV_VAR` → `<NAME>_API_KEY`
+- `YOUR_API_HOST` → leave as TODO for Phase 3
+- `YOUR_API_BASE_URL` → leave as TODO for Phase 3
+- `YOUR_GITHUB_USERNAME` → `<github_owner>` (already detected in Phase 0b)
+- `YOUR_SERVICE` → `<display>`
+
+After substitutions, grep for any remaining `YOUR_`. Fix any hits. Then confirm to the user: "Template customized — all placeholder names replaced with `<name>`."

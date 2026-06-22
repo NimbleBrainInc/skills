@@ -43,7 +43,7 @@ If cold start, verify the basics before proceeding:
 3. **mpak CLI** — `mpak --version` succeeds
 4. **GitHub owner** — detect the user's login via `gh api user --jq .login` as a default, then ask: "Repo owner will be `<detected_login>` — or would you prefer a different org/account?" If the user specifies a different owner, use that as `<github_owner>`. The mpak registry allows any GitHub user or org to publish under their own scope (`@<owner>/*` must match the repo owner via OIDC), so this can be a personal account or any org the user has access to.
 
-If any check fails, tell the contributor what's missing — Python 3.13+ with `uv`/`ruff`/`ty` for Python, or Node 22+ with `npm` for TypeScript (the `contributor` skill's `references/DEV_SETUP.md` has the full walkthrough if they came from there). Don't block on optional tools (e.g., mpak-scanner) — just note they're unavailable and skip the phases that need them.
+If any check fails, tell the contributor what's missing — Python 3.13+ with `uv`/`ruff`/`ty` for Python, or Node 22+ with `npm` for TypeScript (the `contributor` skill's `references/DEV_SETUP.md` has the full walkthrough if they came from there). Don't block on optional tools (e.g., docker) — just note they're unavailable and skip the phases that need them.
 
 ## 0c: Language
 
@@ -108,42 +108,9 @@ Otherwise:
      --template NimbleBrainInc/mcp-server-template-typescript --public --clone
    ```
 
-4. **Immediately after cloning, `cd` into `mcp-<name>` and replace all template placeholders with the actual service name.** Do not move on until this is done — downstream phases assume the project already has correct names everywhere.
-
-**Python template substitutions:**
-
-1. Rename the package directory:
-   ```bash
-   mv src/mcp_example src/mcp_<name>
-   ```
-2. Replace across all files (`*.py`, `*.toml`, `*.json`, `*.md`, `Makefile`, `.env.example`):
-   - `mcp_example` → `mcp_<name>` (package name in imports, paths, logger)
-   - `mcp-example` → `mcp-<name>` (project/bundle name)
-   - `@nimblebraininc/example` → `@<github_owner>/<name>` (registry identifier)
-   - `ExampleClient` → `<Name>Client` (class name)
-   - `ExampleAPIError` → `<Name>APIError` (class name)
-   - `EXAMPLE_API_KEY` → `<NAME>_API_KEY` (env var)
-   - `https://api.example.com/v1` → leave as TODO for Phase 3 to fill with actual API URL
-   - `https://example.com/settings/api` → leave as TODO for Phase 3
-   - `mcp-server-example` → `mcp-server-<name>` (User-Agent)
-   - `FastMCP("Example")` → `FastMCP("<display>")` (server display name)
-   - `"example"` in `pyproject.toml` keywords → `"<name>"`
-   - Update `pyproject.toml` URLs to use `mcp-<name>` repo name
-   - Update README title and description to reference `<display>` instead of "Example"
-
-**TypeScript template substitutions:**
-
-Replace across all files (`*.ts`, `*.json`, `*.md`, `Makefile`, `CLAUDE.md`):
-   - `YOUR_SERVER_NAME` → `<name>`
-   - `YOUR_DISPLAY_NAME` → `<display>`
-   - `YOUR_REPO_NAME` → `mcp-<name>`
-   - `YOUR_API_KEY_ENV_VAR` → `<NAME>_API_KEY`
-   - `YOUR_API_HOST` → leave as TODO for Phase 3
-   - `YOUR_API_BASE_URL` → leave as TODO for Phase 3
-   - `YOUR_GITHUB_USERNAME` → `<github_owner>` (already detected in Phase 0b)
-   - `YOUR_SERVICE` → `<display>`
-
-After substitutions, do a quick sanity check — grep for any remaining `example`/`Example`/`EXAMPLE` (Python) or `YOUR_` (TypeScript) across the project. If any remain, fix them. Then confirm to the user: "Template customized — all placeholder names replaced with `<name>`."
+4. **Immediately after cloning, `cd` into `mcp-<name>` and replace all template
+   placeholders** following the full list in `references/CONVENTIONS-{lang}.md`
+   → "Template Substitutions". Confirm to the user when done.
 
 ## 0g: API Key Readiness
 
