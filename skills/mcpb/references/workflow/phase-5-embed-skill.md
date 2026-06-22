@@ -4,15 +4,13 @@ Create an in-package skill resource that guides LLMs on how to select and compos
 
 ## 5a: Analyze Tools
 
-Extract the server's tool surface:
-- **Python:** Extract all `@mcp.tool()` functions from `server.py`
-- **TypeScript:** Extract all `server.registerTool()` calls from `src/index.ts`
+Extract all tool registrations from the server entry point.
+See `references/CONVENTIONS-{lang}.md` → "Concept Mapping" for the pattern name.
 
 ## 5b: Draft SKILL.md
 
-Generate a **draft** embedded skill file — or edit the generic scaffolded one, if it exists:
-- **Python:** `src/mcp_<name>/SKILL.md`
-- **TypeScript:** `src/SKILL.md`
+Generate a **draft** embedded skill file — or edit the generic scaffolded one, if it exists.
+See `references/SKILL_FORMAT-{lang}.md` → "File Location" for the correct path.
 
 The draft should contain:
 
@@ -80,41 +78,80 @@ Do **not** proceed to wiring (5d) until the contributor has explicitly approved 
 
 ## 5d: Wire the Resource
 
-**Python:** Add to `server.py`:
-- `from importlib.resources import files` import
-- `SKILL_CONTENT = files("mcp_<name>").joinpath("SKILL.md").read_text()`
-- `instructions=` parameter on `FastMCP(...)` constructor
-- `@mcp.resource("skill://<name>/usage")` decorated function returning `SKILL_CONTENT`
-
-**TypeScript:** Add to `src/index.ts`:
-- `import { readFileSync } from "fs"` and `import { join } from "path"`
-- `const SKILL_CONTENT = readFileSync(join(__dirname, "SKILL.md"), "utf-8")`
-- `instructions` in `McpServer` constructor
-- `server.resource("skill-usage", "skill://<name>/usage", ...)` registration
-
-**TypeScript bundling:** Since `.mcpbignore` excludes both `src/` and `*.md`:
-1. Add to Makefile `build` target: `cp src/SKILL.md build/SKILL.md`
-2. Add to `.mcpbignore`: `!build/SKILL.md`
-
-See `references/SKILL_FORMAT.md` for complete wiring examples in both languages.
+Wire the skill resource per `references/SKILL_FORMAT-{lang}.md` → "Wiring Pattern"
+(TypeScript bundling step included there).
 
 ## 5e: Verify
 
-Run MCP runtime validation (same as Phase 4e) and confirm `resources/list` includes `skill://<name>/usage`:
+Same command as Phase 4e with `resources/list` instead of `tools/list`. Only the executor differs:
 
-**Python:**
-```bash
-printf '{"jsonrpc":"2.0","method":"initialize","id":1,"params":{"protocolVersion":"2025-03-26","capabilities":{},"clientInfo":{"name":"test","version":"0.1.0"}}}\n{"jsonrpc":"2.0","method":"notifications/initialized"}\n{"jsonrpc":"2.0","method":"resources/list","id":2}\n' | uv run python -m mcp_<name>.server 2>/dev/null
-```
+- **Python:** `... | uv run python -m mcp_<name>.server 2>/dev/null`
+- **TypeScript:** `... | node build/index.js --stdio 2>/dev/null`
 
-**TypeScript:**
+Full command:
 ```bash
-printf '{"jsonrpc":"2.0","method":"initialize","id":1,"params":{"protocolVersion":"2025-03-26","capabilities":{},"clientInfo":{"name":"test","version":"0.1.0"}}}\n{"jsonrpc":"2.0","method":"notifications/initialized"}\n{"jsonrpc":"2.0","method":"resources/list","id":2}\n' | node build/index.js --stdio 2>/dev/null
+printf '{"jsonrpc":"2.0","method":"initialize","id":1,"params":{"protocolVersion":"2025-03-26","capabilities":{},"clientInfo":{"name":"test","version":"0.1.0"}}}\n{"jsonrpc":"2.0","method":"notifications/initialized"}\n{"jsonrpc":"2.0","method":"resources/list","id":2}\n' | <executor> 2>/dev/null
 ```
 
 The response should include a resource with `uri: "skill://<name>/usage"`.
 
 > **Note:** The embedded skill is encouraged but not mandatory per mpak spec. If no meaningful workflows exist yet (e.g., the server has only 1-2 tools), it's acceptable to skip this phase and add the skill later.
+
+## 5f: Integration & LLM Smoke Tests (Python only)
+
+> TypeScript track: skip 5f — these patterns are Python-only today. Continue to the Gate.
+
+### Integration tests
+
+**Python:**
+```bash
+make test-integration         # real API calls (needs <NAME>_API_KEY in .env)
+```
+
+Real API calls against the live service. The template scaffolds `tests-integration/test_core_tools.py` as a stub — you must replace it with real tests.
+
+**How to write them:** Open `api_client.py` and list every public method (skip `__init__`, `close`, `_request`, `_ensure_session`, and dunder methods). For each method, write a test:
+
+- **Read methods** (list, get, search): Call with minimal valid parameters, assert the response has the expected shape (list, dict, or model with expected keys).
+- **Write methods** (create, update, delete): Create a test resource, verify it, then clean it up in a `finally` block. If no delete method exists, mark the resource as completed/archived and leave a comment.
+- **Chained methods:** Some methods need an ID from a prior call (e.g., `list_workspaces` returns a GID needed by `search_tasks`). Chain them — call the list method first, use the first result's ID.
+- **Tier-gated methods:** If the API has premium endpoints that may not be available on the user's plan, write a `has_<feature>_access` helper that probes the endpoint and returns `False` on 401/402/403. Use `pytest.skip()` in the test if access is unavailable.
+
+See `references/PATTERNS-PY.md` → "Test Patterns" for concrete examples.
+
+**How to run them:**
+
+1. Ask the contributor to add their API key to `.env` (e.g., `ASANA_API_KEY=xxx`). The `.env` file is already in `.gitignore` and `.mcpbignore`. The contributor was asked for this key at the start of the process — they should have it ready.
+2. Run `make test-integration`.
+3. All tests should pass or skip (for tier-gated features). Fix any failures before proceeding.
+4. If the contributor says auth setup is too complex for now (e.g., OAuth flows, multi-step app configuration), proceed — the tests are written and ready to run later. Do not skip writing the tests.
+
+### LLM smoke tests
+
+**Python:**
+```bash
+make test-llm                 # needs <NAME>_API_KEY + ANTHROPIC_API_KEY in .env
+```
+
+Verify Claude Haiku selects the correct tool given the skill resource. Requires both the service API key and `ANTHROPIC_API_KEY`.
+
+**How to write them:** The template scaffolds `get_server_context()` and `get_anthropic_client()` — leave those as-is. Replace the commented-out test stub with 3–5 real tests, one per key tool. Extract a `call_llm()` helper to avoid repeating the system prompt construction across tests.
+
+Each test sends a natural language prompt and asserts the LLM selected the expected tool. Include concrete values for any required parameters in the prompt (IDs, coordinates, dates) — without them, the LLM will ask for clarification instead of calling the tool.
+
+See `references/PATTERNS-PY.md` → "Test Patterns" for the `call_llm()` helper pattern and the concrete-identifiers rule.
+
+**How to run them:**
+
+1. Ask the contributor to add `ANTHROPIC_API_KEY` to `.env` alongside the service API key.
+2. Run `make test-llm`.
+3. All tests should pass. If a test fails because the LLM picked the wrong tool, adjust the prompt to be more specific before touching the SKILL.md.
+4. If the contributor does not have an `ANTHROPIC_API_KEY`, proceed — the tests are written and ready to run later. Do not skip writing the tests.
+
+**Working through failures:** These tests can be challenging depending on the target API's auth method, plan-gated endpoints, and rate limits. Work through failures interactively with the contributor:
+- If auth is complex (OAuth, multi-step), help the contributor get a working token and update the test fixtures
+- If endpoints are plan-gated, use the tier-skip pattern (see PATTERNS-PY.md) to gracefully skip inaccessible endpoints
+- If the contributor doesn't have the required API keys or wants to move on, that's fine — these tests are recommended but **not blocking** for initial release
 
 ## Gate
 
@@ -122,7 +159,11 @@ The response should include a resource with `uri: "skill://<name>/usage"`.
 - [ ] Contributor has approved the SKILL.md content
 - [ ] Skill resource is wired in server code
 - [ ] `resources/list` includes `skill://<name>/usage`
+- [ ] _(Python only)_ Integration tests written with real assertions (not stubs or TODOs)
+- [ ] _(Python only)_ Integration tests pass (recommended, not blocking)
+- [ ] _(Python only)_ LLM smoke tests written with real assertions (not stubs or TODOs)
+- [ ] _(Python only)_ LLM smoke tests pass (recommended, not blocking)
 
-**If any criterion fails:** Revisit the relevant sub-step above.
+**If any criterion fails:** Revisit the relevant sub-step above. For integration/LLM tests, discuss with the contributor whether to fix now or defer.
 
-**When all pass:** Proceed to Phase 6.
+**When all pass (or non-blocking items deferred):** Proceed to Phase 6.

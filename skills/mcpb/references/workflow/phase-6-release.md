@@ -6,13 +6,14 @@ The contributor created and owns the repo — there is no PR to open. The goal i
 
 Before committing, verify the release will succeed:
 
-1. **Version consistency** — Read the version from `manifest.json` and confirm it matches across all version sources:
-   - Python: `pyproject.toml`, `server.json`, `src/mcp_<name>/__init__.py`
-   - TypeScript: run `make sync` and verify no diff
+1. **Version consistency** — Read the version from `manifest.json` and confirm it matches across all version sources.
+   See `references/CONVENTIONS-{lang}.md` → "Version Management" for the files to verify.
    If anything is out of sync, run `make bump VERSION=<version>` to fix.
 2. **`mpak.json`** — Must exist in the repo root with `name` matching `manifest.json`. Without it, the registry announce fails silently after the bundle builds.
 3. **No secrets in working tree** — Check for `.env` files or anything containing real API keys. Warn the contributor if found; do not stage them.
-4. **Skill resource wired** — Verify SKILL.md exists at the expected path (`src/mcp_<name>/SKILL.md` for Python, `src/SKILL.md` for TypeScript) and the resource is registered in server code.
+4. **Skill resource wired** — Verify SKILL.md exists at the expected path
+   (see `references/SKILL_FORMAT-{lang}.md` → "File Location") and the resource
+   is registered in server code.
 
 ## 6b: Stage and Commit
 
