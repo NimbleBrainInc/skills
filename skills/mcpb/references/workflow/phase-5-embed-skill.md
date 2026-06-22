@@ -97,7 +97,9 @@ The response should include a resource with `uri: "skill://<name>/usage"`.
 
 > **Note:** The embedded skill is encouraged but not mandatory per mpak spec. If no meaningful workflows exist yet (e.g., the server has only 1-2 tools), it's acceptable to skip this phase and add the skill later.
 
-## 5f: Integration & LLM Smoke Tests
+## 5f: Integration & LLM Smoke Tests (Python only)
+
+> TypeScript track: skip 5f — these patterns are Python-only today. Continue to the Gate.
 
 ### Integration tests
 
@@ -115,7 +117,7 @@ Real API calls against the live service. The template scaffolds `tests-integrati
 - **Chained methods:** Some methods need an ID from a prior call (e.g., `list_workspaces` returns a GID needed by `search_tasks`). Chain them — call the list method first, use the first result's ID.
 - **Tier-gated methods:** If the API has premium endpoints that may not be available on the user's plan, write a `has_<feature>_access` helper that probes the endpoint and returns `False` on 401/402/403. Use `pytest.skip()` in the test if access is unavailable.
 
-See `references/PATTERNS-PY.md` → "Integration Test Patterns (Python)" for concrete examples.
+See `references/PATTERNS-PY.md` → "Test Patterns" for concrete examples.
 
 **How to run them:**
 
@@ -137,7 +139,7 @@ Verify Claude Haiku selects the correct tool given the skill resource. Requires 
 
 Each test sends a natural language prompt and asserts the LLM selected the expected tool. Include concrete values for any required parameters in the prompt (IDs, coordinates, dates) — without them, the LLM will ask for clarification instead of calling the tool.
 
-See `references/PATTERNS-PY.md` → "LLM smoke tests" for the `call_llm()` helper pattern and the concrete-identifiers rule.
+See `references/PATTERNS-PY.md` → "Test Patterns" for the `call_llm()` helper pattern and the concrete-identifiers rule.
 
 **How to run them:**
 
@@ -157,10 +159,10 @@ See `references/PATTERNS-PY.md` → "LLM smoke tests" for the `call_llm()` helpe
 - [ ] Contributor has approved the SKILL.md content
 - [ ] Skill resource is wired in server code
 - [ ] `resources/list` includes `skill://<name>/usage`
-- [ ] Integration tests written with real assertions (not stubs or TODOs)
-- [ ] Integration tests pass (recommended, not blocking)
-- [ ] LLM smoke tests written with real assertions (not stubs or TODOs)
-- [ ] LLM smoke tests pass (recommended, not blocking)
+- [ ] _(Python only)_ Integration tests written with real assertions (not stubs or TODOs)
+- [ ] _(Python only)_ Integration tests pass (recommended, not blocking)
+- [ ] _(Python only)_ LLM smoke tests written with real assertions (not stubs or TODOs)
+- [ ] _(Python only)_ LLM smoke tests pass (recommended, not blocking)
 
 **If any criterion fails:** Revisit the relevant sub-step above. For integration/LLM tests, discuss with the contributor whether to fix now or defer.
 

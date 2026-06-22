@@ -716,6 +716,8 @@ make bundle                          # Vendor deps + mcpb pack (local bundle)
 
 ---
 
+<!-- The "Tool Design Guidelines" and "API Analysis Checklist" sections below are language-agnostic and duplicated verbatim in PATTERNS-TS.md — keep the two in sync when editing either. -->
+
 ## Tool Design Guidelines
 
 1. **One tool per operation**: `list_items`, `get_item`, `create_item`, etc.

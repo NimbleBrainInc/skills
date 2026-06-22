@@ -41,7 +41,7 @@ See `references/PATTERNS-{lang}.md` → "Build & Test Commands" for the full set
 
 ## 4c: Bundle Inspection
 
-Run `make bundle`. See `references/PATTERNS-{lang}.md` → "`bundle` Target" for the Makefile recipe.
+Run `make bundle`. See `references/PATTERNS-{lang}.md` → "Build & Test Commands" for the Makefile recipe.
 Verify: no large files (`.git`, `node_modules`), `manifest.json` present in bundle root.
 
 ## 4d: MTF Compliance (if mpak-scanner available)

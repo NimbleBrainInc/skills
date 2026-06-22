@@ -23,7 +23,7 @@ make check
 ```
 
 **Python only:** Also run `make test-integration` (needs `<NAME>_API_KEY`) and `make test-llm`
-(needs `ANTHROPIC_API_KEY`). Three test layers — see `references/PATTERNS-{lang}.md`
+(needs `ANTHROPIC_API_KEY`). Three test layers — see `references/PATTERNS-PY.md`
 → "Test Patterns" for complete examples. At minimum, `make check` must pass.
 
 ## Gate
