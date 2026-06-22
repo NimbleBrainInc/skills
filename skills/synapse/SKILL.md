@@ -2,6 +2,8 @@
 name: synapse
 description: Build a Synapse UI for an MCP server — a React app built to one inlined HTML file, served as a `ui://` resource and rendered in the NimbleBrain host. Works with any MCP server (Python/FastMCP or TypeScript). Use when building a Synapse app or UI, adding a frontend to an MCP server, making a server "visual" or "interactive", or wiring a `ui://` resource.
 license: MIT
+compatibility: Node.js 22+, npm (for the React/Vite UI build). The MCP server itself can be Python (FastMCP) or TypeScript.
+allowed-tools: Read Write Bash Glob Grep WebFetch
 metadata:
   area: synapse
   version: "0.1.0"

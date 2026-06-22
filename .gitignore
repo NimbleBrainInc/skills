@@ -22,3 +22,6 @@ node_modules/
 
 # Archived pre-restructure skills + old release tooling (kept locally, untracked)
 archive/
+
+# Local Claude Code worktrees / config (never tracked)
+.claude/

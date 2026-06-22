@@ -17,11 +17,7 @@ npx skills add nimblebraininc/skills
 npx skills add nimblebraininc/skills --list
 ```
 
-Or as a Claude Code plugin marketplace:
-
-```bash
-claude plugin marketplace add nimblebraininc/skills
-```
+_Coming soon:_ install as a Claude Code plugin marketplace (`claude plugin marketplace add nimblebraininc/skills`), once the `.claude-plugin/marketplace.json` manifest lands.
 
 ## Available skills
 
@@ -38,4 +34,4 @@ A skill is a directory `skills/<name>/` containing a `SKILL.md` with YAML frontm
 - **`description`** — what it does *and* when to use it, with trigger phrases (this is the activation surface).
 - Optional `license`, `compatibility`, `allowed-tools`, and free-form `metadata` (`area`, `version`, `author`).
 
-Keep the `SKILL.md` body focused; push depth into `references/`. See [`CONTRIBUTING.md`](./CONTRIBUTING.md).
+Keep the `SKILL.md` body focused; push depth into `references/`.

@@ -2,7 +2,7 @@
 name: contributor
 description: Get started contributing to NimbleBrain open source — find an integration to build, set up your environment, propose a new idea, or check on your work. Use when onboarding as a contributor, picking something to build, filing an issue, or asking "what should I build". Triggers include "I'm a new contributor", "onboard me", "what should I build", "show me open issues", "file an issue".
 license: MIT
-compatibility: gh (GitHub CLI) authenticated with GitHub. Python 3.13+, uv, ruff, ty for Python MCP server work. Node.js 18+, npm for TypeScript work.
+compatibility: gh (GitHub CLI) authenticated with GitHub. Python 3.13+, uv, ruff, ty for Python MCP server work. Node.js 22+, npm for TypeScript work.
 allowed-tools: Read Write Bash Glob Grep WebFetch AskUserQuestion
 metadata:
   area: contributor
