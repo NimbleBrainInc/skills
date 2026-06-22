@@ -23,7 +23,7 @@ skills/<name>/
 
 - **`name`** — kebab-case, **must equal the directory name**.
 - **`description`** — the activation surface. Say *what it does* AND *when to use it*, with trigger phrases. This is load-bearing; the agent decides whether to read the skill from this alone.
-- Optional: `license`, `metadata` (free-form — put `area`, `version`, `author` here). **No top-level `category`/`tags`/`version`** — those aren't in the standard.
+- Optional: `license`, `compatibility` (env needs), `allowed-tools` (space-separated), and `metadata` (free-form — put `area`, `version`, `author` here). **No top-level `category`/`tags`/`version`** — those aren't in the standard.
 - **Progressive disclosure:** keep the `SKILL.md` body tight (aim well under ~500 lines). Push reference detail, long examples, and gotchas into `references/*.md` and link them. The body gets the agent oriented; references load only when needed.
 
 ## Hygiene (this is a public repo)

@@ -6,7 +6,7 @@ Set up language, service name, repo, and template customization — everything n
 
 Determine whether this is a **warm start** or **cold start** by locating the integration issue. Work through these steps in order, stopping as soon as an issue is found:
 
-**Step 1 — Conversation context:** Check whether an integration issue number or URL is already present in the conversation (e.g. passed by a prior `/nimblebrain-contributor` invocation, or stated by the user).
+**Step 1 — Conversation context:** Check whether an integration issue number or URL is already present in the conversation (e.g. passed by a prior `/contributor` invocation, or stated by the user).
 
 **Step 2 — Infer from repo name:** If no reference is in context, try to derive the service name from the current working directory (strip `mcp-` prefix) and search for a matching issue:
 ```bash
@@ -28,7 +28,7 @@ Required fields: service name (title of the form `New MCP Server: <service>`), A
 gh issue edit <number> --repo NimbleBrainInc/.github --add-assignee @me
 ```
 
-**Language on warm start:** Use the language already in the conversation if present (e.g. from a `/nimblebrain-contributor` session). If not available, ask before continuing.
+**Language on warm start:** Use the language already in the conversation if present (e.g. from a `/contributor` session). If not available, ask before continuing.
 
 ---
 
@@ -43,7 +43,7 @@ If cold start, verify the basics before proceeding:
 3. **mpak CLI** — `mpak --version` succeeds
 4. **GitHub owner** — detect the user's login via `gh api user --jq .login` as a default, then ask: "Repo owner will be `<detected_login>` — or would you prefer a different org/account?" If the user specifies a different owner, use that as `<github_owner>`. The mpak registry allows any GitHub user or org to publish under their own scope (`@<owner>/*` must match the repo owner via OIDC), so this can be a personal account or any org the user has access to.
 
-If any check fails, tell the contributor what's missing and point them to `~/.claude/skills/nimblebrain-contributor/references/DEV_SETUP.md` for setup instructions. Don't block on optional tools (e.g., mpak-scanner) — just note they're unavailable and skip the phases that need them.
+If any check fails, tell the contributor what's missing — Python 3.13+ with `uv`/`ruff`/`ty` for Python, or Node 22+ with `npm` for TypeScript (the `contributor` skill's `references/DEV_SETUP.md` has the full walkthrough if they came from there). Don't block on optional tools (e.g., mpak-scanner) — just note they're unavailable and skip the phases that need them.
 
 ## 0c: Language
 

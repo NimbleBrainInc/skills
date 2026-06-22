@@ -394,7 +394,7 @@ jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: astral-sh/setup-uv@v4
       - run: uv python install 3.13
       - run: uv sync --dev
@@ -405,7 +405,7 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: astral-sh/setup-uv@v4
       - run: uv python install 3.13
       - run: uv sync --dev
@@ -439,14 +439,14 @@ jobs:
             runner: macos-latest
     runs-on: ${{ matrix.runner }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Update manifest version
         run: |
           VERSION="${{ github.event.release.tag_name }}"
           VERSION="${VERSION#v}"
           jq --arg v "$VERSION" '.version = $v' manifest.json > manifest.tmp.json
           mv manifest.tmp.json manifest.json
-      - uses: NimbleBrainInc/mcpb-pack@v2
+      - uses: NimbleBrainInc/mcpb-pack@v3
         with:
           output: "{name}-{version}-${{ matrix.os }}-${{ matrix.arch }}.mcpb"
 ```
@@ -464,7 +464,7 @@ jobs:
   scan:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: astral-sh/setup-uv@v4
       - run: uv python install 3.13
       - run: uv sync
@@ -1104,7 +1104,7 @@ jobs:
       - uses: actions/checkout@v6
       - uses: actions/setup-node@v6
         with:
-          node-version: "24"
+          node-version: "22"
           cache: "npm"
       - run: npm ci
       - run: npm run format:check
@@ -1117,7 +1117,7 @@ jobs:
       - uses: actions/checkout@v6
       - uses: actions/setup-node@v6
         with:
-          node-version: "24"
+          node-version: "22"
           cache: "npm"
       - run: npm ci
       - run: npm run build
@@ -1130,7 +1130,7 @@ jobs:
       - uses: actions/checkout@v6
       - uses: actions/setup-node@v6
         with:
-          node-version: "24"
+          node-version: "22"
           cache: "npm"
       - run: npm ci && npm run build
       - run: npm prune --omit=dev
@@ -1167,11 +1167,11 @@ jobs:
       - uses: actions/checkout@v6
       - uses: actions/setup-node@v6
         with:
-          node-version: "24"
+          node-version: "22"
           cache: "npm"
       - run: npm ci && npm run build
       - run: npm prune --omit=dev
-      - uses: NimbleBrainInc/mcpb-pack@v2
+      - uses: NimbleBrainInc/mcpb-pack@v3
         with:
           output: "{name}-{version}-${{ matrix.os }}-${{ matrix.arch }}.mcpb"
 ```
