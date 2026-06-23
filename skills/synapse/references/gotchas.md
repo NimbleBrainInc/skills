@@ -10,7 +10,7 @@ Old (`0.4.x`) examples call `synapse.callTool(...)` directly. On **0.10.x**:
 
 ## B. There's a whole component library — don't hand-roll styling
 `@nimblebrain/synapse/ui` exports: `Avatar, Badge, Button, TextLink, Card, Drawer, EmptyState, ListRow, Pagination, Prose, SearchField, SegmentedControl, Spinner, StatusDot, Table`; layouts `AppFrame, ListDetailLayout (+useListDetail), SidebarLayout (+useSidebar), useBreakpoint`; primitives `Stack, Inline, Spacer, Divider`; typography `Heading, Text`; plus `tokens, textStyle, headingStyle`.
-- `tokens.*` are **CSS `var(--…, fallback)` references** resolved against host-injected variables, so light/dark switches with **no React re-render**.
+- `tokens.*` are **CSS `var(--…, fallback)` references** resolved against host-injected variables, so light/dark switches with **no React re-render** — but not every token is host-backed, and the unbacked ones fall back to light in *every* theme (gotcha L).
 - Brand fonts load via a **side-effect import**: `import "@nimblebrain/synapse/ui/fonts"`.
 
 ## C. `Inline`/`Stack` use short enums, not CSS longhands (tsc-only catch)
@@ -53,3 +53,18 @@ export function markdownToHtml(md: string): string {
 }
 ```
 The CSP is **not** the backstop — sanitization is. The danger is only the `html=`/`dangerouslySetInnerHTML` path; plain `<Text>{value}</Text>` is safe because React escapes it.
+
+## L. Not every `tokens.*` is host-backed — three fall back to light in *every* theme
+`tokens.*` are `var(--…, fallback)` refs (gotcha B), but the host injects only a **subset** of the vars they reference. It sets `--color-background-primary`/`-secondary`, `--color-text-primary`/`-secondary`/`-accent`, `--color-border-primary`, `--color-ring-primary` — in **both** themes. It does **not** set `--color-background-tertiary`, `--color-text-tertiary`, `--color-border-secondary`, so these three tokens always resolve to their **hardcoded light fallbacks**, theme-blind:
+
+| Token | References | Unset → resolves to |
+|---|---|---|
+| `tokens.bgSubtle` | `--color-background-tertiary` | `#f3f4f6` (light) |
+| `tokens.fgFaint` | `--color-text-tertiary` | `#9ca3af` (light) |
+| `tokens.borderStrong` | `--color-border-secondary` | `#d1d5db` (light) |
+
+A surface painted `bgSubtle` with `fg` text (which **is** dark-aware → near-white in dark) is **white-on-white in dark mode** — and looks perfect in light, passes `tsc`/`build`, and renders fine until you toggle the theme. For surfaces use `bg` / `bgRaised`, for borders `border`, for text `fg` / `fgMuted` (all host-backed in both themes). **A token's fallback is a safety net, not a theme — an unset var leaks its light fallback into dark.**
+
+Avoiding the three tokens in **your** code isn't a complete fix, though: the SDK's **own components** paint with them internally (e.g. `Prose` code/quote blocks on `bgSubtle`, hover/track surfaces, neutral `Badge`s, `EmptyState` icons on `fgFaint`), so stock surfaces still flash the light fallback in dark mode regardless. The real fix is upstream — have the host set the tertiary vars, or make the fallbacks dark-aware (tracked in `NimbleBrainInc/synapse`). Until then, dark mode has some unavoidable light patches from stock components.
+
+Which vars get set is the host's contract and can shift between versions — and the enumerated list above is what the SDK's **bundled default theme + preview harness** define (a production host could override it) — so don't memorize it: **toggle the preview to dark and verify every surface** (gotcha F — the preview defaults to dark, with a toggle in its header).
