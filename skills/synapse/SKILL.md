@@ -43,7 +43,7 @@ Then read **`references/gotchas.md`** (non-obvious API facts that each save a de
 
 8. **Local preview** — `cd ui && npm run dev` → open `/__preview`. For an **edge-fronted** server (identity from HTTP headers + a DB), the real server can't be driven over the stdio preview, so every call returns `unauthenticated` — point `synapseVite({ serverCmd })` at a **seeded stdio mock** behind an env flag (gotcha F).
 
-9. **Verify** — `npx tsc --noEmit` **and** `npm run build` (Vite/esbuild won't type-check on its own). Then run the **server project's own lint/format/test gate** (e.g. `make verify`, `ruff format --check`), not just the UI type-check — a format-only diff will redden CI even when types pass. Confirm the server serves `ui://<name>/main` as `text/html`.
+9. **Verify** — `npx tsc --noEmit` **and** `npm run build` (Vite/esbuild won't type-check on its own). Then run the **server project's own lint/format/test gate** (e.g. `make verify`, `ruff format --check`), not just the UI type-check — a format-only diff will redden CI even when types pass. **Toggle the preview to dark *and* light and eyeball every surface** — the token-fallback trap (gotcha L) passes `tsc`/`build`, looks fine in light, and only shows as white-on-white in dark. Confirm the server serves `ui://<name>/main` as `text/html`.
 
 ## Out of scope
 - Host-side rendering — the host already implements placement → iframe → bridge; you build the bundle + declare the placement, nothing more.
