@@ -2,8 +2,8 @@
 
 Each of these costs a debugging cycle if you don't know it. They were learned by reading the `@nimblebrain/synapse` source and by shipping real apps.
 
-## A. API has drifted — target 0.10.x, not 0.4.x
-Old (`0.4.x`) examples call `synapse.callTool(...)` directly. On **0.10.x**:
+## A. API has drifted — use the current API, not 0.4.x
+Old (`0.4.x`) examples call `synapse.callTool(...)` directly. On **current versions (0.10+)**:
 - `useCallTool<T>(name)` returns `{ call, isPending, error, data }` — you `await call(args)`, you don't get a bare tool function.
 - Imperative path (cleaner for many-tool apps): `useSynapse().callTool(name, args)` → `ToolCallResult { data, isError, content?, _meta? }`.
 - `.data` is **`JSON.parse` of the first `text` content block** (raw string on parse failure); a non-CallToolResult object passes through as-is. So a Python tool returning a `dict` arrives as `.data`. A tool that returns a structured `{ "error": ... }` dict is **not** an MCP `isError` — check `data.error` yourself.
