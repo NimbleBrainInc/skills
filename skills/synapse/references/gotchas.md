@@ -2,8 +2,8 @@
 
 Each of these costs a debugging cycle if you don't know it. They were learned by reading the `@nimblebrain/synapse` source and by shipping real apps.
 
-## A. API has drifted — target 0.10.x, not 0.4.x
-Old (`0.4.x`) examples call `synapse.callTool(...)` directly. On **0.10.x**:
+## A. API has drifted — use the current API, not 0.4.x
+Old (`0.4.x`) examples call `synapse.callTool(...)` directly. On **current versions (0.10+)**:
 - `useCallTool<T>(name)` returns `{ call, isPending, error, data }` — you `await call(args)`, you don't get a bare tool function.
 - Imperative path (cleaner for many-tool apps): `useSynapse().callTool(name, args)` → `ToolCallResult { data, isError, content?, _meta? }`.
 - `.data` is **`JSON.parse` of the first `text` content block** (raw string on parse failure); a non-CallToolResult object passes through as-is. So a Python tool returning a `dict` arrives as `.data`. A tool that returns a structured `{ "error": ... }` dict is **not** an MCP `isError` — check `data.error` yourself.
@@ -68,3 +68,6 @@ A surface painted `bgSubtle` with `fg` text (which **is** dark-aware → near-wh
 Avoiding the three tokens in **your** code isn't a complete fix, though: the SDK's **own components** paint with them internally (e.g. `Prose` code/quote blocks on `bgSubtle`, hover/track surfaces, neutral `Badge`s, `EmptyState` icons on `fgFaint`), so stock surfaces still flash the light fallback in dark mode regardless. The real fix is upstream — have the host set the tertiary vars, or make the fallbacks dark-aware (tracked in `NimbleBrainInc/synapse`). Until then, dark mode has some unavoidable light patches from stock components.
 
 Which vars get set is the host's contract and can shift between versions — and the enumerated list above is what the SDK's **bundled default theme + preview harness** define (a production host could override it) — so don't memorize it: **toggle the preview to dark and verify every surface** (gotcha F — the preview defaults to dark, with a toggle in its header).
+
+## M. `AppFrame` fills the pane — the root-height chain is supplied for you (≥0.11)
+`AppFrame` is `height: 100%`, which only fills if its ancestor chain (`#root` → `body` → `html`) has a definite height. A Synapse app iframe is a bare document, so before **0.11** an app that didn't add `html, body, #root { height: 100% }` to its own `index.html` collapsed to **content height** — full width, short height (an empty board renders as a thin band over dead space). As of **0.11**, `AppFrame` injects that chain itself on render (a `nb-synapse-base` `<style>`), so a bare `index.html` works and you don't hand-roll root height. **`import "@nimblebrain/synapse/ui/base"` in `main.tsx`** to apply it *before first paint* (no layout jump), or for a full-pane app that renders without `AppFrame`. The reset uses a percentage chain (not `100vh`/`dvh`) on purpose — percentages resolve against the actual allocated pane, staying correct when a host gives the app a pane shorter than the viewport (a viewport unit would overflow with a second scrollbar).
