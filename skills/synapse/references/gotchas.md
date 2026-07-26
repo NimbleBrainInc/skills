@@ -10,8 +10,8 @@ Old (`0.4.x`) examples call `synapse.callTool(...)` directly. On **current versi
 
 ## B. There's a whole component library — don't hand-roll styling
 `@nimblebrain/synapse/ui` exports: `Avatar, Badge, Button, TextLink, Card, Drawer, EmptyState, ListRow, Pagination, Prose, SearchField, SegmentedControl, Spinner, StatusDot, Table`; layouts `AppFrame, ListDetailLayout (+useListDetail), SidebarLayout (+useSidebar), useBreakpoint`; primitives `Stack, Inline, Spacer, Divider`; typography `Heading, Text`; plus `tokens, textStyle, headingStyle`.
-- `tokens.*` are **CSS `var(--…, fallback)` references** resolved against host-injected variables, so light/dark switches with **no React re-render** — but not every token is host-backed, and the unbacked ones fall back to light in *every* theme (gotcha L).
-- Brand fonts load via a **side-effect import**: `import "@nimblebrain/synapse/ui/fonts"`.
+- `tokens.*` are **CSS `var(--…, fallback)` references** resolved against host-injected variables, so light/dark switches with **no React re-render**.
+- **The SDK ships no fonts, and you do not import any.** `@nimblebrain/synapse/ui/fonts` was removed in **0.13.0** — it fetched one host's brand from a third-party CDN, which the app iframe's CSP blocked anyway. Font tokens fall back to web-safe system stacks (`system-ui`, `ui-monospace`, `Georgia`), so an app renders correctly with no host and no network. A host that wants its own typeface sends `@font-face` descriptors on the theme (`SynapseTheme.fontFaces`) and the SDK loads them — that is the *host's* job, not the app's. If you are on `≤0.12.x` and have the import, delete it: it is inert in-host.
 
 ## C. `Inline`/`Stack` use short enums, not CSS longhands (tsc-only catch)
 `justify` ∈ `start | center | end | between | around` (NOT `space-between`/`flex-end`); `align` ∈ `start | center | end | stretch | baseline`. Wrong values only fail at `tsc`, never at runtime.
@@ -54,20 +54,12 @@ export function markdownToHtml(md: string): string {
 ```
 The CSP is **not** the backstop — sanitization is. The danger is only the `html=`/`dangerouslySetInnerHTML` path; plain `<Text>{value}</Text>` is safe because React escapes it.
 
-## L. Not every `tokens.*` is host-backed — three fall back to light in *every* theme
-`tokens.*` are `var(--…, fallback)` refs (gotcha B), but the host injects only a **subset** of the vars they reference. It sets `--color-background-primary`/`-secondary`, `--color-text-primary`/`-secondary`/`-accent`, `--color-border-primary`, `--color-ring-primary` — in **both** themes. It does **not** set `--color-background-tertiary`, `--color-text-tertiary`, `--color-border-secondary`, so these three tokens always resolve to their **hardcoded light fallbacks**, theme-blind:
+## L. Token fallbacks are a safety net, not a theme — but the SDK backs the gap
+A `var()` fallback is a **static literal**: it fires exactly when the var is unset, which is the moment there is no theme signal to branch on. So an unbacked theme-sensitive token resolves to its **light** fallback in dark mode — historically `tokens.bgSubtle` / `fgFaint` / `borderStrong` painted white-on-white in dark, passing `tsc` and `build` and looking perfect in light.
 
-| Token | References | Unset → resolves to |
-|---|---|---|
-| `tokens.bgSubtle` | `--color-background-tertiary` | `#f3f4f6` (light) |
-| `tokens.fgFaint` | `--color-text-tertiary` | `#9ca3af` (light) |
-| `tokens.borderStrong` | `--color-border-secondary` | `#d1d5db` (light) |
+**This is fixed in the SDK** (`theme-defaults.ts`, [synapse#17](https://github.com/NimbleBrainInc/synapse/issues/17)). `applyTheme` writes a theme-*aware* neutral default layer for the active mode first, then the host's variables on top — so every token the contract references resolves correctly in both modes even against an incomplete host, a standalone `connect()` widget, or a third-party host. A regression test enforces a TOTAL partition: every referenced var must be either declared theme-invariant or backed in both modes, so a new token cannot ship unbacked.
 
-A surface painted `bgSubtle` with `fg` text (which **is** dark-aware → near-white in dark) is **white-on-white in dark mode** — and looks perfect in light, passes `tsc`/`build`, and renders fine until you toggle the theme. For surfaces use `bg` / `bgRaised`, for borders `border`, for text `fg` / `fgMuted` (all host-backed in both themes). **A token's fallback is a safety net, not a theme — an unset var leaks its light fallback into dark.**
-
-Avoiding the three tokens in **your** code isn't a complete fix, though: the SDK's **own components** paint with them internally (e.g. `Prose` code/quote blocks on `bgSubtle`, hover/track surfaces, neutral `Badge`s, `EmptyState` icons on `fgFaint`), so stock surfaces still flash the light fallback in dark mode regardless. The real fix is upstream — have the host set the tertiary vars, or make the fallbacks dark-aware (tracked in `NimbleBrainInc/synapse`). Until then, dark mode has some unavoidable light patches from stock components.
-
-Which vars get set is the host's contract and can shift between versions — and the enumerated list above is what the SDK's **bundled default theme + preview harness** define (a production host could override it) — so don't memorize it: **toggle the preview to dark and verify every surface** (gotcha F — the preview defaults to dark, with a toggle in its header).
+You therefore do **not** need to avoid `bgSubtle` / `fgFaint` / `borderStrong`. What still holds is the underlying rule — *a token's fallback is a safety net, not a theme* — which matters if you introduce your own `var(--custom, …)` outside the contract, since nothing backs that in dark. **Toggle the preview to dark and eyeball every surface** either way (gotcha F): it is the only check that catches this class, and it costs seconds.
 
 ## M. `AppFrame` fills the pane — the root-height chain is supplied for you (≥0.11)
 `AppFrame` is `height: 100%`, which only fills if its ancestor chain (`#root` → `body` → `html`) has a definite height. A Synapse app iframe is a bare document, so before **0.11** an app that didn't add `html, body, #root { height: 100% }` to its own `index.html` collapsed to **content height** — full width, short height (an empty board renders as a thin band over dead space). As of **0.11**, `AppFrame` injects that chain itself on render (a `nb-synapse-base` `<style>`), so a bare `index.html` works and you don't hand-roll root height. **`import "@nimblebrain/synapse/ui/base"` in `main.tsx`** to apply it *before first paint* (no layout jump), or for a full-pane app that renders without `AppFrame`. The reset uses a percentage chain (not `100vh`/`dvh`) on purpose — percentages resolve against the actual allocated pane, staying correct when a host gives the app a pane shorter than the viewport (a viewport unit would overflow with a second scrollbar).
