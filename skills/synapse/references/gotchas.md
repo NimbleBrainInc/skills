@@ -10,8 +10,8 @@ Old (`0.4.x`) examples call `synapse.callTool(...)` directly. On **current versi
 
 ## B. There's a whole component library — don't hand-roll styling
 `@nimblebrain/synapse/ui` exports: `Avatar, Badge, Button, TextLink, Card, Drawer, EmptyState, ListRow, Pagination, Prose, SearchField, SegmentedControl, Spinner, StatusDot, Table`; layouts `AppFrame, ListDetailLayout (+useListDetail), SidebarLayout (+useSidebar), useBreakpoint`; primitives `Stack, Inline, Spacer, Divider`; typography `Heading, Text`; plus `tokens, textStyle, headingStyle`.
-- `tokens.*` are **CSS `var(--…, fallback)` references** resolved against host-injected variables, so light/dark switches with **no React re-render** — but not every token is host-backed, and the unbacked ones fall back to light in *every* theme (gotcha L).
-- Brand fonts load via a **side-effect import**: `import "@nimblebrain/synapse/ui/fonts"`.
+- `tokens.*` are **CSS `var(--…, fallback)` references** resolved against host-injected variables, so light/dark switches with **no React re-render**. Every color var they reference is backed in both themes by the SDK's own neutral default layer, with the host's values layered on top (gotcha L).
+- **The SDK ships no fonts.** Font tokens fall back to web-safe system stacks (`system-ui`, `ui-monospace`, `Georgia`), so an app renders correctly with no host, no network and no font files. A host that wants its own typeface sends `@font-face` descriptors as `SynapseTheme.fontFaces` and the SDK loads them — there is **no font import**, by design (gotcha N).
 
 ## C. `Inline`/`Stack` use short enums, not CSS longhands (tsc-only catch)
 `justify` ∈ `start | center | end | between | around` (NOT `space-between`/`flex-end`); `align` ∈ `start | center | end | stretch | baseline`. Wrong values only fail at `tsc`, never at runtime.
@@ -54,20 +54,25 @@ export function markdownToHtml(md: string): string {
 ```
 The CSP is **not** the backstop — sanitization is. The danger is only the `html=`/`dangerouslySetInnerHTML` path; plain `<Text>{value}</Text>` is safe because React escapes it.
 
-## L. Not every `tokens.*` is host-backed — three fall back to light in *every* theme
-`tokens.*` are `var(--…, fallback)` refs (gotcha B), but the host injects only a **subset** of the vars they reference. It sets `--color-background-primary`/`-secondary`, `--color-text-primary`/`-secondary`/`-accent`, `--color-border-primary`, `--color-ring-primary` — in **both** themes. It does **not** set `--color-background-tertiary`, `--color-text-tertiary`, `--color-border-secondary`, so these three tokens always resolve to their **hardcoded light fallbacks**, theme-blind:
+## L. A token's `var()` fallback is a safety net, not a theme — the SDK's default layer is what makes dark work
+`tokens.*` are `var(--…, fallback)` refs (gotcha B), and each fallback is a **static literal that cannot branch on theme** — every one of them is a *light* value. A host injects only a subset of the vars they reference, so any var it omits would leak that light literal into dark mode.
 
-| Token | References | Unset → resolves to |
-|---|---|---|
-| `tokens.bgSubtle` | `--color-background-tertiary` | `#f3f4f6` (light) |
-| `tokens.fgFaint` | `--color-text-tertiary` | `#9ca3af` (light) |
-| `tokens.borderStrong` | `--color-border-secondary` | `#d1d5db` (light) |
+That gap is closed **inside the SDK**, not by the host: as of **0.10.2** the package ships a neutral default theme that backs every color var the token contract references, in **both** themes. its internal `applyThemeVariables(mode, hostVars)` writes the mode's defaults to `:root` **first**, then the host's values on top — so the host's brand still wins for every key it provides, and anything it omits resolves to a theme-correct neutral instead of a light literal. **Use any `tokens.*` freely, including `bgSubtle` / `fgFaint` / `borderStrong`.**
 
-A surface painted `bgSubtle` with `fg` text (which **is** dark-aware → near-white in dark) is **white-on-white in dark mode** — and looks perfect in light, passes `tsc`/`build`, and renders fine until you toggle the theme. For surfaces use `bg` / `bgRaised`, for borders `border`, for text `fg` / `fgMuted` (all host-backed in both themes). **A token's fallback is a safety net, not a theme — an unset var leaks its light fallback into dark.**
+Two edges remain:
+- **Below 0.10.2** the default layer doesn't exist, and those three tokens really are theme-blind — `bgSubtle` under `fg` text renders white-on-white in dark, looks perfect in light, and passes `tsc`/`build`. If you're reading an app pinned that low, that's the bug.
+- The layer applies **on connection**. Rendering `ui` components with no Synapse connection at all (a bare Storybook-style mount, no `connect`/`<SynapseProvider>`/`connectUI`) leaves every var unset, so the light fallbacks are what you get.
 
-Avoiding the three tokens in **your** code isn't a complete fix, though: the SDK's **own components** paint with them internally (e.g. `Prose` code/quote blocks on `bgSubtle`, hover/track surfaces, neutral `Badge`s, `EmptyState` icons on `fgFaint`), so stock surfaces still flash the light fallback in dark mode regardless. The real fix is upstream — have the host set the tertiary vars, or make the fallbacks dark-aware (tracked in `NimbleBrainInc/synapse`). Until then, dark mode has some unavoidable light patches from stock components.
-
-Which vars get set is the host's contract and can shift between versions — and the enumerated list above is what the SDK's **bundled default theme + preview harness** define (a production host could override it) — so don't memorize it: **toggle the preview to dark and verify every surface** (gotcha F — the preview defaults to dark, with a toggle in its header).
+Which vars a *host* sets is its own contract and can shift between versions, so don't memorize it: **toggle the preview to dark and verify every surface** (gotcha F — the preview defaults to dark, with a toggle in its header).
 
 ## M. `AppFrame` fills the pane — the root-height chain is supplied for you (≥0.11)
 `AppFrame` is `height: 100%`, which only fills if its ancestor chain (`#root` → `body` → `html`) has a definite height. A Synapse app iframe is a bare document, so before **0.11** an app that didn't add `html, body, #root { height: 100% }` to its own `index.html` collapsed to **content height** — full width, short height (an empty board renders as a thin band over dead space). As of **0.11**, `AppFrame` injects that chain itself on render (a `nb-synapse-base` `<style>`), so a bare `index.html` works and you don't hand-roll root height. **`import "@nimblebrain/synapse/ui/base"` in `main.tsx`** to apply it *before first paint* (no layout jump), or for a full-pane app that renders without `AppFrame`. The reset uses a percentage chain (not `100vh`/`dvh`) on purpose — percentages resolve against the actual allocated pane, staying correct when a host gives the app a pane shorter than the viewport (a viewport unit would overflow with a second scrollbar).
+
+## N. Fonts come from the host — there is no font import (0.13+)
+A CSS custom property can **name** a font family but cannot **load** one, and an app iframe is its own document that inherits no `@font-face` from the host page. So a `--font-sans` token naming a family is not enough on its own.
+
+`@nimblebrain/synapse/ui/fonts` used to paper over this by injecting a Fontshare stylesheet on import. It was **removed in 0.13.0** — it hardcoded one host's brand inside a general-purpose library, and the iframe's `font-src` blocked it anyway. Importing it on `0.13.0+` is an unresolvable subpath at build time. There is **no replacement import**: the SDK ships no font data.
+
+Instead the host sends `@font-face` descriptors as `SynapseTheme.fontFaces` (`family`, `src`, optional `weight`/`style`/`display`), which the SDK loads into the app document through the same funnel as the token variables. As an app author there is nothing to wire — read `useTheme().fontFaces` if you need to know what's loaded. Two consequences worth knowing:
+- **Sending no fonts is a supported configuration, not a degraded one.** With no host, no network and no font files the app renders in `system-ui` / `ui-monospace` / `Georgia`.
+- If you *are* the host: give every `--font-*` token value a **web-safe tail** (`"'Your Sans', system-ui, sans-serif"`, never `"'Your Sans'"`), and check the frame's CSP — a `srcdoc` iframe without `allow-same-origin` has an **opaque origin**, so `font-src 'self'` matches nothing and only a `data:` URI works unconditionally.
