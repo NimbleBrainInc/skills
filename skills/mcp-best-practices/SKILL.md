@@ -52,9 +52,9 @@ Ordered by what the model does with the surface. Apply every rung to every adver
 ### 1. Find — names
 
 - Names use only `A-Z`, `a-z`, `0-9`, `_`, `-`, `.`, run 1–128 characters, and carry no spaces or punctuation.
-- Names are specific enough to mean something alone. `get_current_weather` over `weather`; `sniff_domain` over `analyze`.
+- Names are specific enough to mean something alone. `get_current_weather` over `weather`; `create_invoice` over `create`.
 - Names survive aggregation. Uniqueness is scoped to one server, and a host that merges several servers *should* disambiguate but is not required to. A bare `search`, `upgrade`, or `query` is a bet on client behaviour — prefix it, or accept that a user with five connectors has given the model an ambiguous referent.
-- `title` and `annotations.title` are for humans; `name` is what the model reasons about. For tools, display precedence runs `annotations.title` → `title` → `name`.
+- `title` and `annotations.title` are for humans; `name` is what the model reasons about. For tools, display precedence runs `title` → `annotations.title` → `name` — `annotations.title` outranks only `name`, and only when `title` is absent.
 
 ### 2. Choose — descriptions
 
@@ -75,7 +75,7 @@ Ordered by what the model does with the surface. Apply every rung to every adver
 ### 4. Read — results, output schemas, errors
 
 - Tool execution failures return a result with `isError: true` and text the model can act on. They are not JSON-RPC errors — that channel is for unknown tools and malformed requests, which the model cannot fix.
-- Error text names what to change. "Invalid departure date, must be in the future, today is 08/08/2025" recovers; "400 Bad Request" does not.
+- Error text names what to change. The specification's own example — `Invalid departure date: must be in the future. Current date is 08/08/2025.` — recovers; `400 Bad Request` does not.
 - An `outputSchema`, where present, matches what the server actually returns, and the server also returns the serialized JSON in a text block for clients that ignore structured content.
 - Long-running or paginated surfaces return deterministically ordered lists, which is what lets clients cache and keeps prompt-cache hits alive.
 
@@ -104,20 +104,20 @@ Verify each finding against the advertised surface before reporting it. A rule t
 Lead with the surface as it stands, then the findings ranked by what they cost.
 
 ```
-MCP REVIEW — <server> (<n> tools, <n> resources, <n> prompts)
+MCP REVIEW — example-server (3 tools, 0 resources, 0 prompts)
 
-SURFACE     tools/list payload 14,377 chars (~3,600 tokens, loaded every conversation)
-            sniff_domain 835 · upgrade 303 · manage_account 443
+SURFACE     tools/list payload 12,400 chars (~3,100 tokens, loaded every conversation)
+            create_invoice 835 · upgrade 303 · list_customers 443
 
 FINDINGS
-  1  Choose   sniff_domain describes capability, states no trigger
+  1  Choose   create_invoice describes capability, states no trigger
               → model has no cue to volunteer it; highest-yield fix
   2  Fill     4 of 4 params carry no schema description
               → Args prose sits in the description instead
   3  Find     `upgrade` is generic; collides across aggregated servers
 
 PASSES      Find (charset/length), Read (isError, outputSchema), Trust (audience
-            validation, SSRF guard on crawl targets)
+            validation, SSRF guard on fetch targets)
 
 UNCHECKED   Trust (scope minimization) — server declares no scopes to inspect
 ```

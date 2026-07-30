@@ -37,7 +37,7 @@ The ordering is the subtle part: setting the state cookie before consent approva
 
 ## SSRF
 
-Relevant wherever the server fetches a URL the caller influenced — a crawl target, a webhook, a metadata document.
+**Read this one as an extension by analogy, not as a rule the specification states.** The spec scopes SSRF to MCP *clients* fetching OAuth-discovery URLs, and addresses its `SHOULD`s to them — there is no server-side SSRF obligation in the text. The mitigations transfer intact to any server that fetches a URL the caller influenced (a fetch target, a webhook, a metadata document), which is why they are here, but a finding raised on this section cites reasoning rather than a quotable rule. Say which you are doing.
 
 Block private and reserved ranges: `10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16`, loopback `127.0.0.0/8` and `::1`, link-local `169.254.0.0/16` (which is the cloud metadata endpoint), and IPv6 `fc00::/7`, `fe80::/10`. Require HTTPS outside loopback.
 
