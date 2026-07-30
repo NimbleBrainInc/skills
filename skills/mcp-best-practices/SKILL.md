@@ -36,12 +36,18 @@ curl -s -X POST "$URL" -H "Authorization: Bearer $TOKEN" \
   -H 'Content-Type: application/json' -H 'Accept: application/json, text/event-stream' \
   -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}'
 
-# Python FastMCP, from source
+# Python, from source. The two FastMCP lineages differ: the official mcp SDK
+# returns Tool objects from list_tools(); the standalone fastmcp package returns
+# a dict from get_tools(), whose values need .to_mcp_tool().
 python -c "import asyncio, json; from <module> import mcp; \
-print(json.dumps([t.model_dump() for t in asyncio.run(mcp.list_tools())], indent=2))"
+ts = asyncio.run(mcp.list_tools()) if hasattr(mcp, 'list_tools') \
+     else [t.to_mcp_tool() for t in asyncio.run(mcp.get_tools()).values()]; \
+print(json.dumps([t.model_dump() for t in ts], indent=2))"
 ```
 
 Measure sizes while you are there — description length per tool, and the whole `tools/list` payload. That payload loads into context in every conversation where the server is enabled, so it is a standing cost, not a one-off.
+
+**Capture the negotiated `protocolVersion` from `initialize` too, and name it in the report.** The citations in this skill are drawn from the draft specification, which moves, and some of the rules quoted are draft-only — the `tools/list` ordering `SHOULD`, the "set MAY vary by the authorization presented" sentence, and the whole State Handle Hijacking section, which replaced Session Hijacking after `2025-11-25`. A finding says which version it is judged under. Against a server on a released version, check the rule was in force before filing.
 
 ## The rungs
 
@@ -53,6 +59,7 @@ A rung that restates a specification rule carries that rule's strength and no mo
 
 - Names use only `A-Z`, `a-z`, `0-9`, `_`, `-`, `.`, run 1–128 characters, and carry no spaces, commas or other special characters. These are `SHOULD`s. The Anthropic API is harder — `^[a-zA-Z0-9_-]{1,64}$` — which rejects the dot and anything past 64 characters, so the spec's own `admin.tools.list` example will not survive that surface.
 - Names are specific enough to mean something alone. `get_current_weather` over `weather`; `create_invoice` over `create`.
+- The advertised list is deterministically ordered. This is the spec's `SHOULD` on `tools/list`, and it is what lets a client cache the list and keeps prompt-cache hits alive — it governs the surface, not what a call returns.
 - Names survive aggregation. Uniqueness is scoped to one server, and a host that merges several servers *should* disambiguate but is not required to. A bare `search`, `upgrade`, or `query` is a bet on client behaviour — prefix it, or accept that a user with five connectors has given the model an ambiguous referent. Anthropic asks for the same prefixing directly, as "meaningful namespacing in tool names" (`github_list_prs`, `slack_send_message`).
 - `title` and `annotations.title` are for humans; `name` is what the model reasons about. For tools, display precedence runs `title` → `annotations.title` → `name` — `annotations.title` outranks only `name`, and only when `title` is absent.
 
@@ -62,7 +69,7 @@ A rung that restates a specification rule carries that rule's strength and no mo
 - It states the boundary too — when *not* to call, and what to do when a required argument is missing. Without it the model's likeliest move on a near-miss is silence, not a clarifying question.
 - One meaning lives in one place. Server `instructions` and a tool description that argue the same point twice pay tokens in every request and teach nothing the second time.
 - Nothing in the description is aimed at a human maintainer. Authoring conventions, changelog notes and rationale belong in the commit, not in a payload the model pays for.
-- No hard length limit exists in the MCP spec, in the Anthropic API, or in OpenAI's current documentation. OpenAI historically enforced 1024 characters on function descriptions and no longer documents it — treat 1024 as a prudent ceiling if the server targets ChatGPT, and otherwise let attention, not a cap, be the constraint.
+- No hard length limit exists in the spec or in either vendor's current documentation. Read `references/spec-citations.md` § The 1024-character question before invoking that number — it is not a rule, and the reason matters.
 
 ### 3. Fill — input schemas
 
@@ -70,14 +77,14 @@ A rung that restates a specification rule carries that rule's strength and no mo
 - `required` lists exactly what is genuinely required; everything else has a sensible default.
 - A parameter with a fixed set of values is an `enum` — unless the set is runtime-configured or the handler deliberately absorbs unknown values, in which case a static enum makes the schema reject at the boundary what the code is written to tolerate. Say which case applies.
 - A parameter the server accepts but ignores says so in its description. Silent no-op parameters teach the model that its arguments do not matter.
-- `inputSchema` is a valid JSON Schema object, never null. A tool with no parameters uses `{"type": "object", "additionalProperties": false}`.
+- `inputSchema` is a valid JSON Schema object, never null. For a tool with no parameters the spec permits both `{"type": "object", "additionalProperties": false}` (its recommendation) and `{"type": "object"}` — the second is not a finding.
 
 ### 4. Read — results, output schemas, errors
 
 - Tool execution failures return a result with `isError: true` and text the model can act on. They are not JSON-RPC errors — that channel is for unknown tools and malformed requests, which the model cannot fix.
 - Error text names what to change. The specification's own example — `Invalid departure date: must be in the future. Current date is 08/08/2025.` — recovers; `400 Bad Request` does not.
 - An `outputSchema`, where present, matches what the server actually returns, and the server also returns the serialized JSON in a text block for clients that ignore structured content.
-- Long-running or paginated surfaces return deterministically ordered lists, which is what lets clients cache and keeps prompt-cache hits alive.
+- Paginated results use stable cursors. The spec asks for that and no more — it states no ordering rule for what a *call* returns, so a results-ordering finding is this skill's reasoning, not a quotable rule.
 
 ### 5. Trust — the boundary
 
@@ -85,13 +92,13 @@ A rung that restates a specification rule carries that rule's strength and no mo
 - Tokens are audience-validated. A server **must not** accept a token that was not issued for it, and must not forward a client's token to a downstream API.
 - State handles are not authentication. A handle is bound server-side to the authenticated principal and verified on every call; possession alone grants nothing.
 - Annotations are hints, never enforcement. `readOnlyHint` on a tool that writes is a lie the client is entitled to believe.
-- Scopes match the approach the server itself claims. The spec sanctions three — minimum, recommended, extended — so breadth alone is not a finding; exceeding the server's own stated approach is.
+- Scopes are two bars, not one. The **published set** is a finding on its own — the spec's named mistakes include publishing every possible scope in `scopes_supported` and using wildcard or omnibus scopes. The **challenge** is the softer bar: the spec sanctions minimum, recommended and extended compositions there, so a broad challenge is only a finding against the composition the server actually claims.
 
 Read `references/security.md` before writing up this rung.
 
 For servers exposing resources or prompts, read `references/resources-and-prompts.md` — those primitives have their own field rules, URI-scheme rules and error codes.
 
-To quote a rule in a finding, take the citation from `references/spec-citations.md` rather than paraphrasing.
+To quote a rule in a finding, take the citation from the reference files rather than paraphrasing — `spec-citations.md` for the surface rules, `security.md` for the boundary ones.
 
 ## Completion criterion
 

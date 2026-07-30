@@ -1,6 +1,6 @@
 # The boundary
 
-Read this when the server does OAuth, proxies a third-party API, holds state across calls, or ships to run on a user's machine. Source: the MCP specification's *Security Best Practices* page, plus the per-primitive security sections.
+Source: the MCP specification's *Security Best Practices* page, plus the per-primitive security sections.
 
 The frame from `SKILL.md` holds throughout: **the boundary is untrusted**. Arguments arrive as model output, and model output is shaped by whatever the model last read — a web page, a document, another tool's result. Review each entry point as if the argument were attacker-chosen.
 
@@ -25,7 +25,7 @@ Applies to any server that proxies a third-party API using a static client ID wh
 
 The attack: a user authorizes once, the third-party authorization server sets a consent cookie for the static client ID, and an attacker later registers a client with their own `redirect_uri` and sends the user a crafted link. The cookie suppresses the consent screen, and the authorization code lands on the attacker's server.
 
-Required protections, all `MUST`:
+Required protections. All `MUST`, though the cookie bar is conditional — it binds only if you track consent in cookies, and the spec permits a server-side store instead:
 
 - Per-client consent stored server-side, checked **before** forwarding to the third party.
 - A consent page naming the requesting client, the scopes, and the registered `redirect_uri`, with CSRF protection and framing denied.
@@ -41,7 +41,7 @@ The spec addresses its SSRF `SHOULD`s to MCP *clients* fetching OAuth-discovery 
 
 So the ranges and traps below are quotable, and the reasoning is the spec's own. What it does not state is an obligation on an ordinary MCP server fetching a caller-supplied URL for its own tool — that last step is analogy. When you raise a finding here, say which of the two you are standing on.
 
-Block private and reserved ranges: `10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16`, loopback `127.0.0.0/8` and `::1`, link-local `169.254.0.0/16` (which is the cloud metadata endpoint), and IPv6 `fc00::/7`, `fe80::/10`. Require HTTPS outside loopback.
+Block private and reserved ranges: `10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16`, loopback `127.0.0.0/8` and `::1`, link-local `169.254.0.0/16` (including cloud metadata endpoints), and IPv6 `fc00::/7`, `fe80::/10`. Require HTTPS outside loopback.
 
 Three traps worth checking specifically:
 
@@ -65,13 +65,15 @@ The failure is a token carrying `files:*`, `db:*`, `admin:*` because the server 
 
 Review for: a minimal baseline scope set covering only low-risk discovery and reads; targeted `WWW-Authenticate` challenges that escalate when a privileged operation is first attempted; and tolerance for down-scoped tokens.
 
-**Breadth on its own is not a finding.** The spec gives servers three sanctioned options and calls the middle one the default:
+**Two bars, and only the second is soft.** The published set is a finding on its own — see the named mistakes below. What the three approaches bound is narrower: the composition of a `WWW-Authenticate` challenge, where the spec recommends the middle option while leaving the call to the server:
 
 > **Minimum approach**: Include only the scopes required for the specific operation that triggered the error.
 > **Recommended approach**: Include the scopes required for the current operation along with related scopes that commonly work together, to reduce the number of step-up authorization rounds.
 > **Extended approach**: Include the scopes required for the current operation, related scopes, and any other scopes the server anticipates the client may need in the near future.
 
-It also directs clients, when a challenge carries no `scope` parameter, to "fall back to requesting all scopes listed in `scopes_supported`" — so a wide grant can be the client's doing under the spec's own instruction. A finding here has to show the server exceeded the approach it claims, not that it exceeded the minimum.
+It also directs clients, when a challenge carries no `scope` parameter, to "fall back to requesting all scopes listed in `scopes_supported`" — so a wide *grant* can be the client's doing under the spec's own instruction, which is another reason to file against the published set rather than the token you observed.
+
+So: a broad challenge is a finding only against the composition the server claims. A broad published set needs no such qualification.
 
 Named mistakes: publishing every possible scope, wildcard or omnibus scopes (`*`, `all`, `full-access`), bundling unrelated privileges to preempt future prompts, returning the whole catalog in every challenge, and treating scopes claimed in a token as sufficient without server-side authorization logic.
 

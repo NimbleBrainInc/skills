@@ -29,7 +29,11 @@ MCP specification, `schema.ts`, `BaseMetadata`:
 > `name` — Intended for programmatic or logical use, but used as a display name in past specs or fallback (if title isn't present).
 > `title` — Intended for UI and end-user contexts — optimized to be human-readable and easily understood, even by those unfamiliar with domain-specific terminology. If not provided, the name should be used for display (except for Tool, where `annotations.title` should be given precedence over using `name`, if present).
 
-Both clauses matter to the precedence rule: `name` is itself a fallback, and `title` names the condition under which it is used.
+The same file states the rule outright, on `Tool.annotations`:
+
+> Display name precedence order is: `title`, `annotations.title`, then `name`.
+
+Quote that line rather than deriving the order from the two clauses above.
 
 ## Descriptions
 

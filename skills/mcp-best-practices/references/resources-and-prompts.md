@@ -78,7 +78,7 @@ Prefer `resource_link` over an embedded resource when the client can fetch it �
 
 ### Errors
 
-Standard JSON-RPC codes, again unlike tools:
+Standard JSON-RPC codes, again unlike tools. `SHOULD`-level here, where the resources not-found code above is a `MUST`:
 
 - Invalid prompt name — `-32602`
 - Missing required arguments — `-32602`
@@ -94,4 +94,4 @@ Servers **SHOULD** validate prompt arguments before processing. Treat a prompt t
 
 For resources and prompts alike: the advertised set **MUST NOT** vary per-connection or as a side effect of other requests, though it **MAY** vary by the authorization presented, since credentials are per-request input rather than connection state.
 
-If `listChanged` is declared, the notification has to actually fire. A declared capability that never emits is worse than an undeclared one, because clients subscribe and then trust a list that has gone stale.
+If `listChanged` is declared, the notification should actually fire — a `SHOULD` in the spec, but one worth raising. A declared capability that never emits is worse than an undeclared one, because clients subscribe and then trust a list that has gone stale.
