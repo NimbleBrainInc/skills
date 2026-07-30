@@ -24,24 +24,33 @@ The obligation sits on the client and it is a `SHOULD`. A server publishing a ge
 
 ## Name, title and display precedence
 
-MCP specification, `BaseMetadata`:
+MCP specification, `schema.ts`, `BaseMetadata`:
 
-> `name` — The programmatic name of the entity.
-> `title` — Intended for UI and end-user contexts, optimized to be human-readable and easily understood, even by those unfamiliar with domain-specific terminology. If not provided, the name should be used for display (except for Tool, where `annotations.title` should be given precedence over using `name`, if present).
+> `name` — Intended for programmatic or logical use, but used as a display name in past specs or fallback (if title isn't present).
+> `title` — Intended for UI and end-user contexts — optimized to be human-readable and easily understood, even by those unfamiliar with domain-specific terminology. If not provided, the name should be used for display (except for Tool, where `annotations.title` should be given precedence over using `name`, if present).
+
+Both clauses matter to the precedence rule: `name` is itself a fallback, and `title` names the condition under which it is used.
 
 ## Descriptions
 
 The MCP specification says only that `description` is a "Human-readable description of functionality". It sets no length limit and gives no guidance on phrasing — that is vendor territory.
 
-**Anthropic**, tool-use documentation, on what earns a call:
+**Anthropic**, [Define tools](https://platform.claude.com/docs/en/agents-and-tools/tool-use/implement-tool-use) → *Best practices for tool definitions*. Five items; these two carry the description and naming rules:
 
-> Write detailed descriptions — Claude uses these to decide when to use the tool. Be prescriptive about *when* to call it, not just what it does (e.g. "Call this when the user asks about current prices or recent events").
+> **Provide extremely detailed descriptions.** This is by far the most important factor in tool performance. Your descriptions should explain every detail about the tool, including:
+>
+> * What the tool does
+> * When it should be used (and when it shouldn't)
+> * What each parameter means and how it affects the tool's behavior
+> * Any important caveats or limitations, such as what information the tool does not return if the tool name is unclear. The more context you can give Claude about your tools, the better it will be at deciding when and how to use them. Aim for at least 3–4 sentences for each tool description, more if the tool is complex.
 
-and, in the Opus 4.8 migration guidance, on where that belongs:
+> **Use meaningful namespacing in tool names.** When your tools span multiple services or resources, prefix names with the service (for example, `github_list_prs`, `slack_send_message`). This makes tool selection unambiguous as your library grows, and is especially important when using [tool search](/docs/en/agents-and-tools/tool-use/tool-search-tool).
 
-> The same lever works at the tool-description level, not just the system prompt: prescriptive descriptions that state *when* to call a tool give meaningful lift over descriptions that only state what the tool does. Make the trigger condition part of each capability's own `description`.
+The remaining three: prefer descriptions but use `input_examples` for complex tools; consolidate related operations into fewer tools rather than one per action; and design tool responses to return only high-signal information.
 
-Anthropic's list of tool-definition practices also asks for specific names (`get_current_weather` over `weather`), a `description` on every property, `enum` for fixed value sets, an accurate `required` list, and a small total tool count.
+The same page constrains the name itself — `name` "Must match the regex `^[a-zA-Z0-9_-]{1,64}$`". That is tighter than MCP's 1–128 characters, and it does not admit the dot MCP allows, so a name legal under the specification can still be rejected by this API.
+
+**Not in that list**, though all three are good practice and all three appear in the page's tool-definition example and its good-versus-poor description comparison: a `description` on every property, `enum` for a fixed value set, and an accurate `required` list. Cite them to the example, not to the practices list.
 
 **OpenAI**, function-calling guide: asks for "clear and detailed function names, parameter descriptions, and instructions", and recommends keeping "fewer than 20 functions available at the start of a turn" for accuracy. The current guide states **no** maximum description length.
 
@@ -58,8 +67,8 @@ MCP specification, *Server / Tools → Data Types*:
 > `inputSchema`: JSON Schema defining expected parameters
 > - **MUST** be a valid JSON Schema object (not `null`)
 > - For tools with no parameters, use one of these valid approaches:
->   - `{ "type": "object", "additionalProperties": false }` — **Recommended**: explicitly accepts only empty objects
->   - `{ "type": "object" }` — accepts any object (including with properties)
+>   - `{ "type": "object", "additionalProperties": false }` - **Recommended**: explicitly accepts only empty objects
+>   - `{ "type": "object" }` - accepts any object (including with properties)
 
 ## Results and errors
 

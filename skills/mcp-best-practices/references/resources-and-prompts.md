@@ -42,7 +42,7 @@ A resource with no `audience` gives the host nothing to filter on. If a resource
 Sharper than the tool rules, and worth checking directly:
 
 > If the requested resource does not exist, servers **MUST** return a JSON-RPC error with code `-32602` (Invalid Params). Servers **SHOULD** return `-32603` for internal errors.
-> Servers **MUST NOT** return an empty `contents` array for a non-existent resource. An empty array is ambiguous — it could mean the resource exists but has no content, or that it doesn't exist at all.
+> Servers **MUST NOT** return an empty `contents` array for a non-existent resource. An empty array is ambiguous—it could mean the resource exists but has no content, or that it doesn't exist at all.
 
 Clients **SHOULD** also accept `-32002`, which earlier protocol versions used for not-found.
 

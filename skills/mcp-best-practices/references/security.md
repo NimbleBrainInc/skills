@@ -6,7 +6,7 @@ The frame from `SKILL.md` holds throughout: **the boundary is untrusted**. Argum
 
 ## Token passthrough
 
-The one unambiguous `MUST NOT` in the whole page:
+The rule is unconditional:
 
 > MCP servers **MUST NOT** accept any tokens that were not explicitly issued for the MCP server.
 
@@ -37,7 +37,9 @@ The ordering is the subtle part: setting the state cookie before consent approva
 
 ## SSRF
 
-**Read this one as an extension by analogy, not as a rule the specification states.** The spec scopes SSRF to MCP *clients* fetching OAuth-discovery URLs, and addresses its `SHOULD`s to them — there is no server-side SSRF obligation in the text. The mitigations transfer intact to any server that fetches a URL the caller influenced (a fetch target, a webhook, a metadata document), which is why they are here, but a finding raised on this section cites reasoning rather than a quotable rule. Say which you are doing.
+The spec addresses its SSRF `SHOULD`s to MCP *clients* fetching OAuth-discovery URLs, then extends them itself. *SSRF Against Authorization Servers* opens "SSRF risks are not limited to MCP clients", describes a server that "takes a URL as input from an unknown client and fetches that URL", and states that the mitigations "apply equally".
+
+So the ranges and traps below are quotable, and the reasoning is the spec's own. What it does not state is an obligation on an ordinary MCP server fetching a caller-supplied URL for its own tool — that last step is analogy. When you raise a finding here, say which of the two you are standing on.
 
 Block private and reserved ranges: `10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16`, loopback `127.0.0.0/8` and `::1`, link-local `169.254.0.0/16` (which is the cloud metadata endpoint), and IPv6 `fc00::/7`, `fe80::/10`. Require HTTPS outside loopback.
 
@@ -53,7 +55,7 @@ For any server that returns a handle — a cart, a job, a workflow, a session-is
 
 > MCP servers that implement authorization **MUST** verify all inbound requests. MCP servers **MUST NOT** treat possession of a state handle as authentication.
 
-The bar: handles are generated with a secure random source, bound server-side to the authenticated principal (key state as `<user_id>:<handle>` with the user id taken from the verified token, never from the request), rejected when presented by anyone else, and expired.
+The `MUST`s are in the quote above. The rest of the bar is `SHOULD`-level, so a finding on it carries that weight and no more: handles generated with a secure random number generator, bound server-side to the authenticated user (key state as `<user_id>:<handle>` with the user id taken from the verified token, never from the request) and rejected when presented by anyone else, with expiry as a further risk reducer.
 
 **Review move.** Find the handler that accepts the handle and confirm it re-derives the principal from the token and compares. A lookup keyed on the handle alone is the bug, and it reads as ordinary code.
 

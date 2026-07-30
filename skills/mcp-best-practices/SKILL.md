@@ -24,8 +24,6 @@ Two frames carry the whole thing:
 
 Scope: the surface and the boundary. Building a server end to end — scaffolding, bundling, releasing — is the `mcpb` skill.
 
-Authoring a new tool applies the same rungs to one item, and finishes on the same criterion. The rest of this reads as an audit because that is the demanding case; nothing in it is audit-only.
-
 ## Read the advertised surface, never the source alone
 
 Frameworks reshape what the source appears to say. A Python docstring's `Args:` block does not reach the input schema; a decorator injects metadata the source never names; a wrapper rewrites a description. Reviewing source is reviewing intent. Review what ships.
@@ -53,12 +51,12 @@ Ordered by what the model does with the surface. Apply every rung to every adver
 
 - Names use only `A-Z`, `a-z`, `0-9`, `_`, `-`, `.`, run 1–128 characters, and carry no spaces or punctuation.
 - Names are specific enough to mean something alone. `get_current_weather` over `weather`; `create_invoice` over `create`.
-- Names survive aggregation. Uniqueness is scoped to one server, and a host that merges several servers *should* disambiguate but is not required to. A bare `search`, `upgrade`, or `query` is a bet on client behaviour — prefix it, or accept that a user with five connectors has given the model an ambiguous referent.
+- Names survive aggregation. Uniqueness is scoped to one server, and a host that merges several servers *should* disambiguate but is not required to. A bare `search`, `upgrade`, or `query` is a bet on client behaviour — prefix it, or accept that a user with five connectors has given the model an ambiguous referent. Anthropic asks for the same prefixing directly, as "meaningful namespacing in tool names" (`github_list_prs`, `slack_send_message`).
 - `title` and `annotations.title` are for humans; `name` is what the model reasons about. For tools, display precedence runs `title` → `annotations.title` → `name` — `annotations.title` outranks only `name`, and only when `title` is absent.
 
 ### 2. Choose — descriptions
 
-- **The description states when to call, not only what the tool does.** This is the highest-yield rung. Current Anthropic guidance is explicit that prescriptive "call this when…" descriptions measurably raise the should-call rate on recent models, which reach for tools conservatively by default. A description that only describes capability is the single most common reason a live tool goes unused.
+- **The description states when to call, not only what the tool does.** This is the highest-yield rung. Anthropic calls the description "by far the most important factor in tool performance" and asks it to cover "When it should be used (and when it shouldn't)", alongside what the tool does, what each parameter means, and the caveats — aiming for at least three or four sentences. A description that states capability and stops is the failure this skill exists to catch.
 - It states the boundary too — when *not* to call, and what to do when a required argument is missing. Without it the model's likeliest move on a near-miss is silence, not a clarifying question.
 - One meaning lives in one place. Server `instructions` and a tool description that argue the same point twice pay tokens in every request and teach nothing the second time.
 - Nothing in the description is aimed at a human maintainer. Authoring conventions, changelog notes and rationale belong in the commit, not in a payload the model pays for.
