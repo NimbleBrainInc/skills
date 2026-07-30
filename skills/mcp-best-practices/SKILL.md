@@ -5,7 +5,7 @@ license: MIT
 compatibility: Any MCP server, any language. Reads a live server over tools/list, resources/list and prompts/list, or the source that produces them.
 allowed-tools: Read Bash Glob Grep WebFetch
 metadata:
-  area: review
+  area: authoring
   version: "0.1.0"
   author: NimbleBrain
 ---
@@ -47,9 +47,11 @@ Measure sizes while you are there — description length per tool, and the whole
 
 Ordered by what the model does with the surface. Apply every rung to every advertised tool, resource and prompt.
 
+A rung that restates a specification rule carries that rule's strength and no more. `references/spec-citations.md` records which are `MUST` and which are `SHOULD`; check it before a finding claims more force than the source gives it, and say so when a rung is this skill's reasoning rather than anyone's rule.
+
 ### 1. Find — names
 
-- Names use only `A-Z`, `a-z`, `0-9`, `_`, `-`, `.`, run 1–128 characters, and carry no spaces or punctuation.
+- Names use only `A-Z`, `a-z`, `0-9`, `_`, `-`, `.`, run 1–128 characters, and carry no spaces, commas or other special characters. These are `SHOULD`s. The Anthropic API is harder — `^[a-zA-Z0-9_-]{1,64}$` — which rejects the dot and anything past 64 characters, so the spec's own `admin.tools.list` example will not survive that surface.
 - Names are specific enough to mean something alone. `get_current_weather` over `weather`; `create_invoice` over `create`.
 - Names survive aggregation. Uniqueness is scoped to one server, and a host that merges several servers *should* disambiguate but is not required to. A bare `search`, `upgrade`, or `query` is a bet on client behaviour — prefix it, or accept that a user with five connectors has given the model an ambiguous referent. Anthropic asks for the same prefixing directly, as "meaningful namespacing in tool names" (`github_list_prs`, `slack_send_message`).
 - `title` and `annotations.title` are for humans; `name` is what the model reasons about. For tools, display precedence runs `title` → `annotations.title` → `name` — `annotations.title` outranks only `name`, and only when `title` is absent.
@@ -79,13 +81,13 @@ Ordered by what the model does with the surface. Apply every rung to every adver
 
 ### 5. Trust — the boundary
 
-- Every argument is validated server-side. Path-shaped arguments are resolved and confined; URL-shaped arguments are checked against SSRF (private ranges, link-local `169.254.0.0/16`, loopback, redirects).
+- Every argument is validated server-side. Path-shaped arguments are resolved and confined; URL-shaped arguments are checked against SSRF (private ranges, link-local `169.254.0.0/16`, loopback, redirects). The spec addresses SSRF to clients and to authorization servers, so for an ordinary server this is analogy — sound, but not a rule you can quote.
 - Tokens are audience-validated. A server **must not** accept a token that was not issued for it, and must not forward a client's token to a downstream API.
 - State handles are not authentication. A handle is bound server-side to the authenticated principal and verified on every call; possession alone grants nothing.
 - Annotations are hints, never enforcement. `readOnlyHint` on a tool that writes is a lie the client is entitled to believe.
-- Scopes are minimal and escalate on demand rather than being requested wholesale up front.
+- Scopes match the approach the server itself claims. The spec sanctions three — minimum, recommended, extended — so breadth alone is not a finding; exceeding the server's own stated approach is.
 
-For servers doing OAuth, proxying a third-party API, holding state, or running locally, read `references/security.md` before writing up this rung.
+Read `references/security.md` before writing up this rung.
 
 For servers exposing resources or prompts, read `references/resources-and-prompts.md` — those primitives have their own field rules, URI-scheme rules and error codes.
 
@@ -102,7 +104,7 @@ Verify each finding against the advertised surface before reporting it. A rule t
 Lead with the surface as it stands, then the findings ranked by what they cost.
 
 ```
-MCP REVIEW — example-server (3 tools, 0 resources, 0 prompts)
+SURFACE REVIEW — example-server (3 tools, 0 resources, 0 prompts)
 
 SURFACE     tools/list payload 12,400 chars (~3,100 tokens, loaded every conversation)
             create_invoice 835 · upgrade 303 · list_customers 443

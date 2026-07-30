@@ -65,6 +65,14 @@ The failure is a token carrying `files:*`, `db:*`, `admin:*` because the server 
 
 Review for: a minimal baseline scope set covering only low-risk discovery and reads; targeted `WWW-Authenticate` challenges that escalate when a privileged operation is first attempted; and tolerance for down-scoped tokens.
 
+**Breadth on its own is not a finding.** The spec gives servers three sanctioned options and calls the middle one the default:
+
+> **Minimum approach**: Include only the scopes required for the specific operation that triggered the error.
+> **Recommended approach**: Include the scopes required for the current operation along with related scopes that commonly work together, to reduce the number of step-up authorization rounds.
+> **Extended approach**: Include the scopes required for the current operation, related scopes, and any other scopes the server anticipates the client may need in the near future.
+
+It also directs clients, when a challenge carries no `scope` parameter, to "fall back to requesting all scopes listed in `scopes_supported`" — so a wide grant can be the client's doing under the spec's own instruction. A finding here has to show the server exceeded the approach it claims, not that it exceeded the minimum.
+
 Named mistakes: publishing every possible scope, wildcard or omnibus scopes (`*`, `all`, `full-access`), bundling unrelated privileges to preempt future prompts, returning the whole catalog in every challenge, and treating scopes claimed in a token as sufficient without server-side authorization logic.
 
 ## Local servers
