@@ -2,7 +2,7 @@
 name: mcp-best-practices
 description: Best practices for MCP servers — how to name, describe and schema a tool so a model actually calls it, how resources and prompts differ, and what the boundary must never trust. Applies while authoring a new surface or as an audit of an existing one, grounded in the MCP specification and the tool-authoring guidance from Anthropic and OpenAI. Triggers include "MCP best practices", "name this tool", "audit this MCP server", "why won't the model call my tool", "/mcp-best-practices".
 license: MIT
-compatibility: Any MCP server, any language. Reads a running server over tools/list, resources/list and prompts/list, on HTTP or stdio.
+compatibility: Any MCP server, any language. Reads a running server with the MCP Inspector CLI (needs npx) over stdio or streamable HTTP.
 allowed-tools: Read Bash Glob Grep WebFetch
 metadata:
   area: authoring
@@ -26,29 +26,34 @@ Scope: the surface and the boundary. Building a server end to end — scaffoldin
 
 ## Read the advertised surface, never the source alone
 
-Frameworks reshape what the source appears to say. A Python docstring's `Args:` block does not reach the input schema; a decorator injects metadata the source never names; a wrapper rewrites a description. Reviewing source is reviewing intent. Review what ships.
+Frameworks reshape what the source appears to say, and they disagree with each other. One Python docstring with an `Args:` block, read over the wire on current releases:
 
-Ask the server for it:
+| framework | where `Args:` lands |
+|---|---|
+| `mcp` 2.0.0, the official SDK | left in the tool description; properties carry no `description` |
+| `fastmcp` 3.4.5 | lifted into per-property `description`, and stripped from the tool description |
+
+Same source file, opposite surfaces. A decorator injects metadata the source never names; a wrapper rewrites a description. Reviewing source is reviewing intent — and reviewing it against one framework's behaviour is reviewing a coincidence. Review what ships.
+
+Ask the server, with the client upstream maintains:
 
 ```bash
-# Over HTTP
-curl -s -X POST "$URL" -H "Authorization: Bearer $TOKEN" \
-  -H 'Content-Type: application/json' -H 'Accept: application/json, text/event-stream' \
-  -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}'
+# stdio
+npx -y @modelcontextprotocol/inspector --cli <server-command> --method tools/list
 
-# Over stdio — same wire, same instrument
-printf '%s\n%s\n%s\n' \
-  '{"jsonrpc":"2.0","id":0,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"audit","version":"0"}}}' \
-  '{"jsonrpc":"2.0","method":"notifications/initialized"}' \
-  '{"jsonrpc":"2.0","id":1,"method":"tools/list"}' \
-  | <server-command>
+# streamable HTTP
+npx -y @modelcontextprotocol/inspector --cli "$URL" --transport http --method tools/list
+
+# same for the other primitives
+npx -y @modelcontextprotocol/inspector --cli <server-command> --method resources/list
+npx -y @modelcontextprotocol/inspector --cli <server-command> --method prompts/list
 ```
 
-Read the wire, not the server object. Importing the module and calling an SDK method is reviewing the source one layer down — it inherits whatever the framework renamed this release, and it prints the SDK's field names rather than the ones a client receives. The two commands above are the whole instrument, and they do not age.
+It performs the `initialize` handshake, carries the session id streamable HTTP requires, holds the connection while the server answers, and prints what a client receives — `_meta` and vendor extensions included. Hand-rolled JSON-RPC works until a transport adds a requirement, and then fails quietly: a bare `tools/list` over HTTP is a `400`, and a stdio server whose stdin closes at `EOF` can exit before answering, printing nothing and returning `0`.
 
 Measure sizes while you are there — description length per tool, and the whole `tools/list` payload. That payload loads into context in every conversation where the server is enabled, so it is a standing cost, not a one-off.
 
-**Capture the negotiated `protocolVersion` from `initialize` too, and name it in the report.** The citations here are transcribed from the draft specification, which moves — several quoted rules postdate `2025-11-25`, and no list of which ones stays accurate. So the obligation is per-citation rather than per-list: before filing, open the link on the citation you are quoting and confirm the rule was in force for the version the server negotiated.
+**Record which protocol version the server implements, and name it in the report.** The citations here are transcribed from the draft specification, which moves — several quoted rules postdate `2025-11-25`, and no list of which ones stays accurate. So the obligation is per-citation rather than per-list: before filing, open the link on the citation you are quoting and confirm the rule was in force for that version.
 
 ## The rungs
 
@@ -121,7 +126,7 @@ FINDINGS
   1  Choose   create_invoice describes capability, states no trigger
               → model has no cue to volunteer it; highest-yield fix
   2  Fill     4 of 4 params carry no schema description
-              → Args prose sits in the description instead
+              → on this framework the docstring Args block never reaches the schema
   3  Find     `upgrade` is generic; collides across aggregated servers
 
 PASSES      Find (charset/length), Read (isError, outputSchema), Trust (audience
