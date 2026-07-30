@@ -1,6 +1,6 @@
 ---
-name: mcp-review
-description: Review an MCP server's advertised surface — tool names, descriptions, input schemas, resources, prompts, results, errors — against the MCP specification and the tool-authoring guidance from Anthropic and OpenAI. Use when auditing an existing server or tool, when choosing how to name or describe a new one, or when a model never calls a tool it already has. Triggers include "audit this MCP server", "name this tool", "why won't the model call my tool", "/mcp-review".
+name: mcp-best-practices
+description: Best practices for MCP servers — how to name, describe and schema a tool so a model actually calls it, how resources and prompts differ, and what the boundary must never trust. Applies while authoring a new surface or as an audit of an existing one, grounded in the MCP specification and the tool-authoring guidance from Anthropic and OpenAI. Triggers include "MCP best practices", "name this tool", "audit this MCP server", "why won't the model call my tool", "/mcp-best-practices".
 license: MIT
 compatibility: Any MCP server, any language. Reads a live server over tools/list, resources/list and prompts/list, or the source that produces them.
 allowed-tools: Read Bash Glob Grep WebFetch
@@ -10,17 +10,21 @@ metadata:
   author: NimbleBrain
 ---
 
-# Review an MCP surface
+# MCP server best practices
+
+These are rules to apply, not a document to read. Every rung below ends in a checkable bar, and the completion criterion at the bottom binds you to all of them — whether you are authoring a surface or auditing one, the work is the same and finishes the same way.
 
 An MCP server publishes two things. The **surface** is everything it advertises — names, titles, descriptions, schemas, annotations, resource metadata. The **boundary** is everything crossing into it — arguments, tokens, URIs, state handles.
 
-Two frames carry the whole review:
+Two frames carry the whole thing:
 
 **The surface is prompt.** Every advertised character is text a model reads and reasons over, spending the same window and the same attention as a system prompt. Judge it as prompt, not as API documentation. A description that reads well to a developer and gives the model no reason to act is a defect.
 
 **The boundary is untrusted.** Every argument is model output, and model output is shaped by whatever the model just read. Judge each entry point as if the argument were chosen by an attacker, because a prompt injection three tool calls ago means it may have been.
 
-Scope: this reviews the surface and the boundary. Building a server end to end — scaffolding, bundling, releasing — is the `mcpb` skill.
+Scope: the surface and the boundary. Building a server end to end — scaffolding, bundling, releasing — is the `mcpb` skill.
+
+Authoring a new tool applies the same rungs to one item, and finishes on the same criterion. The rest of this reads as an audit because that is the demanding case; nothing in it is audit-only.
 
 ## Read the advertised surface, never the source alone
 
@@ -91,7 +95,7 @@ To quote a rule in a finding, take the citation from `references/spec-citations.
 
 ## Completion criterion
 
-The review is done when every advertised tool, resource and prompt has been checked against every rung; each finding names its rung and quotes the rule it breaks; and rungs that pass are reported as passing rather than omitted. A rung you could not check is reported as unchecked, with the reason. Silence on a rung reads as a pass, so never let it stand in for one.
+The work is done when every tool, resource and prompt in scope — the whole advertised set when auditing, the one item when authoring — has been checked against every rung; each finding names its rung and quotes the rule it breaks; and rungs that pass are reported as passing rather than omitted. A rung you could not check is reported as unchecked, with the reason. Silence on a rung reads as a pass, so never let it stand in for one.
 
 Verify each finding against the advertised surface before reporting it. A rule that a framework already satisfies is not a finding, and reporting it costs the reader more than it saves.
 
