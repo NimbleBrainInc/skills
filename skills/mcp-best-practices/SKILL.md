@@ -47,13 +47,16 @@ npx -y @modelcontextprotocol/inspector --cli "$URL" --transport http --method to
 # same for the other primitives
 npx -y @modelcontextprotocol/inspector --cli <server-command> --method resources/list
 npx -y @modelcontextprotocol/inspector --cli <server-command> --method prompts/list
+
+# the protocol version the server declares, plus its capabilities
+npx -y @modelcontextprotocol/inspector --cli <server-command> --method initialize
 ```
 
 It performs the `initialize` handshake, carries the session id streamable HTTP requires, holds the connection while the server answers, and prints what a client receives — `_meta` and vendor extensions included. Hand-rolled JSON-RPC works until a transport adds a requirement, and then fails quietly: a bare `tools/list` over HTTP is a `400`, and a stdio server whose stdin closes at `EOF` can exit before answering, printing nothing and returning `0`.
 
 Measure sizes while you are there — description length per tool, and the whole `tools/list` payload. That payload loads into context in every conversation where the server is enabled, so it is a standing cost, not a one-off.
 
-**Record which protocol version the server implements, and name it in the report.** The citations here are transcribed from the draft specification, which moves — several quoted rules postdate `2025-11-25`, and no list of which ones stays accurate. So the obligation is per-citation rather than per-list: before filing, open the link on the citation you are quoting and confirm the rule was in force for that version.
+**Record the protocol version the server declares — `--method initialize` prints it — and name it in the report.** The citations here are transcribed from the draft specification, which moves — several quoted rules postdate `2025-11-25`, and no list of which ones stays accurate. So the obligation is per-citation rather than per-list: before filing, open the link on the citation you are quoting and confirm the rule was in force for that version.
 
 ## The rungs
 
@@ -119,13 +122,15 @@ Lead with the surface as it stands, then the findings ranked by what they cost.
 ```
 SURFACE REVIEW — example-server (3 tools, 0 resources, 0 prompts)
 
+PROTOCOL    2025-06-18 declared by the server · citations below re-derived against it
+
 SURFACE     tools/list payload 12,400 chars (~3,100 tokens, loaded every conversation)
             create_invoice 835 · upgrade 303 · list_customers 443
 
 FINDINGS
   1  Choose   create_invoice describes capability, states no trigger
               → model has no cue to volunteer it; highest-yield fix
-  2  Fill     4 of 4 params carry no schema description
+  2  Fill     create_invoice — 4 of 4 params carry no schema description
               → on this framework the docstring Args block never reaches the schema
   3  Find     `upgrade` is generic; collides across aggregated servers
 

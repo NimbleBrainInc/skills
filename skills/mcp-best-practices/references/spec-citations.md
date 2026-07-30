@@ -28,8 +28,13 @@ The obligation sits on the client and it is a `SHOULD`. A server publishing a ge
 
 MCP specification, [`schema/draft/schema.ts`](https://github.com/modelcontextprotocol/modelcontextprotocol/blob/main/schema/draft/schema.ts), `BaseMetadata`:
 
-> `name` — Intended for programmatic or logical use, but used as a display name in past specs or fallback (if title isn't present).
-> `title` — Intended for UI and end-user contexts — optimized to be human-readable and easily understood, even by those unfamiliar with domain-specific terminology. If not provided, the name should be used for display (except for Tool, where `annotations.title` should be given precedence over using `name`, if present).
+On `name`:
+
+> Intended for programmatic or logical use, but used as a display name in past specs or fallback (if title isn't present).
+
+On `title`:
+
+> Intended for UI and end-user contexts — optimized to be human-readable and easily understood, even by those unfamiliar with domain-specific terminology. If not provided, the name should be used for display (except for Tool, where `annotations.title` should be given precedence over using `name`, if present).
 
 The same file states the rule outright, on `Tool.annotations`:
 
@@ -58,7 +63,7 @@ The same page constrains the name itself — `name` "Must match the regex `^[a-z
 
 **Not in that list**, though all three are good practice and all three appear in the page's tool-definition example and its good-versus-poor description comparison: a `description` on every property, `enum` for a fixed value set, and an accurate `required` list. Cite them to the example, not to the practices list.
 
-**OpenAI**, function-calling guide: asks for "clear and detailed function names, parameter descriptions, and instructions", and recommends keeping "fewer than 20 functions available at the start of a turn" for accuracy. The current guide states **no** maximum description length.
+**OpenAI**, function-calling guide: asks for "clear and detailed function names, parameter descriptions, and instructions", and recommends keeping "fewer than 20 functions available at the start of a turn" for accuracy — adding, in its own words, "though this is just a soft suggestion." The current guide states **no** maximum description length.
 
 ### The 1024-character question
 
@@ -102,19 +107,19 @@ MCP specification, [*Server / Tools* → Capabilities](https://modelcontextproto
 
 The advertised set also has a stability rule:
 
-> This set **MAY** be empty and **MAY** change over time, but **MUST NOT** vary per-connection or as a side effect of other requests on the connection. The set **MAY** vary by the authorization presented on the request — for example, returning only the tools the caller's granted scopes permit — since credentials are per-request input, not connection state.
+> This set **MAY** be empty and **MAY** change over time (see List Changed Notification), but **MUST NOT** vary per-connection or as a side effect of other requests on the connection. The set **MAY** vary by the authorization presented on the request — for example, returning only the tools the caller's granted scopes permit — since credentials are per-request input, not connection state.
 
 ## Annotations are hints
 
-MCP specification, [`ToolAnnotations`](https://modelcontextprotocol.io/specification/draft/server/tools#data-types):
+MCP specification, [`schema/draft/schema.ts`](https://github.com/modelcontextprotocol/modelcontextprotocol/blob/main/schema/draft/schema.ts), `ToolAnnotations`:
 
-> NOTE: all properties in ToolAnnotations are **hints**. They are not guaranteed to provide a faithful description of tool behavior (including descriptive properties like `title`). Clients should never make tool use decisions based on ToolAnnotations received from untrusted servers.
+> NOTE: all properties in `ToolAnnotations` are **hints**. They are not guaranteed to provide a faithful description of tool behavior (including descriptive properties like `title`). Clients should never make tool use decisions based on ToolAnnotations received from untrusted servers.
 
-and in the tool data types:
+The [tools page](https://modelcontextprotocol.io/specification/draft/server/tools#data-types) states the trust rule itself:
 
 > For trust & safety and security, clients **MUST** consider tool annotations to be untrusted unless they come from trusted servers.
 
-The four behavioural hints and their defaults: `readOnlyHint` (default false), `destructiveHint` (default true, meaningful only when `readOnlyHint` is false), `idempotentHint` (default false, same condition), `openWorldHint` (default true).
+The four behavioural hints and their defaults, also from `schema.ts`: `readOnlyHint` (default false), `destructiveHint` (default true, meaningful only when `readOnlyHint` is false), `idempotentHint` (default false, same condition), `openWorldHint` (default true).
 
 ## Human in the loop
 

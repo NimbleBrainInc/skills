@@ -39,7 +39,7 @@ A resource with no `audience` gives the host nothing to filter on. If a resource
 
 ### Errors
 
-Sharper than the tool rules, and worth checking directly:
+From [*Server / Resources* → Error Handling](https://modelcontextprotocol.io/specification/draft/server/resources#error-handling). Sharper than the tool rules, and worth checking directly:
 
 > If the requested resource does not exist, servers **MUST** return a JSON-RPC error with code `-32602` (Invalid Params). Servers **SHOULD** return `-32603` for internal errors.
 > Servers **MUST NOT** return an empty `contents` array for a non-existent resource. An empty array is ambiguous—it could mean the resource exists but has no content, or that it doesn't exist at all.
@@ -78,7 +78,7 @@ Prefer `resource_link` over an embedded resource when the client can fetch it �
 
 ### Errors
 
-Standard JSON-RPC codes, again unlike tools. `SHOULD`-level here, where the resources not-found code above is a `MUST`:
+From [*Server / Prompts* → Error Handling](https://modelcontextprotocol.io/specification/draft/server/prompts#error-handling). Standard JSON-RPC codes, again unlike tools. `SHOULD`-level here, where the resources not-found code above is a `MUST`:
 
 - Invalid prompt name — `-32602`
 - Missing required arguments — `-32602`
