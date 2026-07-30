@@ -1,12 +1,14 @@
 # Citations
 
-Quote from here so a finding cites a rule rather than an opinion. Each entry names its source; follow the link when a review turns on the exact wording, because the MCP specification is versioned and moves.
+Quote from here so a finding cites a rule rather than an opinion.
 
-Sources: the MCP specification (`modelcontextprotocol.io/specification/draft/`), Anthropic's tool-use documentation, and OpenAI's function-calling guide.
+**These transcriptions are a cache, not the authority.** Every block carries its source link. The MCP specification is versioned and moves, so before a finding turns on exact wording — or on a rule being in force for the version the server negotiated — open the link and re-derive it. A quote that cannot be re-derived is not a citation.
+
+Sources: the [MCP specification](https://modelcontextprotocol.io/specification/draft) (draft), [Anthropic's Define tools page](https://platform.claude.com/docs/en/agents-and-tools/tool-use/implement-tool-use), and [OpenAI's function-calling guide](https://developers.openai.com/api/docs/guides/function-calling).
 
 ## Tool names
 
-MCP specification, *Server / Tools → Tool Names*. All `SHOULD`-level:
+MCP specification, [*Server / Tools* → Tool Names](https://modelcontextprotocol.io/specification/draft/server/tools#tool-names). All `SHOULD`-level:
 
 > Tool names **SHOULD** be between 1 and 128 characters in length (inclusive).
 > Tool names **SHOULD** be considered case-sensitive.
@@ -24,7 +26,7 @@ The obligation sits on the client and it is a `SHOULD`. A server publishing a ge
 
 ## Name, title and display precedence
 
-MCP specification, `schema.ts`, `BaseMetadata`:
+MCP specification, [`schema/draft/schema.ts`](https://github.com/modelcontextprotocol/modelcontextprotocol/blob/main/schema/draft/schema.ts), `BaseMetadata`:
 
 > `name` — Intended for programmatic or logical use, but used as a display name in past specs or fallback (if title isn't present).
 > `title` — Intended for UI and end-user contexts — optimized to be human-readable and easily understood, even by those unfamiliar with domain-specific terminology. If not provided, the name should be used for display (except for Tool, where `annotations.title` should be given precedence over using `name`, if present).
@@ -66,7 +68,7 @@ So: no specification and no current vendor documentation imposes a limit. Treat 
 
 ## Input schemas
 
-MCP specification, *Server / Tools → Data Types*:
+MCP specification, [*Server / Tools* → Data Types](https://modelcontextprotocol.io/specification/draft/server/tools#data-types):
 
 > `inputSchema`: JSON Schema defining expected parameters
 > - **MUST** be a valid JSON Schema object (not `null`)
@@ -76,7 +78,7 @@ MCP specification, *Server / Tools → Data Types*:
 
 ## Results and errors
 
-MCP specification, *Server / Tools → Error Handling*, distinguishes two channels:
+MCP specification, [*Server / Tools* → Error Handling](https://modelcontextprotocol.io/specification/draft/server/tools#error-handling), distinguishes two channels:
 
 > **Protocol Errors** indicate issues with the request structure itself that models are less likely to be able to fix: Unknown tool, Malformed requests, Server errors.
 > **Tool Execution Errors** contain actionable feedback that language models can use to self-correct and retry with adjusted parameters: API failures, Input validation errors (e.g., date in wrong format, value out of range), Business logic errors. They are reported in tool results with `isError: true`.
@@ -94,7 +96,7 @@ and, for compatibility:
 
 ## Determinism and caching
 
-MCP specification, *Server / Tools*:
+MCP specification, [*Server / Tools* → Capabilities](https://modelcontextprotocol.io/specification/draft/server/tools#capabilities):
 
 > Servers **SHOULD** return tools in a deterministic order (i.e., the same ordering across requests when the underlying set of tools has not changed). Deterministic ordering enables clients to reliably cache the tool list and improves LLM prompt cache hit rates when tools are included in model context.
 
@@ -104,7 +106,7 @@ The advertised set also has a stability rule:
 
 ## Annotations are hints
 
-MCP specification, `ToolAnnotations`:
+MCP specification, [`ToolAnnotations`](https://modelcontextprotocol.io/specification/draft/server/tools#data-types):
 
 > NOTE: all properties in ToolAnnotations are **hints**. They are not guaranteed to provide a faithful description of tool behavior (including descriptive properties like `title`). Clients should never make tool use decisions based on ToolAnnotations received from untrusted servers.
 
@@ -116,7 +118,7 @@ The four behavioural hints and their defaults: `readOnlyHint` (default false), `
 
 ## Human in the loop
 
-MCP specification, *Server / Tools → User Interaction Model*:
+MCP specification, [*Server / Tools* → User Interaction Model](https://modelcontextprotocol.io/specification/draft/server/tools#user-interaction-model):
 
 > For trust & safety and security, there **SHOULD** always be a human in the loop with the ability to deny tool invocations.
 
@@ -124,4 +126,8 @@ Applications **SHOULD** make clear which tools are exposed, indicate when tools 
 
 ## Stateful tools
 
-MCP has no protocol-level session, so cross-call state rides an explicit handle returned by a creation tool and passed back as an ordinary argument. The specification's design guidance, from *Server / Tools → Stateful Tools*, asks servers to consider authorization on every call, opaque rather than structured handles, a stated lifetime in the creation tool's description, and an expiry error the model can recover from. The matching attack is in `security.md`.
+MCP has no protocol-level session, so cross-call state rides an explicit handle returned by a creation tool and passed back as an ordinary argument. The specification's design guidance, from [*Server / Tools* → Stateful Tools](https://modelcontextprotocol.io/specification/draft/server/tools#stateful-tools), asks servers to consider opaque rather than structured handles, a stated lifetime in the creation tool's description, and an expiry error the model can recover from. On authorization it splits by auth model:
+
+> **Authorization.** For authenticated servers, a handle is a name, not a capability. The server should validate the caller's authorization against the handle on every call. For unauthenticated servers, where the handle is necessarily a bearer token, it should be generated with sufficient entropy (e.g., a UUIDv4) and given a bounded lifetime.
+
+So an unauthenticated server whose handle is the credential is following the guidance, not breaking it. The matching attack is in `security.md`.

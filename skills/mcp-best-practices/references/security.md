@@ -1,6 +1,6 @@
 # The boundary
 
-Source: the MCP specification's *Security Best Practices* page, plus the per-primitive security sections.
+Source: the MCP specification's [*Security Best Practices*](https://modelcontextprotocol.io/specification/draft/basic/security_best_practices) page, plus the per-primitive security sections. As in `spec-citations.md`, the quotes here are a cache — re-derive from the link before a finding turns on wording or on the rule being in force for the negotiated version.
 
 The frame from `SKILL.md` holds throughout: **the boundary is untrusted**. Arguments arrive as model output, and model output is shaped by whatever the model last read — a web page, a document, another tool's result. Review each entry point as if the argument were attacker-chosen.
 
@@ -55,7 +55,9 @@ For any server that returns a handle — a cart, a job, a workflow, a session-is
 
 > MCP servers that implement authorization **MUST** verify all inbound requests. MCP servers **MUST NOT** treat possession of a state handle as authentication.
 
-The `MUST`s are in the quote above. The rest of the bar is `SHOULD`-level, so a finding on it carries that weight and no more: handles generated with a secure random number generator, bound server-side to the authenticated user (key state as `<user_id>:<handle>` with the user id taken from the verified token, never from the request) and rejected when presented by anyone else, with expiry as a further risk reducer.
+Note the condition in the quote — *that implement authorization*. The spec's design guidance on the tools page splits the two cases: "For authenticated servers, a handle is a name, not a capability… For unauthenticated servers, where the handle is necessarily a bearer token, it should be generated with sufficient entropy (e.g., a UUIDv4) and given a bounded lifetime."
+
+So the bar depends on the model. **Authenticated:** the `MUST`s above, plus `SHOULD`-level binding — handles from a secure random number generator, bound server-side to the authenticated user (key state as `<user_id>:<handle>` with the user id taken from the verified token, never from the request), rejected when presented by anyone else. **Unauthenticated:** binding is not available and not asked for; the bar is entropy and bounded lifetime.
 
 **Review move.** Find the handler that accepts the handle and confirm it re-derives the principal from the token and compares. A lookup keyed on the handle alone is the bug, and it reads as ordinary code.
 
@@ -75,7 +77,7 @@ It also directs clients, when a challenge carries no `scope` parameter, to "fall
 
 So: a broad challenge is a finding only against the composition the server claims. A broad published set needs no such qualification.
 
-Named mistakes: publishing every possible scope, wildcard or omnibus scopes (`*`, `all`, `full-access`), bundling unrelated privileges to preempt future prompts, returning the whole catalog in every challenge, and treating scopes claimed in a token as sufficient without server-side authorization logic.
+The spec's six named mistakes: publishing all possible scopes in `scopes_supported`; wildcard or omnibus scopes (`*`, `all`, `full-access`); bundling unrelated privileges to preempt future prompts; returning the entire scope catalog in every challenge; silent scope semantic changes without versioning; and treating scopes claimed in a token as sufficient without server-side authorization logic.
 
 ## Local servers
 

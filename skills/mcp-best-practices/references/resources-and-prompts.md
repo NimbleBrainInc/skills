@@ -1,6 +1,6 @@
 # Resources and prompts
 
-Read this when the server advertises either primitive. Source: the MCP specification, *Server / Resources* and *Server / Prompts*.
+Read this when the server advertises either primitive. Source: the MCP specification, [*Server / Resources*](https://modelcontextprotocol.io/specification/draft/server/resources) and [*Server / Prompts*](https://modelcontextprotocol.io/specification/draft/server/prompts). Same rule as the other reference files — the quotes are a cache; re-derive from the link before filing on wording.
 
 The rungs in `SKILL.md` still apply — the surface is prompt, the boundary is untrusted — but both primitives differ from tools in who decides when they are used, and that changes what a good description is doing.
 

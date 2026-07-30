@@ -2,7 +2,7 @@
 name: mcp-best-practices
 description: Best practices for MCP servers — how to name, describe and schema a tool so a model actually calls it, how resources and prompts differ, and what the boundary must never trust. Applies while authoring a new surface or as an audit of an existing one, grounded in the MCP specification and the tool-authoring guidance from Anthropic and OpenAI. Triggers include "MCP best practices", "name this tool", "audit this MCP server", "why won't the model call my tool", "/mcp-best-practices".
 license: MIT
-compatibility: Any MCP server, any language. Reads a live server over tools/list, resources/list and prompts/list, or the source that produces them.
+compatibility: Any MCP server, any language. Reads a running server over tools/list, resources/list and prompts/list, on HTTP or stdio.
 allowed-tools: Read Bash Glob Grep WebFetch
 metadata:
   area: authoring
@@ -28,26 +28,27 @@ Scope: the surface and the boundary. Building a server end to end — scaffoldin
 
 Frameworks reshape what the source appears to say. A Python docstring's `Args:` block does not reach the input schema; a decorator injects metadata the source never names; a wrapper rewrites a description. Reviewing source is reviewing intent. Review what ships.
 
-Get the real surface from a live server, or by importing the server object and listing:
+Ask the server for it:
 
 ```bash
-# Any server reachable over HTTP with a token
+# Over HTTP
 curl -s -X POST "$URL" -H "Authorization: Bearer $TOKEN" \
   -H 'Content-Type: application/json' -H 'Accept: application/json, text/event-stream' \
   -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}'
 
-# Python, from source. The two FastMCP lineages differ: the official mcp SDK
-# returns Tool objects from list_tools(); the standalone fastmcp package returns
-# a dict from get_tools(), whose values need .to_mcp_tool().
-python -c "import asyncio, json; from <module> import mcp; \
-ts = asyncio.run(mcp.list_tools()) if hasattr(mcp, 'list_tools') \
-     else [t.to_mcp_tool() for t in asyncio.run(mcp.get_tools()).values()]; \
-print(json.dumps([t.model_dump() for t in ts], indent=2))"
+# Over stdio — same wire, same instrument
+printf '%s\n%s\n%s\n' \
+  '{"jsonrpc":"2.0","id":0,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"audit","version":"0"}}}' \
+  '{"jsonrpc":"2.0","method":"notifications/initialized"}' \
+  '{"jsonrpc":"2.0","id":1,"method":"tools/list"}' \
+  | <server-command>
 ```
+
+Read the wire, not the server object. Importing the module and calling an SDK method is reviewing the source one layer down — it inherits whatever the framework renamed this release, and it prints the SDK's field names rather than the ones a client receives. The two commands above are the whole instrument, and they do not age.
 
 Measure sizes while you are there — description length per tool, and the whole `tools/list` payload. That payload loads into context in every conversation where the server is enabled, so it is a standing cost, not a one-off.
 
-**Capture the negotiated `protocolVersion` from `initialize` too, and name it in the report.** The citations in this skill are drawn from the draft specification, which moves, and some of the rules quoted are draft-only — the `tools/list` ordering `SHOULD`, the "set MAY vary by the authorization presented" sentence, and the whole State Handle Hijacking section, which replaced Session Hijacking after `2025-11-25`. A finding says which version it is judged under. Against a server on a released version, check the rule was in force before filing.
+**Capture the negotiated `protocolVersion` from `initialize` too, and name it in the report.** The citations here are transcribed from the draft specification, which moves — several quoted rules postdate `2025-11-25`, and no list of which ones stays accurate. So the obligation is per-citation rather than per-list: before filing, open the link on the citation you are quoting and confirm the rule was in force for the version the server negotiated.
 
 ## The rungs
 
@@ -90,7 +91,7 @@ A rung that restates a specification rule carries that rule's strength and no mo
 
 - Every argument is validated server-side. Path-shaped arguments are resolved and confined; URL-shaped arguments are checked against SSRF (private ranges, link-local `169.254.0.0/16`, loopback, redirects). The spec addresses SSRF to clients and to authorization servers, so for an ordinary server this is analogy — sound, but not a rule you can quote.
 - Tokens are audience-validated. A server **must not** accept a token that was not issued for it, and must not forward a client's token to a downstream API.
-- State handles are not authentication. A handle is bound server-side to the authenticated principal and verified on every call; possession alone grants nothing.
+- State handles carry the weight the server's auth model gives them. On an **authenticated** server a handle is a name, not a capability — bind it to the principal and re-verify on every call. On an **unauthenticated** server the handle *is* the bearer token by the spec's own design, so the bar is entropy and a bounded lifetime, not binding. Filing "possession grants access" against the second case is a finding the source does not make.
 - Annotations are hints, never enforcement. `readOnlyHint` on a tool that writes is a lie the client is entitled to believe.
 - Scopes are two bars, not one. The **published set** is a finding on its own — the spec's named mistakes include publishing every possible scope in `scopes_supported` and using wildcard or omnibus scopes. The **challenge** is the softer bar: the spec sanctions minimum, recommended and extended compositions there, so a broad challenge is only a finding against the composition the server actually claims.
 
