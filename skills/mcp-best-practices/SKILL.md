@@ -69,6 +69,7 @@ A rung that restates a specification rule carries that rule's strength and no mo
 - Names use only `A-Z`, `a-z`, `0-9`, `_`, `-`, `.`, run 1–128 characters, and carry no spaces, commas or other special characters. These are `SHOULD`s. The Anthropic API is harder — `^[a-zA-Z0-9_-]{1,64}$` — which rejects the dot and anything past 64 characters, so the spec's own `admin.tools.list` example will not survive that surface.
 - Names are specific enough to mean something alone. `get_current_weather` over `weather`; `create_invoice` over `create`.
 - The advertised list is deterministically ordered. This is the spec's `SHOULD` on `tools/list`, and it is what lets a client cache the list and keeps prompt-cache hits alive — it governs the surface, not what a call returns.
+- A paginated list returns stable cursors and handles an invalid cursor gracefully. Both are `SHOULD`s, and they reach every list operation — `tools/list`, `resources/list`, `resources/templates/list`, `prompts/list`.
 - Names survive aggregation. Uniqueness is scoped to one server, and a host that merges several servers *should* disambiguate but is not required to. A bare `search`, `upgrade`, or `query` is a bet on client behaviour — prefix it, or accept that a user with five connectors has given the model an ambiguous referent. Anthropic asks for the same prefixing directly, as "meaningful namespacing in tool names" (`github_list_prs`, `slack_send_message`).
 - `title` and `annotations.title` are for humans; `name` is what the model reasons about. For tools, display precedence runs `title` → `annotations.title` → `name` — `annotations.title` outranks only `name`, and only when `title` is absent.
 
@@ -93,7 +94,7 @@ A rung that restates a specification rule carries that rule's strength and no mo
 - Tool execution failures return a result with `isError: true` and text the model can act on. They are not JSON-RPC errors — that channel is for unknown tools and malformed requests, which the model cannot fix.
 - Error text names what to change. The specification's own example — `Invalid departure date: must be in the future. Current date is 08/08/2025.` — recovers; `400 Bad Request` does not.
 - An `outputSchema`, where present, matches what the server actually returns, and the server also returns the serialized JSON in a text block for clients that ignore structured content.
-- Paginated results use stable cursors. The spec asks for that and no more — it states no ordering rule for what a *call* returns, so a results-ordering finding is this skill's reasoning, not a quotable rule.
+- The spec states no ordering rule for what a *call* returns. Pagination and its cursor rules govern the list operations, not tool results, so a results-ordering finding here is this skill's reasoning rather than a quotable rule.
 
 ### 5. Trust — the boundary
 

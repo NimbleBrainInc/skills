@@ -91,11 +91,11 @@ MCP specification, [*Server / Tools* → Error Handling](https://modelcontextpro
 
 The spec's own example of actionable text: `"Invalid departure date: must be in the future. Current date is 08/08/2025."`
 
-On output schemas:
+On output schemas, from [*Server / Tools* → Tool Result](https://modelcontextprotocol.io/specification/draft/server/tools#tool-result):
 
 > If an output schema is provided: Servers **MUST** provide structured results that conform to this schema. Clients **SHOULD** validate structured results against this schema.
 
-and, for compatibility:
+and, from the same section, for compatibility:
 
 > For backwards compatibility, a tool that returns structured content SHOULD also return the serialized JSON in a TextContent block.
 
@@ -108,6 +108,18 @@ MCP specification, [*Server / Tools* → Capabilities](https://modelcontextproto
 The advertised set also has a stability rule:
 
 > This set **MAY** be empty and **MAY** change over time (see List Changed Notification), but **MUST NOT** vary per-connection or as a side effect of other requests on the connection. The set **MAY** vary by the authorization presented on the request — for example, returning only the tools the caller's granted scopes permit — since credentials are per-request input, not connection state.
+
+## Pagination
+
+MCP specification, [*Utilities* → Pagination](https://modelcontextprotocol.io/specification/draft/server/utilities/pagination#implementation-guidelines):
+
+> 1. Servers **SHOULD**:
+>    * Provide stable cursors
+>    * Handle invalid cursors gracefully
+
+The same page lists what pagination covers — `resources/list`, `resources/templates/list`, `prompts/list` and `tools/list`. Nothing in the specification paginates a `tools/call` result, so these are list-surface rules and a cursor finding against tool output has no source.
+
+Clients **MUST** treat cursors as opaque tokens. A server that encodes meaning in a cursor is relying on behaviour no client owes it — the same shape as publishing a generic tool name.
 
 ## Annotations are hints
 
