@@ -35,13 +35,15 @@ preview path in gotcha F) a `ready`-gated feature never renders at all.
 Every ext-apps host capability below is optional and the SDK checks none of them, so the column
 that matters is **how each call fails**. That follows the call type: a *request* rides a transport
 with no deadline and hangs unresolved; a *notification* carries no `id` and no promise, so it is
-dropped without a trace. Neither surfaces an error.
+dropped without a trace. Neither surfaces an error **where the host ignores the call** — that is
+the silent case. A host that answers with a JSON-RPC error does reject, and `useCallTool` sets
+`error`, clears `isPending` and rethrows.
 
 | Hook / method | Wire | In a host that doesn't implement it |
 |---|---|---|
 | `useSynapse` | the `ui/initialize` handshake and the `Synapse` handle | works |
 | `useCallTool`, `callTool` | ext-apps `tools/call` — **request** | gated on `serverTools`. A host that omits it and drops the call leaves the promise **pending forever**: `isPending` stays `true`, no error arrives, the spinner never stops |
-| `useCallToolAsTask` | MCP 2025-11-25 tasks — `tools/call` with a `task` param, then `tasks/result` / `tasks/get` / `tasks/cancel` | **throws** unless the host advertised `tasks.requests.tools.call` at init; the message tells you to fall back to `callTool`. This gate is the MCP tasks utility, not an ext-apps host capability — `McpUiHostCapabilities` has no `tasks` member |
+| `useCallToolAsTask` | MCP 2025-11-25 tasks — `tools/call` with a `task` param, then `tasks/result` / `tasks/get` / `tasks/cancel` | **throws** unless the host advertised `tasks.requests.tools.call` at init; the message tells you to fall back to `callTool`. This gate is the MCP tasks utility, not an ext-apps host capability — `McpUiHostCapabilities` has no `tasks` member at all, so a host can only advertise it as an undeclared extra key. Assume this throws anywhere but NimbleBrain |
 | `useTheme` | ext-apps host context (`theme`, `styles.variables`) | works. `fontFaces` rides the `synapse/fontFaces` context key — absent, the web-safe token fallbacks stay in force (gotcha N) |
 | `useHostContext` | ext-apps `ui/notifications/host-context-changed` | works. Host-specific fields are absent (NimbleBrain publishes `workspace`) — type them optional and tolerate `undefined` |
 | `useVisibleState` | ext-apps `ui/update-model-context` — **notification** | gated on `updateModelContext`. Silently dropped where unsupported — there is no promise, so there is nothing to catch |
@@ -53,7 +55,7 @@ dropped without a trace. Neither surfaces an error.
 | `useAgentAction` | `synapse/action`, inbound **(extension)** | the callback never fires |
 | `useDataSync` | `synapse/data-changed`, inbound **(extension)** | the callback never fires — no agent-driven refresh. Drive reloads from your own `onDone`, as you already must in preview (gotcha F) |
 | `downloadFile` | `synapse/download-file`, outbound **(extension)** | the notification is sent **unguarded** and dropped on the floor: nothing downloads, nothing throws, and there is no local anchor fallback. Downloading itself is not the problem — ext-apps has `ui/download-file` behind the `downloadFile` host capability; a portable app sends that request itself instead of calling `synapse.downloadFile()` |
-| `useStore` | in memory, plus `synapse/persist-state` / `synapse/state-loaded` **(extensions)** | the store works. Persistence is silently swallowed (`.catch(() => {})`) and nothing rehydrates. `visibleToAgent: true` still works — it routes through `ui/update-model-context` |
+| `useStore` | in memory, plus `synapse/persist-state` / `synapse/state-loaded` **(extensions)** | the store works. Persistence is silently swallowed (`.catch(() => {})`) and nothing rehydrates. `visibleToAgent: true` is spec rather than an extension, so it outlives persistence — but it routes through `setVisibleState` and rides the same optional `updateModelContext` gate as `useVisibleState` above, and is dropped just as silently |
 
 `SynapseOptions.forwardKeys` sends `synapse/keydown`, also unguarded and also dropped elsewhere.
 

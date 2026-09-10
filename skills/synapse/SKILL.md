@@ -41,8 +41,9 @@ degrade the same way** — know which half you are using before you build on it:
 | **Extension — partial** | `useStore` | the in-memory store works; persistence is swallowed and nothing rehydrates |
 
 **Request or notification decides how a gated call fails.** `useCallTool` and `readResource` are
-requests on a transport with **no deadline**, so an unsupported call hangs **pending forever** —
-`isPending` stays `true` and no error ever arrives. `useVisibleState` and `useChat` are
+requests on a transport with **no deadline**, so a host that *ignores* one hangs **pending
+forever** — `isPending` stays `true` and nothing settles. (A host that answers with a JSON-RPC
+error does reject, and `useCallTool` surfaces it.) `useVisibleState` and `useChat` are
 notifications, posted with no `id` and returning no promise, so they are **dropped without a
 trace**. `openLink` is a request with a `window.open` fallback, but it runs only on an explicit
 *rejection*: a host that ignores the request never settles the promise, and the fallback never
