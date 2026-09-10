@@ -34,15 +34,26 @@ degrade the same way** — know which half you are using before you build on it:
 | | Hooks / methods | Off NimbleBrain |
 |---|---|---|
 | **Spec, unconditional** | `useSynapse`, `useTheme`, `useHostContext` | work — this is the handshake and the host context, i.e. the bridge itself |
-| **Spec, host-capability-gated** | `useCallTool`, `readResource`, `useVisibleState`, `useChat`, `openLink`, `useCallToolAsTask` | ext-apps marks each of these host capabilities **optional**. `useCallToolAsTask` throws when `tasks.requests.tools.call` is absent — the rest are sent unchecked over a transport with no timeout, so an unsupported call **hangs pending forever** instead of erroring. `openLink` alone has a fallback (`window.open`) |
+| **Spec, host-capability-gated** | `useCallTool`, `readResource`, `useVisibleState`, `useChat`, `openLink` | ext-apps marks each of these five host capabilities **optional** and the SDK sends without checking. *How* it fails depends on the call type — below |
+| **Spec, task-gated** | `useCallToolAsTask` | **throws** when the host omits `tasks.requests.tools.call`. That is the MCP tasks utility, not an ext-apps host capability — `McpUiHostCapabilities` has no `tasks` member |
 | **Extension — throws** | `useFileUpload` | `Error: pickFile is not supported in this host` |
 | **Extension — silently does nothing** | `useAction`, `useAgentAction`, `useDataSync`, `downloadFile` | no-op, or a callback that never fires. A dead download button looks like your bug |
 | **Extension — partial** | `useStore` | the in-memory store works; persistence is swallowed and nothing rehydrates |
 
+**Request or notification decides how a gated call fails.** `useCallTool` and `readResource` are
+requests on a transport with **no deadline**, so an unsupported call hangs **pending forever** —
+`isPending` stays `true` and no error ever arrives. `useVisibleState` and `useChat` are
+notifications, posted with no `id` and returning no promise, so they are **dropped without a
+trace**. `openLink` is a request with a `window.open` fallback, but it runs only on an explicit
+*rejection*: a host that ignores the request never settles the promise, and the fallback never
+fires. Assume nothing degrades on its own.
+
 `useSynapse().isNimbleBrainHost` is the feature check, but it resolves during the `ui/initialize`
 handshake and carries **no subscription**: `SynapseProvider` renders children before the handshake
 completes, so a render-time read is `false` even on NimbleBrain and nothing re-renders when it
-flips. Read it after `await synapse.ready`, or just make the call and handle the failure. A bare
+flips. Prefer making the call and handling the failure — `pickFile` throws synchronously and is
+cheap to `try`/`catch`. `await synapse.ready` also works, but it is that same undeadlined request,
+so where the handshake never returns a `ready`-gated feature never renders at all. A bare
 `{synapse.isNimbleBrainHost && <Upload/>}` hides the feature on the one host that has it.
 Per-hook wire methods, exact degradation, and the three connection entry points:
 **`references/portability.md`**.

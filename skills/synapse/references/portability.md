@@ -22,23 +22,32 @@ row from npm or `github.com/NimbleBrainInc/synapse`.
 - **It carries no subscription.** Unlike `useTheme`/`useHostContext`, nothing re-renders when it
   flips, so the first answer is the only one React ever sees.
 
-So `{synapse.isNimbleBrainHost && <Upload/>}` hides the feature on the host that supports it. Read
-it behind `await synapse.ready`, drive it through ready-gated state, or skip the check and handle
-the failure at the call — `pickFile` throws synchronously and is cheap to `try`/`catch`.
+So `{synapse.isNimbleBrainHost && <Upload/>}` hides the feature on the host that supports it.
+
+The option with no failure mode of its own is to **skip the check** and handle the failure at the
+call — `pickFile` throws synchronously and is cheap to `try`/`catch`. `await synapse.ready` and
+ready-gated state both work too, but `ready` *is* the `ui/initialize` request on the same
+undeadlined transport, so anywhere the handshake never returns (the built HTML opened directly, the
+preview path in gotcha F) a `ready`-gated feature never renders at all.
 
 ## Per-hook
+
+Every ext-apps host capability below is optional and the SDK checks none of them, so the column
+that matters is **how each call fails**. That follows the call type: a *request* rides a transport
+with no deadline and hangs unresolved; a *notification* carries no `id` and no promise, so it is
+dropped without a trace. Neither surfaces an error.
 
 | Hook / method | Wire | In a host that doesn't implement it |
 |---|---|---|
 | `useSynapse` | the `ui/initialize` handshake and the `Synapse` handle | works |
-| `useCallTool`, `callTool` | ext-apps `tools/call` | works |
-| `useCallToolAsTask` | MCP 2025-11-25 tasks — `tools/call` with a `task` param, then `tasks/result` / `tasks/get` / `tasks/cancel` | **throws** unless the host advertised `tasks.requests.tools.call` at init. The message tells you to fall back to `callTool` |
+| `useCallTool`, `callTool` | ext-apps `tools/call` — **request** | gated on `serverTools`. A host that omits it and drops the call leaves the promise **pending forever**: `isPending` stays `true`, no error arrives, the spinner never stops |
+| `useCallToolAsTask` | MCP 2025-11-25 tasks — `tools/call` with a `task` param, then `tasks/result` / `tasks/get` / `tasks/cancel` | **throws** unless the host advertised `tasks.requests.tools.call` at init; the message tells you to fall back to `callTool`. This gate is the MCP tasks utility, not an ext-apps host capability — `McpUiHostCapabilities` has no `tasks` member |
 | `useTheme` | ext-apps host context (`theme`, `styles.variables`) | works. `fontFaces` rides the `synapse/fontFaces` context key — absent, the web-safe token fallbacks stay in force (gotcha N) |
 | `useHostContext` | ext-apps `ui/notifications/host-context-changed` | works. Host-specific fields are absent (NimbleBrain publishes `workspace`) — type them optional and tolerate `undefined` |
-| `useVisibleState` | ext-apps `ui/update-model-context` | works |
-| `useChat` | ext-apps `ui/message` | the message is delivered. The optional `context` argument is a NimbleBrain-only `_meta.context` and is simply not attached elsewhere |
-| `readResource` | ext-apps `resources/read` | works |
-| `openLink` | ext-apps `ui/open-link` | works, and on rejection falls back to `window.open(url, "_blank", "noopener")` |
+| `useVisibleState` | ext-apps `ui/update-model-context` — **notification** | gated on `updateModelContext`. Silently dropped where unsupported — there is no promise, so there is nothing to catch |
+| `useChat` | ext-apps `ui/message` — **notification** | gated on `message`. Delivered where supported, silently dropped where not. The optional `context` argument is a NimbleBrain-only `_meta.context` and is never attached elsewhere |
+| `readResource` | ext-apps `resources/read` — **request** | gated on `serverResources`; same pending-forever shape as `useCallTool` |
+| `openLink` | ext-apps `ui/open-link` — **request** | gated on `openLinks`. Falls back to `window.open(url, "_blank", "noopener")` **only on an explicit rejection** — a host that ignores the request never settles the promise, so the fallback never runs and links quietly do nothing |
 | `useFileUpload` | `synapse/request-file` **(extension)** | **throws** `pickFile is not supported in this host` (and `pickFiles …` from the multi-file picker) — an explicit `isNimbleBrainHost` guard, not a failed request |
 | `useAction` | `synapse/action`, outbound **(extension)** | **silent no-op** — guarded, returns without sending |
 | `useAgentAction` | `synapse/action`, inbound **(extension)** | the callback never fires |
@@ -57,8 +66,9 @@ agent-visible state and chat are spec but ride **optional** host capabilities (`
 timeout, a host that doesn't proxy tool calls leaves every `useCall<T>()` **pending forever**:
 `isPending` stays `true`, no error arrives, and the spinner never stops. That failure is
 indistinguishable from a slow server, so probe once at startup rather than debugging it per
-component. The `connectUI()` path models this properly — `capabilities().pull` plus
-`HostUnsupportedError` — which is worth copying if you are targeting unknown hosts.
+component. Agent-visible state and chat fail the other way — they are notifications, so they
+vanish with nothing to observe at all. The `connectUI()` path models this properly —
+`capabilities().pull` plus `HostUnsupportedError` — worth copying if you target unknown hosts.
 
 Beyond that, a non-NimbleBrain host costs you **agent-driven refresh**
 (`useDataSync` / `useAgentAction` go quiet), **file pick and file download**, and **state that
