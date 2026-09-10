@@ -1,6 +1,6 @@
 ---
 name: synapse
-description: Build a Synapse UI for an MCP server — a React app built to one inlined HTML file, served as a `ui://` resource and rendered in the NimbleBrain host. Works with any MCP server (Python/FastMCP or TypeScript). Use when building a Synapse app or UI, adding a frontend to an MCP server, making a server "visual" or "interactive", or wiring a `ui://` resource.
+description: Build a Synapse UI for an MCP server — a React app built to one inlined HTML file, served as a `ui://` resource and mounted by an MCP ext-apps host. Works with any MCP server (Python/FastMCP or TypeScript). Use when building a Synapse app or UI, adding a frontend to an MCP server, making a server "visual" or "interactive", or wiring a `ui://` resource.
 license: MIT
 compatibility: Node.js 22+, npm (for the React/Vite UI build). The MCP server itself can be Python (FastMCP) or TypeScript.
 allowed-tools: Read Write Bash Glob Grep WebFetch
@@ -12,7 +12,7 @@ metadata:
 
 # Synapse — build a UI for an MCP Server
 
-Give an MCP server an interactive UI. The UI is a React app built to **one inlined HTML file** with `@nimblebrain/synapse` + Vite, served by the server as the MCP resource `ui://<name>/main`, and mounted by the NimbleBrain host in a sandboxed iframe wired to a `postMessage` bridge. The UI calls the server's **existing tools** over that bridge — it is data-layer-agnostic and needs no special server framework.
+Give an MCP server an interactive UI. The UI is a React app built to **one inlined HTML file** with `@nimblebrain/synapse` + Vite, served by the server as the MCP resource `ui://<name>/main`, and mounted by an **MCP ext-apps** host in a sandboxed iframe wired to a `postMessage` bridge. The UI calls the server's **existing tools** over that bridge — it is data-layer-agnostic and needs no special server framework. NimbleBrain is the host the SDK is developed and verified against — but the bridge is a spec, and which parts of the SDK travel to another host has an exact answer. Read Portability below before you write components.
 
 **Target `@nimblebrain/synapse@^0.13.0`** (published on npm). The package *is* the documentation — read its exported types before writing code.
 
@@ -23,7 +23,25 @@ From the installed package (`node_modules/@nimblebrain/synapse/dist/*.d.ts`) or 
 - the `ui` entry — the **component library** (`AppFrame`, `ListDetailLayout`, `ListRow`, `Table`, `Badge`, `Prose`, `tokens`, …). Don't hand-roll styling.
 - the type exports — `ToolCallResult`, `SynapseTheme`, the `Synapse` interface.
 
-Then read **`references/gotchas.md`** (non-obvious API facts that each save a debugging cycle) and **`references/host-contract.md`** (the manifest + bridge contract). Skim these first; they're short and they're the difference between working and "why is every tool call returning `unauthenticated`."
+Then read **`references/gotchas.md`** (non-obvious API facts that each save a debugging cycle) and **`references/host-contract.md`** (the NimbleBrain manifest declaration + the bridge). Skim these first; they're short and they're the difference between working and "why is every tool call returning `unauthenticated`."
+
+## Portability — this is an MCP app, not a NimbleBrain app
+
+Any host implementing ext-apps can mount the bundle. NimbleBrain implements the spec plus a few
+`synapse/*` extensions, and the SDK's hooks split across that line. **The extensions do not all
+degrade the same way** — know which half you are using before you build on it:
+
+| | Hooks | Off NimbleBrain |
+|---|---|---|
+| **Spec** | `useSynapse`, `useCallTool`, `useTheme`, `useHostContext`, `useVisibleState`, `useChat`, `readResource`, `openLink` | work |
+| **Spec, capability-gated** | `useCallToolAsTask` | **throws** unless the host advertised `tasks.requests.tools.call`; fall back to `callTool` |
+| **Extension — throws** | `useFileUpload` | `Error: pickFile is not supported in this host` |
+| **Extension — silently does nothing** | `useAction`, `useAgentAction`, `useDataSync`, `downloadFile` | no-op, or a callback that never fires. A dead download button looks like your bug |
+| **Extension — partial** | `useStore` | the in-memory store works; persistence is swallowed and nothing rehydrates |
+
+`useSynapse().isNimbleBrainHost` is the runtime check — branch on it before anything that throws.
+Per-hook wire methods, exact degradation, and the three connection entry points:
+**`references/portability.md`**.
 
 ## Process
 
@@ -31,13 +49,13 @@ Then read **`references/gotchas.md`** (non-obvious API facts that each save a de
 
 2. **Scaffold `ui/`** — `package.json` (`react`/`react-dom` `^19`, `@nimblebrain/synapse@^0.13.0`, `vite`, `vite-plugin-singlefile`, `typescript`; add `marked` + `dompurify` only if you render markdown), `vite.config.ts` (`react()`, `viteSingleFile()`, `synapseVite()`, `build.assetsInlineLimit: Infinity`), a strict `tsconfig.json`, `index.html`, and `.gitignore` (`node_modules/`, `dist/`, `.vite/`). **Commit `package-lock.json`** so the build can `npm ci`.
 
-3. **Build `App.tsx`** — `<SynapseProvider name="<server>">`. One side-effect import goes in the Vite entry (`main.tsx`): `import "@nimblebrain/synapse/ui/base"` (the root-height chain `AppFrame` fills — applied before first paint; gotcha M). **Don't import fonts** — the SDK ships none, and typography arrives from the host like every other theme value (gotcha N). Use the package's **`AppFrame` shell** (with `AppFrame.Body bleed` hosting `ListDetailLayout`/`SidebarLayout`) — **never** a hand-rolled `height:100vh` (gotcha D). Drive data with a thin `useCall<T>()` wrapper around `useSynapse().callTool(name, args)`; refresh with `useDataSync`; theme with `tokens`/`useTheme`; push agent context with `useVisibleState`. **Master lists use `ListRow`, not `Table`** (gotcha D — a `Table` overflows a fixed-width rail and paints over the detail pane).
+3. **Build `App.tsx`** — `<SynapseProvider name="<server>">`. One side-effect import goes in the Vite entry (`main.tsx`): `import "@nimblebrain/synapse/ui/base"` (the root-height chain `AppFrame` fills — applied before first paint; gotcha M). **Don't import fonts** — the SDK ships none, and typography arrives from the host like every other theme value (gotcha N). Use the package's **`AppFrame` shell** (with `AppFrame.Body bleed` hosting `ListDetailLayout`/`SidebarLayout`) — **never** a hand-rolled `height:100vh` (gotcha D). Drive data with a thin `useCall<T>()` wrapper around `useSynapse().callTool(name, args)`; refresh with `useDataSync` (NimbleBrain-only — off it the callback never fires, so keep your own reload path); theme with `tokens`/`useTheme`; push agent context with `useVisibleState`. **Master lists use `ListRow`, not `Table`** (gotcha D — a `Table` overflows a fixed-width rail and paints over the detail pane).
 
 4. **Sanitize any rendered HTML — do not skip (stored-XSS).** If you render server- or agent-authored markdown (notes, descriptions, research output) via `Prose` / `dangerouslySetInnerHTML`, run it through **DOMPurify first**: `DOMPurify.sanitize(marked.parse(md, { async: false }) as string)`. The iframe runs with `allow-scripts` and a `script-src 'unsafe-inline'` CSP, so **sanitization — not the CSP — is the only thing stopping an injected `<script>`/`onerror` from running with full tool-bridge authority** (read/exfiltrate/mutate everything the tools can reach). Plain `<Text>{value}</Text>` is safe (React escapes). Full chain: gotcha K.
 
 5. **Serve the UI as a resource** — `@mcp.resource("ui://<name>/main", mime_type="text/html")` returning the built `ui/dist/index.html`. Resolve the path via an env var (`<APP>_UI_DIR`) with a `__file__`-relative fallback (gotcha E — an installed package lands in site-packages, so a `__file__`-relative `ui/dist` lookup misses). Make it a **bare file read**: no DB/auth session, identity-free HTML, all tenant data fetched at runtime through the bridge.
 
-6. **Declare the host placement** — add `_meta["ai.nimblebrain/host"]` to `manifest.json`: one `placements[]` entry (`slot: "sidebar.apps"`, `resourceUri: "ui://<name>/main"`, `route`, `label`, `icon`). Full contract + options: `references/host-contract.md`.
+6. **Register the app with its host.** The bundle from steps 2–5 is the same either way; only registration differs. *Targeting the NimbleBrain host* — add `_meta["ai.nimblebrain/host"]` to `manifest.json`: one `placements[]` entry (`slot: "sidebar.apps"`, `resourceUri: "ui://<name>/main"`, `route`, `label`, `icon`). Full contract + options: `references/host-contract.md`. *Targeting another ext-apps host* — use that host's own registration mechanism; this skill doesn't cover it.
 
 7. **Container-deployed servers — multi-stage build.** A `.mcpb` bundle gets `ui/dist` from release CI; a container image must build it: a `node:22` builder stage runs `npm ci && npm run build`, then the runtime `COPY --from=builder …/ui/dist` (so the runtime stays Node-free) and sets the UI-dir env var. Strip the `ui/` source from the runtime layer — only `dist` ships.
 

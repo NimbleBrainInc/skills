@@ -1,4 +1,9 @@
-# Host contract — how the NimbleBrain host finds and renders your UI
+# NimbleBrain host contract — how the host finds and renders your UI
+
+This is **one host's** registration extension. The bridge in §3 is the MCP ext-apps spec, which any
+conforming host implements; the `_meta["ai.nimblebrain/host"]` manifest block in §1 is
+NimbleBrain-specific, and another ext-apps host will have its own registration mechanism. Which
+hooks ride the spec and which ride the extensions: `portability.md`.
 
 The host integration is a **manifest declaration** plus a **served resource**. The SDK never mentions this contract — it lives in the bundle `manifest.json`.
 
