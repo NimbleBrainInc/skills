@@ -31,15 +31,19 @@ Any host implementing ext-apps can mount the bundle. NimbleBrain implements the 
 `synapse/*` extensions, and the SDK's hooks split across that line. **The extensions do not all
 degrade the same way** — know which half you are using before you build on it:
 
-| | Hooks | Off NimbleBrain |
+| | Hooks / methods | Off NimbleBrain |
 |---|---|---|
-| **Spec** | `useSynapse`, `useCallTool`, `useTheme`, `useHostContext`, `useVisibleState`, `useChat`, `readResource`, `openLink` | work |
-| **Spec, capability-gated** | `useCallToolAsTask` | **throws** unless the host advertised `tasks.requests.tools.call`; fall back to `callTool` |
+| **Spec, unconditional** | `useSynapse`, `useTheme`, `useHostContext` | work — this is the handshake and the host context, i.e. the bridge itself |
+| **Spec, host-capability-gated** | `useCallTool`, `readResource`, `useVisibleState`, `useChat`, `openLink`, `useCallToolAsTask` | ext-apps marks each of these host capabilities **optional**. `useCallToolAsTask` throws when `tasks.requests.tools.call` is absent — the rest are sent unchecked over a transport with no timeout, so an unsupported call **hangs pending forever** instead of erroring. `openLink` alone has a fallback (`window.open`) |
 | **Extension — throws** | `useFileUpload` | `Error: pickFile is not supported in this host` |
 | **Extension — silently does nothing** | `useAction`, `useAgentAction`, `useDataSync`, `downloadFile` | no-op, or a callback that never fires. A dead download button looks like your bug |
 | **Extension — partial** | `useStore` | the in-memory store works; persistence is swallowed and nothing rehydrates |
 
-`useSynapse().isNimbleBrainHost` is the runtime check — branch on it before anything that throws.
+`useSynapse().isNimbleBrainHost` is the feature check, but it resolves during the `ui/initialize`
+handshake and carries **no subscription**: `SynapseProvider` renders children before the handshake
+completes, so a render-time read is `false` even on NimbleBrain and nothing re-renders when it
+flips. Read it after `await synapse.ready`, or just make the call and handle the failure. A bare
+`{synapse.isNimbleBrainHost && <Upload/>}` hides the feature on the one host that has it.
 Per-hook wire methods, exact degradation, and the three connection entry points:
 **`references/portability.md`**.
 

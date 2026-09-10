@@ -1,7 +1,7 @@
 # Portability — what the SDK does in a host that isn't NimbleBrain
 
 A Synapse app is an **MCP app**: one inlined HTML file served as a `ui://` resource and mounted
-over the [MCP ext-apps](https://modelcontextprotocol.io/specification/2025-06-18/user-interaction/ext-apps)
+over the [MCP ext-apps](https://modelcontextprotocol.io/extensions/apps/overview) (`2026-01-26`)
 `postMessage` bridge. `@nimblebrain/synapse` calls itself an "Agent-aware app SDK for the MCP
 ext-apps protocol", peer-depends on `@modelcontextprotocol/ext-apps`, and imports its method
 constants from it. It is an enhancement layer over the spec, not a private protocol.
@@ -13,8 +13,18 @@ row from npm or `github.com/NimbleBrainInc/synapse`.
 
 ## Feature-detect at runtime
 
-`useSynapse().isNimbleBrainHost` is a boolean on the `Synapse` interface, resolved from the
-`ui/initialize` handshake. Branch on it before calling anything in a **throws** row below.
+`useSynapse().isNimbleBrainHost` is a boolean on the `Synapse` interface, assigned inside the
+`ui/initialize` response handler. Two consequences, both easy to get wrong:
+
+- **It is `false` until the handshake resolves.** `SynapseProvider` renders `children` immediately,
+  beside `ThemeInjector` and with no ready gate, so a read during first render says "not
+  NimbleBrain" on NimbleBrain.
+- **It carries no subscription.** Unlike `useTheme`/`useHostContext`, nothing re-renders when it
+  flips, so the first answer is the only one React ever sees.
+
+So `{synapse.isNimbleBrainHost && <Upload/>}` hides the feature on the host that supports it. Read
+it behind `await synapse.ready`, drive it through ready-gated state, or skip the check and handle
+the failure at the call — `pickFile` throws synchronously and is cheap to `try`/`catch`.
 
 ## Per-hook
 
@@ -29,19 +39,28 @@ row from npm or `github.com/NimbleBrainInc/synapse`.
 | `useChat` | ext-apps `ui/message` | the message is delivered. The optional `context` argument is a NimbleBrain-only `_meta.context` and is simply not attached elsewhere |
 | `readResource` | ext-apps `resources/read` | works |
 | `openLink` | ext-apps `ui/open-link` | works, and on rejection falls back to `window.open(url, "_blank", "noopener")` |
-| `useFileUpload` | `synapse/request-file` **(extension)** | **throws** `pickFile is not supported in this host` — an explicit `isNimbleBrainHost` guard, not a failed request |
+| `useFileUpload` | `synapse/request-file` **(extension)** | **throws** `pickFile is not supported in this host` (and `pickFiles …` from the multi-file picker) — an explicit `isNimbleBrainHost` guard, not a failed request |
 | `useAction` | `synapse/action`, outbound **(extension)** | **silent no-op** — guarded, returns without sending |
 | `useAgentAction` | `synapse/action`, inbound **(extension)** | the callback never fires |
 | `useDataSync` | `synapse/data-changed`, inbound **(extension)** | the callback never fires — no agent-driven refresh. Drive reloads from your own `onDone`, as you already must in preview (gotcha F) |
-| `downloadFile` | `synapse/download-file`, outbound **(extension)** | the notification is sent **unguarded** and dropped on the floor: nothing downloads, nothing throws, and there is no local anchor fallback |
+| `downloadFile` | `synapse/download-file`, outbound **(extension)** | the notification is sent **unguarded** and dropped on the floor: nothing downloads, nothing throws, and there is no local anchor fallback. Downloading itself is not the problem — ext-apps has `ui/download-file` behind the `downloadFile` host capability; a portable app sends that request itself instead of calling `synapse.downloadFile()` |
 | `useStore` | in memory, plus `synapse/persist-state` / `synapse/state-loaded` **(extensions)** | the store works. Persistence is silently swallowed (`.catch(() => {})`) and nothing rehydrates. `visibleToAgent: true` still works — it routes through `ui/update-model-context` |
 
 `SynapseOptions.forwardKeys` sends `synapse/keydown`, also unguarded and also dropped elsewhere.
 
 ## What you actually lose
 
-Tool calls, theming, host context, agent-visible state and chat are all spec — an app that sticks
-to them runs anywhere. What a non-NimbleBrain host costs you is **agent-driven refresh**
+Only the handshake, theming and host context are unconditional. Tool calls, resource reads,
+agent-visible state and chat are spec but ride **optional** host capabilities (`serverTools`,
+`serverResources`, `updateModelContext`, `message`), and the SDK sends them without checking
+`hostCapabilities` — it extracts only `tasks` at init. Since `SynapseTransport.request()` sets no
+timeout, a host that doesn't proxy tool calls leaves every `useCall<T>()` **pending forever**:
+`isPending` stays `true`, no error arrives, and the spinner never stops. That failure is
+indistinguishable from a slow server, so probe once at startup rather than debugging it per
+component. The `connectUI()` path models this properly — `capabilities().pull` plus
+`HostUnsupportedError` — which is worth copying if you are targeting unknown hosts.
+
+Beyond that, a non-NimbleBrain host costs you **agent-driven refresh**
 (`useDataSync` / `useAgentAction` go quiet), **file pick and file download**, and **state that
 survives a reload**. Two of those fail loudly (`useFileUpload` throws) and the rest fail quietly,
 which is the more expensive kind: a `downloadFile` button that does nothing looks like a bug in
