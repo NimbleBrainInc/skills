@@ -37,7 +37,7 @@ degrade the same way** — know which half you are using before you build on it:
 | **Spec, host-capability-gated** | `useCallTool`, `readResource`, `useVisibleState`, `useChat`, `openLink` | ext-apps marks each of these five host capabilities **optional** and the SDK sends without checking. *How* it fails depends on the call type — below |
 | **Spec, task-gated** | `useCallToolAsTask` | **throws** when the host omits `tasks.requests.tools.call`. That is the MCP tasks utility, not an ext-apps host capability — `McpUiHostCapabilities` has no `tasks` member |
 | **Extension — throws** | `useFileUpload` | `Error: pickFile is not supported in this host` |
-| **Extension — silently does nothing** | `useAction`, `useAgentAction`, `useDataSync`, `downloadFile` | no-op, or a callback that never fires. A dead download button looks like your bug |
+| **Extension — silently does nothing** | `useAction`, `useDataSync`, `downloadFile` | no-op, or a callback that never fires. A dead download button looks like your bug |
 | **Extension — partial** | `useStore` | the in-memory store works; persistence is swallowed and nothing rehydrates |
 
 **Request or notification decides how a gated call fails.** `useCallTool` and `readResource` are

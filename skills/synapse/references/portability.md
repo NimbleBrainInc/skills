@@ -52,7 +52,6 @@ the silent case. A host that answers with a JSON-RPC error does reject, and `use
 | `openLink` | ext-apps `ui/open-link` — **request** | gated on `openLinks`. Falls back to `window.open(url, "_blank", "noopener")` **only on an explicit rejection** — a host that ignores the request never settles the promise, so the fallback never runs and links quietly do nothing |
 | `useFileUpload` | `synapse/request-file` **(extension)** | **throws** `pickFile is not supported in this host` (and `pickFiles …` from the multi-file picker) — an explicit `isNimbleBrainHost` guard, not a failed request |
 | `useAction` | `synapse/action`, outbound **(extension)** | **silent no-op** — guarded, returns without sending |
-| `useAgentAction` | `synapse/action`, inbound **(extension)** | the callback never fires |
 | `useDataSync` | `synapse/data-changed`, inbound **(extension)** | the callback never fires — no agent-driven refresh. Drive reloads from your own `onDone`, as you already must in preview (gotcha F) |
 | `downloadFile` | `synapse/download-file`, outbound **(extension)** | the notification is sent **unguarded** and dropped on the floor: nothing downloads, nothing throws, and there is no local anchor fallback. Downloading itself is not the problem — ext-apps has `ui/download-file` behind the `downloadFile` host capability; a portable app sends that request itself instead of calling `synapse.downloadFile()` |
 | `useStore` | in memory, plus `synapse/persist-state` / `synapse/state-loaded` **(extensions)** | the store works. Persistence is silently swallowed (`.catch(() => {})`) and nothing rehydrates. `visibleToAgent: true` is spec rather than an extension, so it outlives persistence — but it routes through `setVisibleState` and rides the same optional `updateModelContext` gate as `useVisibleState` above, and is dropped just as silently |
@@ -73,7 +72,7 @@ vanish with nothing to observe at all. The `connectUI()` path models this proper
 `capabilities().pull` plus `HostUnsupportedError` — worth copying if you target unknown hosts.
 
 Beyond that, a non-NimbleBrain host costs you **agent-driven refresh**
-(`useDataSync` / `useAgentAction` go quiet), **file pick and file download**, and **state that
+(`useDataSync` goes quiet), **file pick and file download**, and **state that
 survives a reload**. Two of those fail loudly (`useFileUpload` throws) and the rest fail quietly,
 which is the more expensive kind: a `downloadFile` button that does nothing looks like a bug in
 your app.
