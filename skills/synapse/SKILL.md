@@ -38,7 +38,7 @@ degrade the same way** — know which half you are using before you build on it:
 | **Spec, task-gated** | `useCallToolAsTask` | **throws** when the host omits `tasks.requests.tools.call`. That is the MCP tasks utility, not an ext-apps host capability — `McpUiHostCapabilities` has no `tasks` member |
 | **Extension — throws** | `useFileUpload` | `Error: pickFile is not supported in this host` |
 | **Extension — silently does nothing** | `useAction`, `useDataSync`, `downloadFile` | no-op, or a callback that never fires. A dead download button looks like your bug |
-| **Dead on every host** | `useAgentAction` | never fires, on NimbleBrain included: no host sends `synapse/action` to an app. Don't use it |
+| **Extension — dead everywhere** | `useAgentAction` | never fires, on NimbleBrain included: no host sends `synapse/action` to an app. Don't use it |
 | **Extension — partial** | `useStore` | the in-memory store works; persistence is swallowed and nothing rehydrates |
 
 **Request or notification decides how a gated call fails.** `useCallTool` and `readResource` are
