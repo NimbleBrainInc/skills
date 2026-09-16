@@ -29,6 +29,7 @@ skills/<name>/
 ## Hygiene (this is a public repo)
 
 - **No private monorepo paths or internal product references** (no `platform/…`, `products/nimblebrain/code/…`, internal app names, tenant ids). Cite only public sources: the `@nimblebrain/synapse` package (npm / `github.com/NimbleBrainInc/synapse`), public specs, RFCs. Use neutral placeholder names in examples.
+- **No AI attribution.** Commit messages, PR titles and PR bodies carry no AI attribution — no AI co-author or session trailers, no "generated with" footers. The `No AI attribution` check (`.github/workflows/no-ai-attribution.yml`) enforces it on every PR, reading the commits as well as the title and body because a squash merge builds its message from them.
 - Each skill must stand alone for an external builder who installed it via `npx skills` — they don't have the monorepo.
 
 ## Phase status
