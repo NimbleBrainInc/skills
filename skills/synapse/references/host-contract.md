@@ -60,7 +60,7 @@ The HTML must be **identity-free and static** — never bake tenant/workspace da
 The host mounts the HTML in a sandboxed iframe and speaks the MCP **ext-apps spec (`2026-01-26`)** over `postMessage`. The `@nimblebrain/synapse` React SDK wraps all of it — you use hooks, not raw messages:
 
 - `useSynapse().callTool(name, args)` / `useCallTool(name)` → invoke your server's tools (`tools/call`).
-- `useDataSync(cb)` → re-fetch when the **agent** mutates data (the host broadcasts `data-changed` keyed on the bare server name; UI-initiated calls don't fire it).
+- `useDataSync(cb)` → re-fetch when **your own server** announces a write, by sending `notifications/resources/list_changed`; the host relays it to that server's views. The callback receives the notification's params.
 - `useTheme()` / `tokens` → host theme (light/dark via CSS variables).
 - `useVisibleState(...)` → push the UI's current state so the agent can see what the user is looking at.
 - `useHostContext()` → workspace + host context.

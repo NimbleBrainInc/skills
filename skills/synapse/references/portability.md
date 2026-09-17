@@ -53,11 +53,16 @@ the silent case. A host that answers with a JSON-RPC error does reject, and `use
 | `useFileUpload` | `synapse/request-file` **(extension)** | **throws** `pickFile is not supported in this host` (and `pickFiles …` from the multi-file picker) — an explicit `isNimbleBrainHost` guard, not a failed request |
 | `useAction` | `synapse/action`, outbound **(extension)** | **silent no-op** — guarded, returns without sending |
 | `useAgentAction` | `synapse/action`, inbound **(extension)** | **never fires, on any host** — no host sends `synapse/action` to an app, NimbleBrain included. Don't use it |
-| `useDataSync` | `synapse/data-changed`, inbound **(extension)** | the callback never fires — no agent-driven refresh. Drive reloads from your own `onDone`, as you already must in preview (gotcha F) |
+| `useDataSync` (0.19.0+) | ext-apps `notifications/resources/list_changed` — **notification, inbound** | **portable.** It is the spec's own signal, not an extension, so it fires on any host that relays your server's announcement to your view. What gates it is your *server*: a server that never announces a write means a callback that never fires, on NimbleBrain as much as anywhere else |
 | `downloadFile` | `synapse/download-file`, outbound **(extension)** | the notification is sent **unguarded** and dropped on the floor: nothing downloads, nothing throws, and there is no local anchor fallback. Downloading itself is not the problem — ext-apps has `ui/download-file` behind the `downloadFile` host capability; a portable app sends that request itself instead of calling `synapse.downloadFile()` |
 | `useStore` | in memory, plus `synapse/persist-state` / `synapse/state-loaded` **(extensions)** | the store works. Persistence is silently swallowed (`.catch(() => {})`) and nothing rehydrates. `visibleToAgent: true` is spec rather than an extension, so it outlives persistence — but it routes through `setVisibleState` and rides the same optional `updateModelContext` gate as `useVisibleState` above, and is dropped just as silently |
 
 `SynapseOptions.forwardKeys` sends `synapse/keydown`, also unguarded and also dropped elsewhere.
+
+> **Version note.** `useDataSync` moved to the spec notification in `@nimblebrain/synapse` **0.19.0**,
+> and the NimbleBrain host no longer sends `synapse/data-changed` at all. On a release before 0.19.0
+> the callback therefore never fires, on any host. This skill's stated target predates that — see the
+> skill's own version line, which is being refreshed separately.
 
 ## What you actually lose
 
