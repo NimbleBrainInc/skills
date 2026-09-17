@@ -2,100 +2,86 @@
 
 A Synapse app is an **MCP app**: one inlined HTML file served as a `ui://` resource and mounted
 over the [MCP ext-apps](https://modelcontextprotocol.io/extensions/apps/overview) (`2026-01-26`)
-`postMessage` bridge. `@nimblebrain/synapse` calls itself an "Agent-aware app SDK for the MCP
-ext-apps protocol", peer-depends on `@modelcontextprotocol/ext-apps`, and imports its method
-constants from it. It is an enhancement layer over the spec, not a private protocol.
+`postMessage` bridge. From 0.19.0, `@nimblebrain/synapse` runs on the spec's own client —
+`@modelcontextprotocol/ext-apps`'s `App` owns the transport, the handshake and the wire schemas —
+and is the framework on top of it: theme injection, parsed tool results, multi-subscriber events,
+resize, and the NimbleBrain extensions. It is not a private protocol.
 
 NimbleBrain is the host the SDK is developed and verified against, and it implements a small set
 of `synapse/*` extensions on top of the spec. Everything below was read out of
-`@nimblebrain/synapse@0.13.0` — `dist/*.d.ts` and the shipped `dist/*.js` — so you can re-check any
-row from npm or `github.com/NimbleBrainInc/synapse`.
+`@nimblebrain/synapse@0.19.0` source, so you can re-check any row at
+`github.com/NimbleBrainInc/synapse`.
 
 ## Feature-detect at runtime
 
-`useSynapse().isNimbleBrainHost` is a boolean on the `Synapse` interface, assigned inside the
-`ui/initialize` response handler. Two consequences, both easy to get wrong:
+`<AppProvider>` renders **nothing** until the `ui/initialize` handshake completes, so by the time a
+component reads `useApp().isNimbleBrainHost` (or `hostInfo`, or `supportsTasks`) it is settled, and
+it does not change afterwards. `{app.isNimbleBrainHost && <Upload/>}` is therefore safe.
 
-- **It is `false` until the handshake resolves.** `SynapseProvider` renders `children` immediately,
-  beside `ThemeInjector` and with no ready gate, so a read during first render says "not
-  NimbleBrain" on NimbleBrain.
-- **It carries no subscription.** Unlike `useTheme`/`useHostContext`, nothing re-renders when it
-  flips, so the first answer is the only one React ever sees.
+Two consequences of the provider gate:
 
-So `{synapse.isNimbleBrainHost && <Upload/>}` hides the feature on the host that supports it.
+- **Where the handshake never returns, nothing renders.** Opening the built HTML directly, or a
+  host that never answers `ui/initialize`, leaves a blank pane. The preview (gotcha F) answers the
+  handshake, so develop there.
+- **A handshake the spec's client refuses is thrown during render**, so it reaches your nearest
+  error boundary. A host that answers with fields outside the spec (an unknown
+  `styles.variables` key, pre-spec `serverInfo`/`capabilities` naming) cannot connect at all.
 
-The option with no failure mode of its own is to **skip the check** and handle the failure at the
-call — `pickFile` throws synchronously and is cheap to `try`/`catch`. `await synapse.ready` and
-ready-gated state both work too, but `ready` *is* the `ui/initialize` request on the same
-undeadlined transport, so anywhere the handshake never returns (the built HTML opened directly, the
-preview path in gotcha F) a `ready`-gated feature never renders at all.
+Branching on the host identity is for hiding an affordance the host can't fulfil. It is not
+needed to avoid a crash: every extension below either no-ops or throws something catchable.
 
 ## Per-hook
 
-Every ext-apps host capability below is optional and the SDK checks none of them, so the column
-that matters is **how each call fails**. That follows the call type: a *request* rides a transport
-with no deadline and hangs unresolved; a *notification* carries no `id` and no promise, so it is
-dropped without a trace. Neither surfaces an error **where the host ignores the call** — that is
-the silent case. A host that answers with a JSON-RPC error does reject, and `useCallTool` sets
-`error`, clears `isPending` and rethrows.
+The SDK checks the host's capabilities for exactly two things, `downloadFile` and tasks. Every
+other spec call goes out regardless, and **no request carries a deadline** (a picker waiting on a
+person, a blocking task result and a slow tool all need that). So the column that matters is
+**how each call fails where the host ignores it**.
 
-| Hook / method | Wire | In a host that doesn't implement it |
+| Hook / function | Wire | In a host that doesn't implement it |
 |---|---|---|
-| `useSynapse` | the `ui/initialize` handshake and the `Synapse` handle | works |
-| `useCallTool`, `callTool` | ext-apps `tools/call` — **request** | gated on `serverTools`. A host that omits it and drops the call leaves the promise **pending forever**: `isPending` stays `true`, no error arrives, the spinner never stops |
-| `useCallToolAsTask` | MCP 2025-11-25 tasks — `tools/call` with a `task` param, then `tasks/result` / `tasks/get` / `tasks/cancel` | **throws** unless the host advertised `tasks.requests.tools.call` at init; the message tells you to fall back to `callTool`. This gate is the MCP tasks utility, not an ext-apps host capability — `McpUiHostCapabilities` has no `tasks` member at all, so a host can only advertise it as an undeclared extra key. Assume this throws anywhere but NimbleBrain |
-| `useTheme` | ext-apps host context (`theme`, `styles.variables`) | works. `fontFaces` rides the `synapse/fontFaces` context key — absent, the web-safe token fallbacks stay in force (gotcha N) |
-| `useHostContext` | ext-apps `ui/notifications/host-context-changed` | works. Host-specific fields are absent (NimbleBrain publishes `workspace`) — type them optional and tolerate `undefined` |
-| `useVisibleState` | ext-apps `ui/update-model-context` — **notification** | gated on `updateModelContext`. Silently dropped where unsupported — there is no promise, so there is nothing to catch |
-| `useChat` | ext-apps `ui/message` — **notification** | gated on `message`. Delivered where supported, silently dropped where not. The optional `context` argument is a NimbleBrain-only `_meta.context` and is never attached elsewhere |
-| `readResource` | ext-apps `resources/read` — **request** | gated on `serverResources`; same pending-forever shape as `useCallTool` |
-| `openLink` | ext-apps `ui/open-link` — **request** | gated on `openLinks`. Falls back to `window.open(url, "_blank", "noopener")` **only on an explicit rejection** — a host that ignores the request never settles the promise, so the fallback never runs and links quietly do nothing |
-| `useFileUpload` | `synapse/request-file` **(extension)** | **throws** `pickFile is not supported in this host` (and `pickFiles …` from the multi-file picker) — an explicit `isNimbleBrainHost` guard, not a failed request |
-| `useAction` | `synapse/action`, outbound **(extension)** | **silent no-op** — guarded, returns without sending |
-| `useAgentAction` | `synapse/action`, inbound **(extension)** | **never fires, on any host** — no host sends `synapse/action` to an app, NimbleBrain included. Don't use it |
-| `useDataSync` (0.19.0+) | ext-apps `notifications/resources/list_changed` — **notification, inbound** | **portable.** It is the spec's own signal, not an extension, so it fires on any host that relays your server's announcement to your view. What gates it is your *server*: a server that never announces a write means a callback that never fires, on NimbleBrain as much as anywhere else |
-| `downloadFile` | `synapse/download-file`, outbound **(extension)** | the notification is sent **unguarded** and dropped on the floor: nothing downloads, nothing throws, and there is no local anchor fallback. Downloading itself is not the problem — ext-apps has `ui/download-file` behind the `downloadFile` host capability; a portable app sends that request itself instead of calling `synapse.downloadFile()` |
-| `useStore` | in memory, plus `synapse/persist-state` / `synapse/state-loaded` **(extensions)** | the store works. Persistence is silently swallowed (`.catch(() => {})`) and nothing rehydrates. `visibleToAgent: true` is spec rather than an extension, so it outlives persistence — but it routes through `setVisibleState` and rides the same optional `updateModelContext` gate as `useVisibleState` above, and is dropped just as silently |
-
-`SynapseOptions.forwardKeys` sends `synapse/keydown`, also unguarded and also dropped elsewhere.
+| `AppProvider`, `useApp` | the `ui/initialize` handshake and the `App` handle | works |
+| `useTheme`, `useHostContext` | ext-apps host context and `ui/notifications/host-context-changed` | works. `fontFaces` rides the `synapse/fontFaces` context key — absent, the web-safe token fallbacks stay in force (gotcha N). Host-specific context fields are absent elsewhere — type them optional |
+| `useToolResult`, `useToolInput`, `useResize` | ext-apps tool notifications and `ui/notifications/size-changed` | works |
+| `useCallTool`, `app.callTool` | `tools/call` — **request** | a host that drops the call leaves the promise **pending forever**: `isPending` stays `true`, no error arrives. A host that answers with an error rejects, and `useCallTool` sets `error`. The call reaches the app's own server only |
+| `app.readServerResource` | `resources/read` — **request** | same pending-forever shape as `useCallTool` |
+| `useDataSync` | `notifications/resources/list_changed`, inbound, from the app's own server | fires wherever the host relays it (capability `serverResources.listChanged`). The SDK does not read that capability, so there is nothing to check: where the host doesn't relay, the hook is simply quiet. **It also needs your server to announce its writes** — without that it is quiet on every host |
+| `useModelContext`, `app.updateModelContext` | `ui/update-model-context` — request, fire-and-forget | returns nothing and swallows the failure: where unsupported it vanishes without a trace |
+| `useSendMessage`, `app.sendMessage` | `ui/message` — request, fire-and-forget | same as `useModelContext`. The optional `context` argument becomes `_meta.context` on NimbleBrain only |
+| `app.openLink` | `ui/open-link` — **request** | falls back to `window.open(url, "_blank", "noopener")` **only on an explicit rejection** — a host that ignores the request never settles it, so the fallback never runs and links quietly do nothing |
+| `downloadFile(app, …)` | `ui/download-file` — **request** | **rejects without sending** when the host didn't advertise the `downloadFile` capability. Resolves `{ isError: true }` when the host declined or the user cancelled. Handle the promise |
+| `useCallToolAsTask`, `callToolAsTask` | MCP 2025-11-25 tasks — `tools/call` with a `task` param, then `tasks/*` | **throws** unless the host negotiated `experimental["io.modelcontextprotocol/tasks"]` (`app.supportsTasks`). Fall back to `callTool` |
+| `useFileUpload` (`pickFile`, `pickFiles`) | `synapse/request-file` **(extension)** | **throws** `pickFile is not supported in this host` — an explicit host check, not a failed request |
+| `useAction`, `action(app, …)` | `synapse/action`, outbound **(extension)** | **silent no-op** — guarded, returns without sending |
+| `connect({ forwardKeys })` | `synapse/keydown` **(extension)** | not sent — forwarding only starts on a NimbleBrain host |
 
 > **Version note.** `useDataSync` moved to the spec notification in `@nimblebrain/synapse` **0.19.0**.
 > Before that it listened for `synapse/data-changed`, which NimbleBrain hosts **after v0.26.0** no
 > longer send — so on an SDK older than 0.19.0 the callback fires on a NimbleBrain host up to v0.26.0,
-> stops on a later one, and never fires on any other host. This skill's stated target predates
-> 0.19.0; see #49.
+> stops on a later one, and never fires on any other host.
 
 ## What you actually lose
 
-Only the handshake, theming and host context are unconditional. Tool calls, resource reads,
-agent-visible state and chat are spec but ride **optional** host capabilities (`serverTools`,
-`serverResources`, `updateModelContext`, `message`), and the SDK sends them without checking
-`hostCapabilities` — it extracts only `tasks` at init. Since `SynapseTransport.request()` sets no
-timeout, a host that doesn't proxy tool calls leaves every `useCall<T>()` **pending forever**:
-`isPending` stays `true`, no error arrives, and the spinner never stops. That failure is
-indistinguishable from a slow server, so probe once at startup rather than debugging it per
-component. Agent-visible state and chat fail the other way — they are notifications, so they
-vanish with nothing to observe at all. The `connectUI()` path models this properly —
+Only the handshake, theming, host context and the tool notifications are unconditional. Tool calls,
+resource reads, agent-visible state and chat are spec but ride **optional** host capabilities, and
+the SDK sends them without checking. Since no request has a deadline, a host that doesn't proxy tool
+calls leaves every `useCallTool` **pending forever** — indistinguishable from a slow server, so
+probe once at startup rather than debugging it per component. Agent-visible state and chat fail the
+other way: they vanish with nothing to observe at all. The `connectUI()` path models this properly —
 `capabilities().pull` plus `HostUnsupportedError` — worth copying if you target unknown hosts.
 
-Beyond that, a non-NimbleBrain host costs you **file pick and file download** and **state that
-survives a reload**. Live refresh is no longer on that list: from 0.19.0 `useDataSync` rides the
-spec notification and works anywhere your server announces. One of these fails loudly
-(`useFileUpload` throws) and the rest fail quietly,
-which is the more expensive kind: a `downloadFile` button that does nothing looks like a bug in
-your app.
+Beyond that, a non-NimbleBrain host costs you **the file picker** (it throws) and **host actions and
+keyboard forwarding** (silent). Live refresh and file download are spec, so they travel to any host
+that relays `list_changed` and advertises `downloadFile`.
 
-## Three connection entry points
+## Two connection entry points
 
-`connect()` / `AppProvider` (→ `App`) is the ext-apps widget path: a component rendered from a
-tool result, with `useToolResult` / `useToolInput` / `useResize`. Pure spec.
+`connect()` / `<AppProvider>` (→ `App`) is **this skill's path** — a full app in a pane, and a
+component rendered from a tool result alike (`useToolResult` / `useToolInput` / `useResize`). The
+spec plus the `synapse/*` extensions above, each degrading as the table says.
 
-`createSynapse()` / `SynapseProvider` (→ `Synapse`) is **this skill's path** — a full app in a
-pane, ext-apps plus the `synapse/*` extensions above. Host-neutral for everything in the spec rows.
-
-`connectUI()` (→ `SynapseUIClient`, 0.13.0+) is the explicitly cross-host one: it feature-detects
-the browsing context, selects a per-host adapter, and exposes `capabilities()` (`pull`,
-`sendPrompt`, `openLink`) so a widget can branch on what the host actually offers, throwing
-`HostUnsupportedError` where it doesn't. Push-first and widget-shaped — the tool output that
-spawned it arrives at render via `data()` / `onData()`. It is not a substitute for
-`SynapseProvider` in a full app.
+`connectUI()` (→ `SynapseUIClient`, from `@nimblebrain/synapse/host`) is the explicitly cross-host
+one: it feature-detects the browsing context, selects a per-host adapter, and exposes
+`capabilities()` (`pull`, `sendPrompt`, `openLink`) so a widget can branch on what the host
+actually offers, throwing `HostUnsupportedError` where it doesn't. Push-first and widget-shaped —
+the tool output that spawned it arrives at render via `data()` / `onData()`. It is not a substitute
+for `AppProvider` in a full app.
