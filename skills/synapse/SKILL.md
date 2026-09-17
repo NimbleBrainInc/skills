@@ -14,7 +14,7 @@ metadata:
 
 Give an MCP server an interactive UI. The UI is a React app built to **one inlined HTML file** with `@nimblebrain/synapse` + Vite, served by the server as the MCP resource `ui://<name>/main`, and mounted by an **MCP ext-apps** host in a sandboxed iframe wired to a `postMessage` bridge. The UI calls the server's **existing tools** over that bridge — it is data-layer-agnostic and needs no special server framework. NimbleBrain is the host the SDK is developed and verified against — but the bridge is a spec, and which parts of the SDK travel to another host has an exact answer. Read Portability below before you write components.
 
-**Target `@nimblebrain/synapse@^0.19.0`** (published on npm), with its peer `@modelcontextprotocol/ext-apps@^1.7.5`. A caret range on `0.x` does not cross a minor, so an app on an older pin stays there until someone bumps it deliberately — and anything below 0.17 is on a connection API that no longer exists. The package *is* the documentation — read its exported types before writing code. Its guides live at `synapse.nimblebrain.ai`.
+**Target `@nimblebrain/synapse@^0.19.0`** (published on npm), with its peer `@modelcontextprotocol/ext-apps@^1.7.5`. A caret range on `0.x` does not cross a minor, so an app on an older pin stays there until someone bumps it deliberately — and anything below 0.17 is on a connection API that no longer exists. **On NimbleBrain, 0.19.0 needs a host release after v0.26.0**: an older host throws on the file picker and never settles `openLink` or `useSendMessage`. The package *is* the documentation — read its exported types before writing code. Its guides live at `synapse.nimblebrain.ai`.
 
 ## Pre-flight — read the SDK's types (the real docs)
 
@@ -68,7 +68,13 @@ Per-hook wire methods, exact degradation, and the connection entry points:
 
 5. **Serve the UI as a resource, and announce writes.** `@mcp.resource("ui://<name>/main")` returning the built `ui/dist/index.html`, served as the spec's MIME type `text/html;profile=mcp-app` (the default for a `ui://` URI in `fastmcp` 3.4+; pass `mime_type` explicitly anywhere else). Resolve the path via an env var (`<APP>_UI_DIR`) with a `__file__`-relative fallback (gotcha E — an installed package lands in site-packages, so a `__file__`-relative `ui/dist` lookup misses). Make it a **bare file read**: no DB/auth session, identity-free HTML, all tenant data fetched at runtime through the bridge. Then make every tool that writes send `notifications/resources/list_changed` after the write commits — that is the only thing `useDataSync` fires on, and it covers every writer (the agent, another view, a webhook):
    ```python
-   await ctx.session.send_notification(ResourceListChangedNotification(), related_request_id=ctx.request_id)
+   from mcp.types import ResourceListChangedNotification
+
+   @mcp.tool()
+   async def save_item(item: Item, ctx: Context) -> dict:
+       stored = store.save(item)
+       await ctx.session.send_notification(ResourceListChangedNotification(), related_request_id=ctx.request_id)
+       return stored
    ```
    `related_request_id` makes it travel in the call's own response over HTTP. Announce once per write, not per row. Full guide: `synapse.nimblebrain.ai/docs/guides/keep-ui-in-sync/`.
 

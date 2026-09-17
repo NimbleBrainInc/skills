@@ -3,7 +3,7 @@
 Each of these costs a debugging cycle if you don't know it. They were learned by reading the `@nimblebrain/synapse` source and by shipping real apps.
 
 ## A. The API has moved — use 0.19's, not an older example's
-Examples from before **0.17** use `createSynapse()` / `<SynapseProvider>` / `useSynapse()`. That API is **gone**: `connect()` / `<AppProvider>` / `useApp()` is the whole surface, and `useVisibleState` → `useModelContext`, `useChat` → `useSendMessage`, `useConnectTheme` → `useTheme`. An import of the old names fails to compile.
+Examples from before **0.17** use `createSynapse()` / `<SynapseProvider>` / `useSynapse()`. That API is **gone**: `connect()` / `<AppProvider>` / `useApp()` is the whole surface, and `useVisibleState` → `useModelContext` (a new call shape: `useModelContext(factory, deps)` pushes when `deps` change, `useModelContext()` returns a push function, both debounced 250 ms), `useChat` → `useSendMessage`, `useConnectTheme` → `useTheme`. An import of the old names fails to compile.
 - `useCallTool<T>(name)` returns `{ call, isPending, error, data }` — you `await call(args)`, you don't get a bare tool function. It reaches the app's **own** server only; there is no target-server argument.
 - Imperative path (cleaner for many-tool apps): `useApp().callTool(name, args)` → `ToolCallResult { data, isError, content?, _meta? }`. The result is validated against the spec's `CallToolResult`, and a malformed one **rejects**.
 - `.data` is **`JSON.parse` of the first `text` content block** (raw string on parse failure). So a Python tool returning a `dict` arrives as `.data`. A tool that returns a structured `{ "error": ... }` dict is **not** an MCP `isError` — check `data.error` yourself.
