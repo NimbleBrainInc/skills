@@ -37,7 +37,7 @@ Nothing is gated on the host's name.
 | `app.readServerResource` | `serverResources` | `HostCapabilityError` |
 | `useDataSync` | a host that relays `notifications/resources/list_changed` (declared as `serverResources.listChanged`) | the callback never runs. The hook only listens and does not read the declaration. **It also needs your server to announce its writes**, otherwise it stays silent on every host |
 | `useModelContext`, `app.updateModelContext` | `updateModelContext` | no-op |
-| `useSendMessage`, `app.sendMessage` | `message` | no-op. The optional `context` becomes `_meta.context` only on a host that identifies as NimbleBrain |
+| `useSendMessage`, `app.sendMessage` | `message` | no-op. The optional `context` becomes `_meta["ai.nimblebrain/context"]` only on a host that identifies as NimbleBrain |
 | `app.openLink` | `openLinks` | opens the URL with `window.open` instead (also when the host refuses) |
 | `downloadFile(app, …)` | `downloadFile` | `HostCapabilityError`. Resolves `{ isError: true }` when the host declined or the user cancelled |
 | `useCallToolAsTask`, `callToolAsTask` | `experimental["io.modelcontextprotocol/tasks"]` with `requests.tools.call` | `HostCapabilityError`. Check `app.supportsTasks`; fall back to `callTool` |
@@ -88,18 +88,22 @@ offer it.
 
 ## The NimbleBrain extensions — the complete list
 
-| Extension | Method | Declared as (`hostCapabilities.experimental`) |
-|---|---|---|
-| Host actions (`action`, `useAction`) | `synapse/action` | `ai.nimblebrain/action` |
-| File picker (`pickFile`, `pickFiles`, `useFileUpload`), answered `{ files }` | `synapse/request-file` | `ai.nimblebrain/request-file` |
-| Keyboard forwarding (`forwardKeys`) | `synapse/keydown` | `ai.nimblebrain/keydown` |
+Each name below is both the method the app sends and the identifier the host declares in
+`hostCapabilities.experimental` to offer it.
+
+| Extension | Name |
+|---|---|
+| Host actions (`action`, `useAction`) | `ai.nimblebrain/action` |
+| File picker (`pickFile`, `pickFiles`, `useFileUpload`), answered `{ files }` | `ai.nimblebrain/request-file` |
+| Keyboard forwarding (`forwardKeys`) | `ai.nimblebrain/keydown` |
 
 `NIMBLEBRAIN_EXTENSIONS` (package root) is the same table in code. The extensions are declared under
 `experimental` because MCP Apps has no field for extensions, and `experimental` is the only part of
 `hostCapabilities` whose contents a spec client keeps. Two NimbleBrain fields also ride inside spec
-messages, and other hosts ignore them: `workspace` in the host context, and `_meta.context` on
-`sendMessage`. The host's typeface arrives as font-face descriptors in the host context (gotcha N),
-and an app with no fonts from the host falls back to web-safe stacks.
+messages, and other hosts ignore them: `workspace` in the host context, and
+`_meta["ai.nimblebrain/context"]` on `sendMessage`. The host's typeface is not one of them: it
+arrives as `@font-face` CSS in the spec's `styles.css.fonts` (gotcha N), and an app with no fonts
+from the host falls back to web-safe stacks.
 
 Live refresh and file download are **not** extensions. `useDataSync` rides the spec's
 `notifications/resources/list_changed`, and `downloadFile` rides `ui/download-file`.

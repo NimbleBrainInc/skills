@@ -6,7 +6,7 @@ compatibility: Node.js 22+, npm (for the React/Vite UI build). The MCP server it
 allowed-tools: Read Write Bash Glob Grep WebFetch
 metadata:
   area: synapse
-  version: "0.3.0"
+  version: "0.3.1"
   author: NimbleBrain
 ---
 
@@ -43,9 +43,10 @@ gated, and `useDataSync` only listens):
 
 **The portable subset** is the handshake, theme and host context, tool input/results, `callTool`,
 `sendMessage`, `updateModelContext` and `resize`. An app built on that behaves the same everywhere.
-**The NimbleBrain extensions** are exactly three (`synapse/action`, `synapse/request-file`,
-`synapse/keydown`), each used only where the host declares `ai.nimblebrain/<name>` in
-`hostCapabilities.experimental`.
+**The NimbleBrain extensions** are exactly three (`ai.nimblebrain/action`,
+`ai.nimblebrain/request-file`, `ai.nimblebrain/keydown`). Each name is both the method and the
+identifier the host declares in `hostCapabilities.experimental` to offer it, and an extension is
+used only where it is declared.
 
 A no-op is still invisible to the user, so read the declaration and hide what the host can't do:
 `hostSupports(app, "requestFile")`, `app.hostCapabilities.message`, `app.supportsTasks`.
