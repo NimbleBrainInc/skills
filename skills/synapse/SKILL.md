@@ -28,8 +28,9 @@ Then read **`references/gotchas.md`** (non-obvious API facts that each save a de
 ## Portability — this is an MCP app, not a NimbleBrain app
 
 Claude, ChatGPT and NimbleBrain all speak MCP Apps. Each declares what it offers in its
-`ui/initialize` answer (`hostCapabilities`), and **every Synapse call checks that declaration before
-it sends**, then does one documented thing when the capability is missing:
+`ui/initialize` answer (`hostCapabilities`), and **every gated Synapse call checks that declaration
+before it sends**, then does one documented thing when the capability is missing (`resize` is never
+gated, and `useDataSync` only listens):
 
 - **a request with an answer rejects with `HostCapabilityError`, without sending** — `useCallTool`
   (`serverTools`), `readServerResource` (`serverResources`), `downloadFile`, `useCallToolAsTask`

@@ -14,9 +14,9 @@ answer to `ui/initialize`, as `hostCapabilities`. Everything below can be re-che
 
 ## The contract
 
-Synapse reads `hostCapabilities` once, when the app connects. Every method and hook checks the
-declaration **before it sends**, and does exactly one of three things when the capability is
-missing:
+Synapse reads `hostCapabilities` once, when the app connects. Every gated method and hook checks
+the declaration **before it sends**, and does exactly one of three things when the capability is
+missing. `resize` is never gated, and `useDataSync` only listens; the table gives each case:
 
 - **A request with an answer rejects with `HostCapabilityError`, without sending.** Requests carry
   no deadline, because a file picker waits on a person and a task result blocks until the task
