@@ -61,8 +61,9 @@ the silent case. A host that answers with a JSON-RPC error does reject, and `use
 
 > **Version note.** `useDataSync` moved to the spec notification in `@nimblebrain/synapse` **0.19.0**.
 > Before that it listened for `synapse/data-changed`, which NimbleBrain hosts **after v0.26.0** no
-> longer send — so on an SDK older than 0.19.0 the callback fires on a v0.26.0-or-earlier host and
-> stops on a later one. This skill's stated target predates 0.19.0; see #49.
+> longer send — so on an SDK older than 0.19.0 the callback fires on a NimbleBrain host up to v0.26.0,
+> stops on a later one, and never fires on any other host. This skill's stated target predates
+> 0.19.0; see #49.
 
 ## What you actually lose
 
