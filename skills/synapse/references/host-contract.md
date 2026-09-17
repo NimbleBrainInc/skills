@@ -57,7 +57,7 @@ The HTML must be **identity-free and static** — never bake tenant/workspace da
 
 ## 3. The bridge (what the iframe and host exchange)
 
-The host mounts the HTML in a sandboxed iframe and speaks the MCP **Apps spec (`2026-01-26`)** over `postMessage`. It declares the spec capabilities it serves and the three `ai.nimblebrain/*` extensions in its `ui/initialize` answer, so the file picker, host actions and keyboard forwarding work here and degrade as `portability.md` describes elsewhere. The `@nimblebrain/synapse` React SDK wraps all of it — you use hooks, not raw messages:
+The host mounts the HTML in a sandboxed iframe and speaks the MCP **Apps spec (`2026-01-26`)** over `postMessage`. From the host release that closes [nimblebrain#1239](https://github.com/NimbleBrainInc/nimblebrain/issues/1239), it declares the spec capabilities it serves and the three `ai.nimblebrain/*` extensions in its `ui/initialize` answer. The file picker, host actions and keyboard forwarding then work here, and degrade as `portability.md` describes on other hosts. The `@nimblebrain/synapse` React SDK wraps all of it — you use hooks, not raw messages:
 
 - `useApp().callTool(name, args)` / `useCallTool(name)` → invoke your server's tools (`tools/call`).
 - `useDataSync(cb)` → re-fetch when your **server** announces a write. The server sends `notifications/resources/list_changed`, and the host relays it verbatim to that server's views. It covers every writer (the agent, another view, a webhook), and a write the server doesn't announce refreshes nothing.

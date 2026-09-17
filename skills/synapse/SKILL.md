@@ -14,7 +14,7 @@ metadata:
 
 Give an MCP server an interactive UI. The UI is a React app built to **one inlined HTML file** with `@nimblebrain/synapse` + Vite, served by the server as the MCP resource `ui://<name>/main`, and mounted by an **MCP Apps** host (Claude, ChatGPT, NimbleBrain) in a sandboxed iframe wired to a `postMessage` bridge. The UI calls the server's **existing tools** over that bridge — it is data-layer-agnostic and needs no special server framework. Every host speaks the same bridge; they differ in which capabilities they declare, and the SDK behaves predictably when one is missing. Read Portability below before you write components.
 
-**Target `@nimblebrain/synapse@^0.20.0`** (published on npm), with its peers `@modelcontextprotocol/ext-apps@^1.7.5` and `@modelcontextprotocol/sdk`. A caret range on `0.x` does not cross a minor, so an app stays on its pin until someone bumps it deliberately. The package *is* the documentation — read its exported types before writing code. Its guides live at `synapse.nimblebrain.ai`.
+**Target `@nimblebrain/synapse@^0.20.0`** (published on npm), with its peers `@modelcontextprotocol/ext-apps@^1.7.5` and `@modelcontextprotocol/sdk@^1.29.0`. A caret range on `0.x` does not cross a minor, so an app stays on its pin until someone bumps it deliberately. **On NimbleBrain, 0.20.0 needs a host release that declares `message`, `updateModelContext` and the `ai.nimblebrain/*` extensions** ([nimblebrain#1239](https://github.com/NimbleBrainInc/nimblebrain/issues/1239)): on an earlier host, chat, model context, host actions and key forwarding do nothing and the file picker rejects. The package *is* the documentation — read its exported types before writing code. Its guides live at `synapse.nimblebrain.ai`.
 
 ## Pre-flight — read the SDK's types (the real docs)
 
@@ -37,7 +37,7 @@ it sends**, then does one documented thing when the capability is missing:
 - **a fire-and-forget call sends nothing** — `useSendMessage` (`message`), `useModelContext`
   (`updateModelContext`), `useAction`, `forwardKeys`; `openLink` opens the URL itself;
 - **a hook that waits on the host keeps its initial value** — `useToolResult`/`useToolInput` stay
-  `null`, `useDataSync` never fires without `serverResources.listChanged` (or without your server
+  `null`, `useDataSync` never fires where the host does not relay `notifications/resources/list_changed` (or without your server
   announcing, step 5).
 
 **The portable subset** is the handshake, theme and host context, tool input/results, `callTool`,
@@ -58,7 +58,7 @@ entry points: **`references/portability.md`**.
 
 1. **Analyze the server** — language (Python/FastMCP or TS), transport (stdio vs HTTP-native/edge-fronted), the tool list + return shapes, and deploy shape (`.mcpb` bundle vs a container image — the container needs a Node build stage, step 7).
 
-2. **Scaffold `ui/`** — `package.json` (`react`/`react-dom` `^19`, `@nimblebrain/synapse@^0.20.0`, `@modelcontextprotocol/ext-apps@^1.7.5`, `@modelcontextprotocol/sdk`, `vite`, `vite-plugin-singlefile`, `typescript`; add `marked` + `dompurify` only if you render markdown), `vite.config.ts` (`react()`, `viteSingleFile()`, `synapseVite()`, `build.assetsInlineLimit: Infinity`), a strict `tsconfig.json`, `index.html`, and `.gitignore` (`node_modules/`, `dist/`, `.vite/`). **Commit `package-lock.json`** so the build can `npm ci`.
+2. **Scaffold `ui/`** — `package.json` (`react`/`react-dom` `^19`, `@nimblebrain/synapse@^0.20.0`, `@modelcontextprotocol/ext-apps@^1.7.5`, `@modelcontextprotocol/sdk@^1.29.0`, `vite`, `vite-plugin-singlefile`, `typescript`; add `marked` + `dompurify` only if you render markdown), `vite.config.ts` (`react()`, `viteSingleFile()`, `synapseVite()`, `build.assetsInlineLimit: Infinity`), a strict `tsconfig.json`, `index.html`, and `.gitignore` (`node_modules/`, `dist/`, `.vite/`). **Commit `package-lock.json`** so the build can `npm ci`.
 
 3. **Build `App.tsx`** — `<AppProvider name="<server>" version="<version>">`. One side-effect import goes in the Vite entry (`main.tsx`): `import "@nimblebrain/synapse/ui/base"` (the root-height chain `AppFrame` fills — applied before first paint; gotcha M). **Don't import fonts** — the SDK ships none, and typography arrives from the host like every other theme value (gotcha N). Use the package's **`AppFrame` shell** (with `AppFrame.Body bleed` hosting `ListDetailLayout`/`SidebarLayout`) — **never** a hand-rolled `height:100vh` (gotcha D). Drive data with `useCallTool(name)` or a thin `useCall<T>()` wrapper around `useApp().callTool(name, args)`; re-read in `useDataSync(() => …)`, which fires when your server announces a write (step 5) — the callback names no tool, so the answer is always to re-read; theme with `tokens`/`useTheme`; push agent context with `useModelContext`. **Master lists use `ListRow`, not `Table`** (gotcha D — a `Table` overflows a fixed-width rail and paints over the detail pane).
 

@@ -35,7 +35,7 @@ Nothing is gated on the host's name.
 | `useResize`, `app.resize` | nothing | always sent — the spec gates it on nothing |
 | `useCallTool`, `app.callTool` | `serverTools` | `HostCapabilityError`; `useCallTool`'s `error` holds it |
 | `app.readServerResource` | `serverResources` | `HostCapabilityError` |
-| `useDataSync` | `serverResources.listChanged` | the callback never runs. **It also needs your server to announce its writes**, otherwise it stays silent on every host |
+| `useDataSync` | a host that relays `notifications/resources/list_changed` (declared as `serverResources.listChanged`) | the callback never runs. The hook only listens and does not read the declaration. **It also needs your server to announce its writes**, otherwise it stays silent on every host |
 | `useModelContext`, `app.updateModelContext` | `updateModelContext` | no-op |
 | `useSendMessage`, `app.sendMessage` | `message` | no-op. The optional `context` becomes `_meta.context` only on a host that identifies as NimbleBrain |
 | `app.openLink` | `openLinks` | opens the URL with `window.open` instead (also when the host refuses) |
