@@ -1,87 +1,150 @@
-# Portability — what the SDK does in a host that isn't NimbleBrain
+# Portability — the contract every Synapse call keeps
 
 A Synapse app is an **MCP app**: one inlined HTML file served as a `ui://` resource and mounted
-over the [MCP ext-apps](https://modelcontextprotocol.io/extensions/apps/overview) (`2026-01-26`)
-`postMessage` bridge. From 0.19.0, `@nimblebrain/synapse` runs on the spec's own client —
-`@modelcontextprotocol/ext-apps`'s `App` owns the transport, the handshake and the wire schemas —
-and is the framework on top of it: theme injection, parsed tool results, multi-subscriber events,
-resize, and the NimbleBrain extensions. It is not a private protocol.
+over the [MCP Apps](https://modelcontextprotocol.io/extensions/apps/overview) (`2026-01-26`)
+`postMessage` bridge. `@nimblebrain/synapse` runs on the spec's own client
+(`@modelcontextprotocol/ext-apps`'s `App` owns the transport, the handshake and the wire schemas),
+and adds a framework on top: theme injection, parsed tool results, multi-subscriber events,
+resize, and three NimbleBrain extensions. It is not a private protocol. Claude, ChatGPT and
+NimbleBrain all speak it.
 
-NimbleBrain is the host the SDK is developed and verified against, and it implements a small set
-of `synapse/*` extensions on top of the spec. Everything below was read out of
-`@nimblebrain/synapse@0.19.0` source, so you can re-check any row at
+Hosts differ in **what they offer**, not in how they speak. Each host lists what it offers in its
+answer to `ui/initialize`, as `hostCapabilities`. Everything below can be re-checked against
 `github.com/NimbleBrainInc/synapse`.
 
-## Feature-detect at runtime
+## The contract
 
-`<AppProvider>` renders **nothing** until the `ui/initialize` handshake completes, so by the time a
-component reads `useApp().isNimbleBrainHost` (or `hostInfo`, or `supportsTasks`) it is settled, and
-it does not change afterwards. `{app.isNimbleBrainHost && <Upload/>}` is therefore safe.
+Synapse reads `hostCapabilities` once, when the app connects. Every gated method and hook checks
+the declaration **before it sends**, and does exactly one of three things when the capability is
+missing. `resize` is never gated, and `useDataSync` only listens; the table gives each case:
+
+- **A request with an answer rejects with `HostCapabilityError`, without sending.** Requests carry
+  no deadline, because a file picker waits on a person and a task result blocks until the task
+  ends. A request the host never answers would therefore stay pending forever, so it is never sent.
+  `error.capability` names what the host did not declare.
+- **A fire-and-forget call sends nothing.**
+- **A hook that waits for the host keeps its initial value.**
+
+Nothing is gated on the host's name.
+
+| Hook / function | Needs | Without it |
+|---|---|---|
+| `AppProvider`, `useApp` | nothing (the handshake) | works |
+| `useTheme`, `useHostContext` | nothing | neutral defaults; host-only context fields (`workspace`) are `undefined`, so type them optional |
+| `useToolResult`, `useToolInput` | nothing | `null` until the host sends one; a host that mounts the app without a tool call never does |
+| `useResize`, `app.resize` | nothing | always sent — the spec gates it on nothing |
+| `useCallTool`, `app.callTool` | `serverTools` | `HostCapabilityError`; `useCallTool`'s `error` holds it |
+| `app.readServerResource` | `serverResources` | `HostCapabilityError` |
+| `useDataSync` | a host that relays `notifications/resources/list_changed` (declared as `serverResources.listChanged`) | the callback never runs. The hook only listens and does not read the declaration. **It also needs your server to announce its writes**, otherwise it stays silent on every host |
+| `useModelContext`, `app.updateModelContext` | `updateModelContext` | no-op |
+| `useSendMessage`, `app.sendMessage` | `message` | no-op. The optional `context` becomes `_meta.context` only on a host that identifies as NimbleBrain |
+| `app.openLink` | `openLinks` | opens the URL with `window.open` instead (also when the host refuses) |
+| `downloadFile(app, …)` | `downloadFile` | `HostCapabilityError`. Resolves `{ isError: true }` when the host declined or the user cancelled |
+| `useCallToolAsTask`, `callToolAsTask` | `experimental["io.modelcontextprotocol/tasks"]` with `requests.tools.call` | `HostCapabilityError`. Check `app.supportsTasks`; fall back to `callTool` |
+| `useAction`, `action(app, …)` | `experimental["ai.nimblebrain/action"]` | no-op |
+| `useFileUpload` (`pickFile`, `pickFiles`) | `experimental["ai.nimblebrain/request-file"]` | `HostCapabilityError` |
+| `connect({ forwardKeys })` | `experimental["ai.nimblebrain/keydown"]` | keys are not captured; the browser handles them |
+
+## Decide what to offer from the declaration
+
+`<AppProvider>` renders **nothing** until the handshake completes, so `app.hostCapabilities`,
+`app.supportsTasks` and `hostSupports(app, …)` are settled before any component reads them, and
+they do not change afterwards. Hide an affordance the host cannot fulfil, instead of letting the
+user press it and then showing a no-op or an error:
+
+```tsx
+import { hostSupports } from "@nimblebrain/synapse";
+import { useApp, useFileUpload, useSendMessage } from "@nimblebrain/synapse/react";
+
+const app = useApp();
+const canAttach = hostSupports(app, "requestFile");
+const canChat = app.hostCapabilities.message !== undefined;
+```
 
 Two consequences of the provider gate:
 
 - **Where the handshake never returns, nothing renders.** Opening the built HTML directly, or a
   host that never answers `ui/initialize`, leaves a blank pane. The preview (gotcha F) answers the
   handshake, so develop there.
-- **A handshake the spec's client refuses is thrown during render**, so it reaches your nearest
-  error boundary. A host that answers with fields outside the spec (an unknown
-  `styles.variables` key, pre-spec `serverInfo`/`capabilities` naming) cannot connect at all.
+- **If the spec's client rejects the handshake, the error is thrown during render**, and your
+  nearest error boundary catches it. A host whose answer has fields outside the spec (an unknown
+  `styles.variables` key, `serverInfo`/`capabilities` in place of
+  `hostInfo`/`hostCapabilities`) cannot connect at all.
 
-Branching on the host identity is for hiding an affordance the host can't fulfil. It is not
-needed to avoid a crash: every extension below either no-ops or throws something catchable.
+## The portable subset
 
-## Per-hook
+These are defined by the spec, and every host that renders apps is expected to support them:
 
-The SDK checks the host's capabilities for exactly two things, `downloadFile` and tasks. Every
-other spec call goes out regardless, and **no request carries a deadline** (a picker waiting on a
-person, a blocking task result and a slow tool all need that). So the column that matters is
-**how each call fails where the host ignores it**.
+- the handshake, host context and theme;
+- tool input and results;
+- `callTool` on your own server;
+- `sendMessage`;
+- `updateModelContext`;
+- `resize`.
 
-| Hook / function | Wire | In a host that doesn't implement it |
+An app built only on these behaves the same in Claude, ChatGPT and NimbleBrain. Everything else in
+the table is still spec surface, but hosts may leave it out, so read the declaration before you
+offer it.
+
+## The NimbleBrain extensions — the complete list
+
+| Extension | Method | Declared as (`hostCapabilities.experimental`) |
 |---|---|---|
-| `AppProvider`, `useApp` | the `ui/initialize` handshake and the `App` handle | works |
-| `useTheme`, `useHostContext` | ext-apps host context and `ui/notifications/host-context-changed` | works. `fontFaces` rides the `synapse/fontFaces` context key — absent, the web-safe token fallbacks stay in force (gotcha N). Host-specific context fields are absent elsewhere — type them optional |
-| `useToolResult`, `useToolInput`, `useResize` | ext-apps tool notifications and `ui/notifications/size-changed` | works |
-| `useCallTool`, `app.callTool` | `tools/call` — **request** | a host that drops the call leaves the promise **pending forever**: `isPending` stays `true`, no error arrives. A host that answers with an error rejects, and `useCallTool` sets `error`. The call reaches the app's own server only |
-| `app.readServerResource` | `resources/read` — **request** | same pending-forever shape as `useCallTool` |
-| `useDataSync` | `notifications/resources/list_changed`, inbound, from the app's own server | fires wherever the host relays it (capability `serverResources.listChanged`). The SDK does not read that capability, so there is nothing to check: where the host doesn't relay, the hook is simply quiet. **It also needs your server to announce its writes** — without that it is quiet on every host |
-| `useModelContext`, `app.updateModelContext` | `ui/update-model-context` — request, fire-and-forget | returns nothing and swallows the failure: where unsupported it vanishes without a trace |
-| `useSendMessage`, `app.sendMessage` | `ui/message` — request, fire-and-forget | same as `useModelContext`. The optional `context` argument becomes `_meta.context` on NimbleBrain only |
-| `app.openLink` | `ui/open-link` — **request** | falls back to `window.open(url, "_blank", "noopener")` **only on an explicit rejection** — a host that ignores the request never settles it, so the fallback never runs and links quietly do nothing |
-| `downloadFile(app, …)` | `ui/download-file` — **request** | **rejects without sending** when the host didn't advertise the `downloadFile` capability. Resolves `{ isError: true }` when the host declined or the user cancelled. Handle the promise |
-| `useCallToolAsTask`, `callToolAsTask` | MCP 2025-11-25 tasks — `tools/call` with a `task` param, then `tasks/*` | **throws** unless the host negotiated `experimental["io.modelcontextprotocol/tasks"]` (`app.supportsTasks`). Fall back to `callTool` |
-| `useFileUpload` (`pickFile`, `pickFiles`) | `synapse/request-file` **(extension)** | **throws** `pickFile is not supported in this host` — an explicit host check, not a failed request |
-| `useAction`, `action(app, …)` | `synapse/action`, outbound **(extension)** | **silent no-op** — guarded, returns without sending |
-| `connect({ forwardKeys })` | `synapse/keydown` **(extension)** | not sent — forwarding only starts on a NimbleBrain host |
+| Host actions (`action`, `useAction`) | `synapse/action` | `ai.nimblebrain/action` |
+| File picker (`pickFile`, `pickFiles`, `useFileUpload`), answered `{ files }` | `synapse/request-file` | `ai.nimblebrain/request-file` |
+| Keyboard forwarding (`forwardKeys`) | `synapse/keydown` | `ai.nimblebrain/keydown` |
 
-> **Version note.** `useDataSync` moved to the spec notification in `@nimblebrain/synapse` **0.19.0**.
-> Before that it listened for `synapse/data-changed`, which NimbleBrain hosts **after v0.26.0** no
-> longer send — so on an SDK older than 0.19.0 the callback fires on a NimbleBrain host up to v0.26.0,
-> stops on a later one, and never fires on any other host.
+`NIMBLEBRAIN_EXTENSIONS` (package root) is the same table in code. The extensions are declared under
+`experimental` because MCP Apps has no field for extensions, and `experimental` is the only part of
+`hostCapabilities` whose contents a spec client keeps. Two NimbleBrain fields also ride inside spec
+messages, and other hosts ignore them: `workspace` in the host context, and `_meta.context` on
+`sendMessage`. The host's typeface arrives as font-face descriptors in the host context (gotcha N),
+and an app with no fonts from the host falls back to web-safe stacks.
 
-## What you actually lose
+Live refresh and file download are **not** extensions. `useDataSync` rides the spec's
+`notifications/resources/list_changed`, and `downloadFile` rides `ui/download-file`.
 
-Only the handshake, theming, host context and the tool notifications are unconditional. Tool calls,
-resource reads, agent-visible state and chat are spec but ride **optional** host capabilities, and
-the SDK sends them without checking. Since no request has a deadline, a host that doesn't proxy tool
-calls leaves every `useCallTool` **pending forever** — indistinguishable from a slow server, so
-probe once at startup rather than debugging it per component. Agent-visible state and chat fail the
-other way: they vanish with nothing to observe at all. The `connectUI()` path models this properly —
-`capabilities().pull` plus `HostUnsupportedError` — worth copying if you target unknown hosts.
+An app does not read or write host-held state. There is no persistence channel, and nothing the
+host sends to the app triggers an action in it. An app reaches **its own server** and nothing else:
+`callTool` takes no target server, and cross-server work belongs to the agent.
 
-Beyond that, a non-NimbleBrain host costs you **the file picker** (it throws) and **host actions and
-keyboard forwarding** (silent). Live refresh and file download are spec, so they travel to any host
-that relays `list_changed` and advertises `downloadFile`.
+## Serving one app to Claude and ChatGPT
+
+Every MCP Apps host reads the same metadata, so a server serves the component **once**:
+
+- one `ui://` resource, served as `text/html;profile=mcp-app`;
+- bound to its tool by `_meta.ui.resourceUri` on the tool descriptor;
+- `ui.visibility` saying who may call each tool: `["model"]`, `["app"]`, or both;
+- `ui.csp` declaring the origins the component loads from (`connectDomains`, `resourceDomains`);
+- a server that requires sign-in declares `securitySchemes` on each tool, answers an
+  unauthenticated request with a `401` carrying `resource_metadata`, and publishes
+  protected-resource metadata whose `resource` equals the server URL exactly.
+
+Do not serve a second copy under another MIME type or bind it with a host-specific key. Leave
+`ui.domain` unset unless the component needs a stable origin: each host then gives the frame its
+own sandbox origin.
+
+For a Python server, `nimblebrain-synapse`'s `SynapseUI` emits all of this from one declaration:
+the resource, the tool `_meta`, the `io.modelcontextprotocol/ui` extension declaration, and an
+`auth_error_result` helper for the sign-in challenge. Its README has the API.
+
+Check a running server against each host's requirements before you submit it:
+
+```bash
+npx @nimblebrain/synapse check --target claude,chatgpt https://your-server.example.com/mcp
+```
 
 ## Two connection entry points
 
-`connect()` / `<AppProvider>` (→ `App`) is **this skill's path** — a full app in a pane, and a
-component rendered from a tool result alike (`useToolResult` / `useToolInput` / `useResize`). The
-spec plus the `synapse/*` extensions above, each degrading as the table says.
+`connect()` / `<AppProvider>` (→ `App`) is **this skill's path**: a full app in a pane, or a
+component rendered from a tool result (`useToolResult` / `useToolInput` / `useResize`), bound by
+the contract above.
 
-`connectUI()` (→ `SynapseUIClient`, from `@nimblebrain/synapse/host`) is the explicitly cross-host
-one: it feature-detects the browsing context, selects a per-host adapter, and exposes
-`capabilities()` (`pull`, `sendPrompt`, `openLink`) so a widget can branch on what the host
-actually offers, throwing `HostUnsupportedError` where it doesn't. Push-first and widget-shaped —
-the tool output that spawned it arrives at render via `data()` / `onData()`. It is not a substitute
-for `AppProvider` in a full app.
+`connectUI()` (→ `SynapseUIClient`, from `@nimblebrain/synapse/host`, and `window.SynapseUI` in
+the IIFE that `SynapseUI` inlines) is the small push-first client for a self-contained component
+that only renders a tool's output. It speaks MCP Apps and nothing else. Inside a frame it runs the
+`ui/*` handshake. Opened standalone, it renders the data baked into the page. The tool output
+arrives through `data()` / `onData()`. `capabilities()` (`pull`, `sendPrompt`, `openLink`) says
+what the host offers. `callTool()` rejects with `HostUnsupportedError` where the host has no pull,
+and with `ToolCallError` when the result reports `isError`. It does not replace `AppProvider` in a
+full app.
