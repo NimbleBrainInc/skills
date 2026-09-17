@@ -59,10 +59,10 @@ the silent case. A host that answers with a JSON-RPC error does reject, and `use
 
 `SynapseOptions.forwardKeys` sends `synapse/keydown`, also unguarded and also dropped elsewhere.
 
-> **Version note.** `useDataSync` moved to the spec notification in `@nimblebrain/synapse` **0.19.0**,
-> and the NimbleBrain host no longer sends `synapse/data-changed` at all. On a release before 0.19.0
-> the callback therefore never fires, on any host. This skill's stated target predates that — see the
-> skill's own version line, which is being refreshed separately.
+> **Version note.** `useDataSync` moved to the spec notification in `@nimblebrain/synapse` **0.19.0**.
+> Before that it listened for `synapse/data-changed`, which NimbleBrain hosts **after v0.26.0** no
+> longer send — so on an SDK older than 0.19.0 the callback fires on a v0.26.0-or-earlier host and
+> stops on a later one. This skill's stated target predates 0.19.0; see #49.
 
 ## What you actually lose
 
@@ -77,9 +77,10 @@ component. Agent-visible state and chat fail the other way — they are notifica
 vanish with nothing to observe at all. The `connectUI()` path models this properly —
 `capabilities().pull` plus `HostUnsupportedError` — worth copying if you target unknown hosts.
 
-Beyond that, a non-NimbleBrain host costs you **agent-driven refresh**
-(`useDataSync` goes quiet), **file pick and file download**, and **state that
-survives a reload**. Two of those fail loudly (`useFileUpload` throws) and the rest fail quietly,
+Beyond that, a non-NimbleBrain host costs you **file pick and file download** and **state that
+survives a reload**. Live refresh is no longer on that list: from 0.19.0 `useDataSync` rides the
+spec notification and works anywhere your server announces. One of these fails loudly
+(`useFileUpload` throws) and the rest fail quietly,
 which is the more expensive kind: a `downloadFile` button that does nothing looks like a bug in
 your app.
 
