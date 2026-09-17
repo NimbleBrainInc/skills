@@ -54,6 +54,11 @@ person, a blocking task result and a slow tool all need that). So the column tha
 | `useAction`, `action(app, …)` | `synapse/action`, outbound **(extension)** | **silent no-op** — guarded, returns without sending |
 | `connect({ forwardKeys })` | `synapse/keydown` **(extension)** | not sent — forwarding only starts on a NimbleBrain host |
 
+> **Version note.** `useDataSync` moved to the spec notification in `@nimblebrain/synapse` **0.19.0**.
+> Before that it listened for `synapse/data-changed`, which NimbleBrain hosts **after v0.26.0** no
+> longer send — so on an SDK older than 0.19.0 the callback fires on a NimbleBrain host up to v0.26.0,
+> stops on a later one, and never fires on any other host.
+
 ## What you actually lose
 
 Only the handshake, theming, host context and the tool notifications are unconditional. Tool calls,
