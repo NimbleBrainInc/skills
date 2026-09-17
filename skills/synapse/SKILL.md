@@ -6,7 +6,7 @@ compatibility: Node.js 22+, npm (for the React/Vite UI build). The MCP server it
 allowed-tools: Read Write Bash Glob Grep WebFetch
 metadata:
   area: synapse
-  version: "0.1.0"
+  version: "0.2.0"
   author: NimbleBrain
 ---
 
@@ -14,63 +14,63 @@ metadata:
 
 Give an MCP server an interactive UI. The UI is a React app built to **one inlined HTML file** with `@nimblebrain/synapse` + Vite, served by the server as the MCP resource `ui://<name>/main`, and mounted by an **MCP ext-apps** host in a sandboxed iframe wired to a `postMessage` bridge. The UI calls the server's **existing tools** over that bridge — it is data-layer-agnostic and needs no special server framework. NimbleBrain is the host the SDK is developed and verified against — but the bridge is a spec, and which parts of the SDK travel to another host has an exact answer. Read Portability below before you write components.
 
-**Target `@nimblebrain/synapse@^0.13.0`** (published on npm). The package *is* the documentation — read its exported types before writing code.
+**Target `@nimblebrain/synapse@^0.19.0`** (published on npm), with its peer `@modelcontextprotocol/ext-apps@^1.7.5`. A caret range on `0.x` does not cross a minor, so an app on an older pin stays there until someone bumps it deliberately — and anything below 0.17 is on a connection API that no longer exists. The package *is* the documentation — read its exported types before writing code. Its guides live at `synapse.nimblebrain.ai`.
 
 ## Pre-flight — read the SDK's types (the real docs)
 
 From the installed package (`node_modules/@nimblebrain/synapse/dist/*.d.ts`) or the public repo (`github.com/NimbleBrainInc/synapse`):
-- the `react` entry — hooks (`useSynapse`, `useCallTool`, `useDataSync`, `useTheme`, `useVisibleState`, …).
-- the `ui` entry — the **component library** (`AppFrame`, `ListDetailLayout`, `ListRow`, `Table`, `Badge`, `Prose`, `tokens`, …). Don't hand-roll styling.
-- the type exports — `ToolCallResult`, `SynapseTheme`, the `Synapse` interface.
+- the `react` entry — `AppProvider` and its hooks (`useApp`, `useCallTool`, `useCallToolAsTask`, `useDataSync`, `useTheme`, `useHostContext`, `useModelContext`, `useSendMessage`, `useAction`, `useFileUpload`, `useToolResult`, `useToolInput`, `useResize`).
+- the `ui` entry — the **component library** (`AppFrame`, `ListDetailLayout`, `ListRow`, `Table`, `Badge`, `Prose`, `ConfirmDialog`, `tokens`, …). Don't hand-roll styling.
+- the type exports — `ToolCallResult`, `Theme`, the `App` interface.
 
 Then read **`references/gotchas.md`** (non-obvious API facts that each save a debugging cycle) and **`references/host-contract.md`** (the NimbleBrain manifest declaration + the bridge). Skim these first; they're short and they're the difference between working and "why is every tool call returning `unauthenticated`."
 
 ## Portability — this is an MCP app, not a NimbleBrain app
 
 Any host implementing ext-apps can mount the bundle. NimbleBrain implements the spec plus a few
-`synapse/*` extensions, and the SDK's hooks split across that line. **The extensions do not all
-degrade the same way** — know which half you are using before you build on it:
+`synapse/*` extensions, and the SDK's hooks split across that line. **They do not all degrade the
+same way** — know which half you are using before you build on it:
 
-| | Hooks / methods | Off NimbleBrain |
+| | Hooks / functions | Off NimbleBrain |
 |---|---|---|
-| **Spec, unconditional** | `useSynapse`, `useTheme`, `useHostContext` | work — this is the handshake and the host context, i.e. the bridge itself |
-| **Spec, host-capability-gated** | `useCallTool`, `readResource`, `useVisibleState`, `useChat`, `openLink` | ext-apps marks each of these five host capabilities **optional** and the SDK sends without checking. *How* it fails depends on the call type — below |
-| **Spec, task-gated** | `useCallToolAsTask` | **throws** when the host omits `tasks.requests.tools.call`. That is the MCP tasks utility, not an ext-apps host capability — `McpUiHostCapabilities` has no `tasks` member |
-| **Extension — throws** | `useFileUpload` | `Error: pickFile is not supported in this host` |
-| **Extension — silently does nothing** | `useAction`, `useDataSync`, `downloadFile` | no-op, or a callback that never fires. A dead download button looks like your bug |
-| **Extension — dead everywhere** | `useAgentAction` | never fires, on NimbleBrain included: no host sends `synapse/action` to an app. Don't use it |
-| **Extension — partial** | `useStore` | the in-memory store works; persistence is swallowed and nothing rehydrates |
+| **Spec, unconditional** | `AppProvider`/`useApp`, `useTheme`, `useHostContext`, `useToolResult`, `useToolInput`, `useResize` | work — this is the handshake and the host context, i.e. the bridge itself |
+| **Spec, host-capability-gated** | `useCallTool`, `readServerResource`, `useModelContext`, `useSendMessage`, `openLink` | the host capabilities behind these are **optional** and the SDK sends without checking them. *How* it fails depends on the call — below |
+| **Spec, checked** | `downloadFile` | its promise **rejects without sending** when the host did not advertise `downloadFile` |
+| **Spec, needs your server** | `useDataSync` | fires on `notifications/resources/list_changed` from the app's own server, on any host that relays it. Quiet where the host doesn't relay — and on every host if your server never announces (Process step 5) |
+| **Spec, task-gated** | `useCallToolAsTask` | **throws** when the host did not negotiate the MCP tasks utility (`app.supportsTasks` is `false`) |
+| **Extension — throws** | `useFileUpload` (`pickFile`, `pickFiles`) | `Error: pickFile is not supported in this host` |
+| **Extension — silent** | `useAction`, `forwardKeys` | guarded no-ops |
 
-**Request or notification decides how a gated call fails.** `useCallTool` and `readResource` are
-requests on a transport with **no deadline**, so a host that *ignores* one hangs **pending
-forever** — `isPending` stays `true` and nothing settles. (A host that answers with a JSON-RPC
-error does reject, and `useCallTool` surfaces it.) `useVisibleState` and `useChat` are
-notifications, posted with no `id` and returning no promise, so they are **dropped without a
-trace**. `openLink` is a request with a `window.open` fallback, but it runs only on an explicit
-*rejection*: a host that ignores the request never settles the promise, and the fallback never
-fires. Assume nothing degrades on its own.
+**No request has a deadline, so a host that ignores one never settles it.** `useCallTool` and
+`readServerResource` then stay **pending forever** — `isPending` stays `true` and nothing arrives.
+(A host that answers with a JSON-RPC error does reject, and `useCallTool` surfaces it.)
+`useModelContext` and `useSendMessage` return nothing and swallow failures, so where the host
+doesn't implement them they vanish without a trace. `openLink` falls back to `window.open` only on
+an explicit *rejection*: a host that ignores the request never triggers the fallback.
 
-`useSynapse().isNimbleBrainHost` is the feature check, but it resolves during the `ui/initialize`
-handshake and carries **no subscription**: `SynapseProvider` renders children before the handshake
-completes, so a render-time read is `false` even on NimbleBrain and nothing re-renders when it
-flips. Prefer making the call and handling the failure — `pickFile` throws synchronously and is
-cheap to `try`/`catch`. `await synapse.ready` also works, but it is that same undeadlined request,
-so where the handshake never returns a `ready`-gated feature never renders at all. A bare
-`{synapse.isNimbleBrainHost && <Upload/>}` hides the feature on the one host that has it.
-Per-hook wire methods, exact degradation, and the three connection entry points:
+`<AppProvider>` renders nothing until the handshake completes, so `useApp().isNimbleBrainHost` is
+settled by the time any component reads it. Branch on it to hide an affordance the host can't
+fulfil (an upload button), or just make the call and handle the failure — `pickFile` throws and is
+cheap to `try`/`catch`. The flip side: where the handshake never returns (the built HTML opened
+directly), nothing under the provider renders at all.
+Per-hook wire methods, exact degradation, and the connection entry points:
 **`references/portability.md`**.
 
 ## Process
 
 1. **Analyze the server** — language (Python/FastMCP or TS), transport (stdio vs HTTP-native/edge-fronted), the tool list + return shapes, and deploy shape (`.mcpb` bundle vs a container image — the container needs a Node build stage, step 7).
 
-2. **Scaffold `ui/`** — `package.json` (`react`/`react-dom` `^19`, `@nimblebrain/synapse@^0.13.0`, `vite`, `vite-plugin-singlefile`, `typescript`; add `marked` + `dompurify` only if you render markdown), `vite.config.ts` (`react()`, `viteSingleFile()`, `synapseVite()`, `build.assetsInlineLimit: Infinity`), a strict `tsconfig.json`, `index.html`, and `.gitignore` (`node_modules/`, `dist/`, `.vite/`). **Commit `package-lock.json`** so the build can `npm ci`.
+2. **Scaffold `ui/`** — `package.json` (`react`/`react-dom` `^19`, `@nimblebrain/synapse@^0.19.0`, `@modelcontextprotocol/ext-apps@^1.7.5`, `vite`, `vite-plugin-singlefile`, `typescript`; add `marked` + `dompurify` only if you render markdown), `vite.config.ts` (`react()`, `viteSingleFile()`, `synapseVite()`, `build.assetsInlineLimit: Infinity`), a strict `tsconfig.json`, `index.html`, and `.gitignore` (`node_modules/`, `dist/`, `.vite/`). **Commit `package-lock.json`** so the build can `npm ci`.
 
-3. **Build `App.tsx`** — `<SynapseProvider name="<server>">`. One side-effect import goes in the Vite entry (`main.tsx`): `import "@nimblebrain/synapse/ui/base"` (the root-height chain `AppFrame` fills — applied before first paint; gotcha M). **Don't import fonts** — the SDK ships none, and typography arrives from the host like every other theme value (gotcha N). Use the package's **`AppFrame` shell** (with `AppFrame.Body bleed` hosting `ListDetailLayout`/`SidebarLayout`) — **never** a hand-rolled `height:100vh` (gotcha D). Drive data with a thin `useCall<T>()` wrapper around `useSynapse().callTool(name, args)`; refresh with `useDataSync` (NimbleBrain-only — off it the callback never fires, so keep your own reload path); theme with `tokens`/`useTheme`; push agent context with `useVisibleState`. **Master lists use `ListRow`, not `Table`** (gotcha D — a `Table` overflows a fixed-width rail and paints over the detail pane).
+3. **Build `App.tsx`** — `<AppProvider name="<server>" version="<version>">`. One side-effect import goes in the Vite entry (`main.tsx`): `import "@nimblebrain/synapse/ui/base"` (the root-height chain `AppFrame` fills — applied before first paint; gotcha M). **Don't import fonts** — the SDK ships none, and typography arrives from the host like every other theme value (gotcha N). Use the package's **`AppFrame` shell** (with `AppFrame.Body bleed` hosting `ListDetailLayout`/`SidebarLayout`) — **never** a hand-rolled `height:100vh` (gotcha D). Drive data with `useCallTool(name)` or a thin `useCall<T>()` wrapper around `useApp().callTool(name, args)`; re-read in `useDataSync(() => …)`, which fires when your server announces a write (step 5) — the callback names no tool, so the answer is always to re-read; theme with `tokens`/`useTheme`; push agent context with `useModelContext`. **Master lists use `ListRow`, not `Table`** (gotcha D — a `Table` overflows a fixed-width rail and paints over the detail pane).
 
 4. **Sanitize any rendered HTML — do not skip (stored-XSS).** If you render server- or agent-authored markdown (notes, descriptions, research output) via `Prose` / `dangerouslySetInnerHTML`, run it through **DOMPurify first**: `DOMPurify.sanitize(marked.parse(md, { async: false }) as string)`. The iframe runs with `allow-scripts` and a `script-src 'unsafe-inline'` CSP, so **sanitization — not the CSP — is the only thing stopping an injected `<script>`/`onerror` from running with full tool-bridge authority** (read/exfiltrate/mutate everything the tools can reach). Plain `<Text>{value}</Text>` is safe (React escapes). Full chain: gotcha K.
 
-5. **Serve the UI as a resource** — `@mcp.resource("ui://<name>/main", mime_type="text/html")` returning the built `ui/dist/index.html`. Resolve the path via an env var (`<APP>_UI_DIR`) with a `__file__`-relative fallback (gotcha E — an installed package lands in site-packages, so a `__file__`-relative `ui/dist` lookup misses). Make it a **bare file read**: no DB/auth session, identity-free HTML, all tenant data fetched at runtime through the bridge.
+5. **Serve the UI as a resource, and announce writes.** `@mcp.resource("ui://<name>/main")` returning the built `ui/dist/index.html`, served as the spec's MIME type `text/html;profile=mcp-app` (the default for a `ui://` URI in `fastmcp` 3.4+; pass `mime_type` explicitly anywhere else). Resolve the path via an env var (`<APP>_UI_DIR`) with a `__file__`-relative fallback (gotcha E — an installed package lands in site-packages, so a `__file__`-relative `ui/dist` lookup misses). Make it a **bare file read**: no DB/auth session, identity-free HTML, all tenant data fetched at runtime through the bridge. Then make every tool that writes send `notifications/resources/list_changed` after the write commits — that is the only thing `useDataSync` fires on, and it covers every writer (the agent, another view, a webhook):
+   ```python
+   await ctx.session.send_notification(ResourceListChangedNotification(), related_request_id=ctx.request_id)
+   ```
+   `related_request_id` makes it travel in the call's own response over HTTP. Announce once per write, not per row. Full guide: `synapse.nimblebrain.ai/docs/guides/keep-ui-in-sync/`.
 
 6. **Register the app with its host.** The bundle from steps 2–5 is the same either way; only registration differs. *Targeting the NimbleBrain host* — add `_meta["ai.nimblebrain/host"]` to `manifest.json`: one `placements[]` entry (`slot: "sidebar.apps"`, `resourceUri: "ui://<name>/main"`, `route`, `label`, `icon`). Full contract + options: `references/host-contract.md`. *Targeting another ext-apps host* — use that host's own registration mechanism; this skill doesn't cover it.
 
@@ -78,7 +78,7 @@ Per-hook wire methods, exact degradation, and the three connection entry points:
 
 8. **Local preview** — `cd ui && npm run dev` → open `/__preview`. For an **edge-fronted** server (identity from HTTP headers + a DB), the real server can't be driven over the stdio preview, so every call returns `unauthenticated` — point `synapseVite({ serverCmd })` at a **seeded stdio mock** behind an env flag (gotcha F).
 
-9. **Verify** — `npx tsc --noEmit` **and** `npm run build` (Vite/esbuild won't type-check on its own). Then run the **server project's own lint/format/test gate** (e.g. `make verify`, `ruff format --check`), not just the UI type-check — a format-only diff will redden CI even when types pass. **Toggle the preview between light and dark and eyeball every surface** — theme-blind color passes `tsc`/`build` and only breaks in one mode. Every `tokens.*` is backed in both; your own vars are not (gotcha L). Confirm the server serves `ui://<name>/main` as `text/html`.
+9. **Verify** — `npx tsc --noEmit` **and** `npm run build` (Vite/esbuild won't type-check on its own). Then run the **server project's own lint/format/test gate** (e.g. `make verify`, `ruff format --check`), not just the UI type-check — a format-only diff will redden CI even when types pass. **Toggle the preview between light and dark and eyeball every surface** — theme-blind color passes `tsc`/`build` and only breaks in one mode. Every `tokens.*` is backed in both; your own vars are not (gotcha L). Confirm the server serves `ui://<name>/main` as `text/html;profile=mcp-app`, and that a write through the preview refreshes the view (the preview relays your server's `list_changed`, gotcha F).
 
 ## Out of scope
 - Host-side rendering — the host already implements placement → iframe → bridge; you build the bundle + declare the placement, nothing more.

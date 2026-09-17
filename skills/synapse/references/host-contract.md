@@ -48,7 +48,7 @@ Your server exposes the built single-file HTML as an MCP resource at the `resour
 
 ```python
 # Python / FastMCP
-@mcp.resource("ui://tasks/main", mime_type="text/html")
+@mcp.resource("ui://tasks/main", mime_type="text/html;profile=mcp-app")
 def app_ui() -> str:
     return load_ui()   # bare file read of ui/dist/index.html — see gotcha E for path resolution
 ```
@@ -59,10 +59,10 @@ The HTML must be **identity-free and static** — never bake tenant/workspace da
 
 The host mounts the HTML in a sandboxed iframe and speaks the MCP **ext-apps spec (`2026-01-26`)** over `postMessage`. The `@nimblebrain/synapse` React SDK wraps all of it — you use hooks, not raw messages:
 
-- `useSynapse().callTool(name, args)` / `useCallTool(name)` → invoke your server's tools (`tools/call`).
-- `useDataSync(cb)` → re-fetch when the **agent** mutates data (the host broadcasts `data-changed` keyed on the bare server name; UI-initiated calls don't fire it).
+- `useApp().callTool(name, args)` / `useCallTool(name)` → invoke your server's tools (`tools/call`).
+- `useDataSync(cb)` → re-fetch when your **server** announces a write. The server sends `notifications/resources/list_changed`, and the host relays it verbatim to that server's views. It covers every writer (the agent, another view, a webhook), and a write the server doesn't announce refreshes nothing.
 - `useTheme()` / `tokens` → host theme (light/dark via CSS variables).
-- `useVisibleState(...)` → push the UI's current state so the agent can see what the user is looking at.
+- `useModelContext(...)` → push the UI's current state so the agent can see what the user is looking at.
 - `useHostContext()` → workspace + host context.
 
 The UI talks **only** to your server's own tools over this bridge. It never reaches the host's internals, and it never needs server-to-server calls.
