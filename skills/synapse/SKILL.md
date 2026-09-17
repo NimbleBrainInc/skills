@@ -6,7 +6,7 @@ compatibility: Node.js 22+, npm (for the React/Vite UI build). The MCP server it
 allowed-tools: Read Write Bash Glob Grep WebFetch
 metadata:
   area: synapse
-  version: "0.3.0"
+  version: "0.3.1"
   author: NimbleBrain
 ---
 
@@ -14,7 +14,7 @@ metadata:
 
 Give an MCP server an interactive UI. The UI is a React app built to **one inlined HTML file** with `@nimblebrain/synapse` + Vite, served by the server as the MCP resource `ui://<name>/main`, and mounted by an **MCP Apps** host (Claude, ChatGPT, NimbleBrain) in a sandboxed iframe wired to a `postMessage` bridge. The UI calls the server's **existing tools** over that bridge — it is data-layer-agnostic and needs no special server framework. Every host speaks the same bridge; they differ in which capabilities they declare, and the SDK behaves predictably when one is missing. Read Portability below before you write components.
 
-**Target `@nimblebrain/synapse@^0.20.0`** (published on npm), with its peers `@modelcontextprotocol/ext-apps@^1.7.5` and `@modelcontextprotocol/sdk@^1.29.0`. A caret range on `0.x` does not cross a minor, so an app stays on its pin until someone bumps it deliberately. **On NimbleBrain, 0.20.0 needs a host release that declares `message`, `updateModelContext` and the `ai.nimblebrain/*` extensions** ([nimblebrain#1239](https://github.com/NimbleBrainInc/nimblebrain/issues/1239)): on an earlier host, chat, model context, host actions and key forwarding do nothing and the file picker rejects. The package *is* the documentation — read its exported types before writing code. Its guides live at `synapse.nimblebrain.ai`.
+**Target `@nimblebrain/synapse@^0.20.0`** — the release these names ship in; until it is on npm, `npm install` of that range fails. Its peers are `@modelcontextprotocol/ext-apps@^1.7.5` and `@modelcontextprotocol/sdk@^1.29.0`. A caret range on `0.x` does not cross a minor, so an app stays on its pin until someone bumps it deliberately. **On NimbleBrain, 0.20.0 needs a host release that declares `message`, `updateModelContext` and the `ai.nimblebrain/*` extensions** ([nimblebrain#1239](https://github.com/NimbleBrainInc/nimblebrain/issues/1239)): on an earlier host, chat, model context, host actions and key forwarding do nothing and the file picker rejects. The package *is* the documentation — read its exported types before writing code. Its guides live at `synapse.nimblebrain.ai`.
 
 ## Pre-flight — read the SDK's types (the real docs)
 
@@ -43,9 +43,10 @@ gated, and `useDataSync` only listens):
 
 **The portable subset** is the handshake, theme and host context, tool input/results, `callTool`,
 `sendMessage`, `updateModelContext` and `resize`. An app built on that behaves the same everywhere.
-**The NimbleBrain extensions** are exactly three (`synapse/action`, `synapse/request-file`,
-`synapse/keydown`), each used only where the host declares `ai.nimblebrain/<name>` in
-`hostCapabilities.experimental`.
+**The NimbleBrain extensions** are exactly three (`ai.nimblebrain/action`,
+`ai.nimblebrain/request-file`, `ai.nimblebrain/keydown`). Each name is both the method and the
+identifier the host declares in `hostCapabilities.experimental` to offer it, and an extension is
+used only where it is declared.
 
 A no-op is still invisible to the user, so read the declaration and hide what the host can't do:
 `hostSupports(app, "requestFile")`, `app.hostCapabilities.message`, `app.supportsTasks`.
