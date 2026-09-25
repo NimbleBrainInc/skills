@@ -1,6 +1,6 @@
 ---
 name: mcp-best-practices
-description: Best practices for MCP servers — how to name, describe and schema a tool so a model actually calls it, how resources and prompts differ, and what the boundary must never trust. Applies while authoring a new surface or as an audit of an existing one, grounded in the MCP specification and the tool-authoring guidance from Anthropic and OpenAI. Triggers include "MCP best practices", "name this tool", "audit this MCP server", "why won't the model call my tool", "/mcp-best-practices".
+description: Best practices for MCP servers — naming, describing, and schema-ing tools so a model calls them, resources vs prompts, and boundary trust, grounded in the MCP spec. Use to author or audit a server. Triggers include "MCP best practices", "audit this MCP server", "why won't the model call my tool".
 license: MIT
 compatibility: Any MCP server, any language. Reads a running server with the MCP Inspector CLI (needs npx) over stdio or streamable HTTP.
 allowed-tools: Read Bash Glob Grep WebFetch
@@ -22,7 +22,7 @@ Two frames carry the whole thing:
 
 **The boundary is untrusted.** Every argument is model output, and model output is shaped by whatever the model just read. Judge each entry point as if the argument were chosen by an attacker, because a prompt injection three tool calls ago means it may have been.
 
-Scope: the surface and the boundary. Building a server end to end — scaffolding, bundling, releasing — is the `mcpb` skill.
+Scope: the surface and the boundary. Building a server end to end — scaffolding, bundling, releasing — is the `mcpb` skill. The rungs are grounded in the MCP specification and the tool-authoring guidance from Anthropic and OpenAI.
 
 ## Read the advertised surface, never the source alone
 

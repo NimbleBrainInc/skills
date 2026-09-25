@@ -1,6 +1,6 @@
 ---
 name: mcpb
-description: Build MCP servers end-to-end — scaffold a production-ready Python or TypeScript server from API docs, implement tools, validate the MCPB bundle, embed a skill resource, and release to the mpak registry. Covers the full lifecycle from API analysis to published bundle. Use when building a new MCP server, wrapping an API as MCP, or creating an integration. Triggers include "build an MCP server", "create a server for X", "/mcpb".
+description: Builds MCP servers end to end — scaffolds a Python or TypeScript server from API docs, implements tools, validates the MCPB bundle, and releases to the mpak registry. Use for a new MCP server or wrapping an API as MCP. Triggers include "build an MCP server", "create a server for X", "/mcpb".
 license: MIT
 compatibility: Python 3.13+, uv, ruff, ty OR Node.js 22+, npm. Docker, mpak CLI. Claude Code or Codex with filesystem access.
 allowed-tools: Read Write Bash Glob Grep WebFetch AskUserQuestion
