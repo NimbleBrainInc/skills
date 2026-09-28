@@ -15,7 +15,7 @@ Add this block to your bundle's `manifest.json`. The minimal, common case is a s
 {
   "_meta": {
     "ai.nimblebrain/host": {
-      "host_version": "1.1",
+      "host_version": "1.0",
       "name": "Tasks",
       "icon": "list-todo",
       "category": "productivity",
@@ -34,7 +34,7 @@ Add this block to your bundle's `manifest.json`. The minimal, common case is a s
 ```
 
 Fields:
-- **`host_version`** — `"1.0"` or `"1.1"`.
+- **`host_version`** — `"1.0"`. It is the contract's major version and changes only on a breaking change; every block here is part of `1.0` and is turned on by declaring it. The host skips a catalog connector that declares another major.
 - **`placements[]`** — each entry registers a surface in host chrome. `slot` ∈ `sidebar | sidebar.apps | sidebar.bottom | main`; `resourceUri` is your `ui://` resource; plus `priority`, `label`, `icon`, `route`, `size`. **A placement is the "register a button in host chrome" mechanism — there is no separate `commands`/toolbar API.**
 - **`primaryView`** — `{ "resourceUri": "ui://…" }` for the default view.
 - **`settings`** — a settings-tab panel: `{ id, label, icon, resourceUri }`.
