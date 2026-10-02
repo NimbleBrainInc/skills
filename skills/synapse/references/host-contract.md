@@ -16,16 +16,12 @@ Add this block to your bundle's `manifest.json`. The minimal, common case is a s
   "_meta": {
     "ai.nimblebrain/host": {
       "host_version": "1.0",
-      "name": "Tasks",
-      "icon": "list-todo",
-      "category": "productivity",
       "placements": [
         {
           "slot": "sidebar.apps",            // where in host chrome it appears
           "resourceUri": "ui://tasks/main",  // the resource your server serves (§2)
           "route": "@owner/your-server",     // stable app route
-          "label": "Tasks",
-          "icon": "list-todo"
+          "label": "Tasks"                   // the sidebar entry's text
         }
       ]
     }
@@ -35,6 +31,7 @@ Add this block to your bundle's `manifest.json`. The minimal, common case is a s
 
 Fields:
 - **`host_version`** — `"1.0"`. It is the contract's major version and changes only on a breaking change; every block here is part of `1.0` and is turned on by declaring it. The host skips a catalog connector that declares another major.
+- **No `name`, `icon` or `category`.** The host names your app from the connector catalog entry's `title` and shows the entry's `icons`, the fields the MCP Registry `ServerDetail` defines. The three keys are deprecated in the host schema and ignored. A `sidebar.apps` entry likewise shows the catalog icon, not a placement `icon`.
 - **`placements[]`** — each entry registers a surface in host chrome. `slot` ∈ `sidebar | sidebar.apps | sidebar.bottom | main`; `resourceUri` is your `ui://` resource; plus `priority`, `label`, `icon`, `route`, `size`. **A placement is the "register a button in host chrome" mechanism — there is no separate `commands`/toolbar API.**
 - **`primaryView`** — `{ "resourceUri": "ui://…" }` for the default view.
 - **`settings`** — a settings-tab panel: `{ id, label, icon, resourceUri }`.
