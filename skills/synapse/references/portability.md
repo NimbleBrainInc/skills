@@ -5,7 +5,7 @@ over the [MCP Apps](https://modelcontextprotocol.io/extensions/apps/overview) (`
 `postMessage` bridge. `@nimblebrain/synapse` runs on the spec's own client
 (`@modelcontextprotocol/ext-apps`'s `App` owns the transport, the handshake and the wire schemas),
 and adds a framework on top: theme injection, parsed tool results, multi-subscriber events,
-resize, and three NimbleBrain extensions. It is not a private protocol. Claude, ChatGPT and
+resize, and the NimbleBrain extensions. It is not a private protocol. Claude, ChatGPT and
 NimbleBrain all speak it.
 
 Hosts differ in **what they offer**, not in how they speak. Each host lists what it offers in its
@@ -15,13 +15,15 @@ answer to `ui/initialize`, as `hostCapabilities`. Everything below can be re-che
 ## The contract
 
 Synapse reads `hostCapabilities` once, when the app connects. Every gated method and hook checks
-the declaration **before it sends**, and does exactly one of three things when the capability is
+the declaration **before it sends**, and does exactly one of four things when the capability is
 missing. `resize` is never gated, and `useDataSync` only listens; the table gives each case:
 
 - **A request with an answer rejects with `HostCapabilityError`, without sending.** Requests carry
   no deadline, because a file picker waits on a person and a task result blocks until the task
   ends. A request the host never answers would therefore stay pending forever, so it is never sent.
   `error.capability` names what the host did not declare.
+- **A request whose answer is only whether it happened resolves `false`, without sending.** Where
+  the host serves it and refuses, it rejects with the host's reason.
 - **A fire-and-forget call sends nothing.**
 - **A hook that waits for the host keeps its initial value.**
 
@@ -37,12 +39,16 @@ Nothing is gated on the host's name.
 | `app.readServerResource` | `serverResources` | `HostCapabilityError` |
 | `useDataSync` | a host that relays `notifications/resources/list_changed` (declared as `serverResources.listChanged`) | the callback never runs. The hook only listens and does not read the declaration. **It also needs your server to announce its writes**, otherwise it stays silent on every host |
 | `useModelContext`, `app.updateModelContext` | `updateModelContext` | no-op |
-| `useSendMessage`, `app.sendMessage` | `message` | no-op. The optional `context` becomes `_meta["ai.nimblebrain/context"]` only on a host that identifies as NimbleBrain |
+| `useSendMessage`, `app.sendMessage` | `message` | no-op. It takes the text alone; what the user is acting on goes in `updateModelContext` |
 | `app.openLink` | `openLinks` | opens the URL with `window.open` instead (also when the host refuses) |
 | `downloadFile(app, …)` | `downloadFile` | `HostCapabilityError`. Resolves `{ isError: true }` when the host declined or the user cancelled |
-| `useCallToolAsTask`, `callToolAsTask` | `experimental["io.modelcontextprotocol/tasks"]` with `requests.tools.call` | `HostCapabilityError`. Check `app.supportsTasks`; fall back to `callTool` |
-| `useAction`, `action(app, …)` | `experimental["ai.nimblebrain/action"]` | no-op |
+| `useCallToolAsTask`, `callToolAsTask` | `experimental["io.modelcontextprotocol/tasks"]` | `HostCapabilityError`. Check `app.supportsTasks`; fall back to `callTool` |
+| `useOpen`, `open(app, uri)` | `experimental["ai.nimblebrain/open"]` | resolves `false` |
+| `useOpenConnectorSettings`, `openConnectorSettings(app)` | `experimental["ai.nimblebrain/open-connector-settings"]` | resolves `false` |
+| `useNotify`, `notify(app, …)` | `experimental["ai.nimblebrain/notify"]` | resolves `false`; show the outcome in the app instead |
+| `useTrail`, `setLocation` / `onNavigate` | `experimental["ai.nimblebrain/location"]` | no-op; `useTrail` returns `false`, so keep the view's own title and breadcrumb |
 | `useFileUpload` (`pickFile`, `pickFiles`) | `experimental["ai.nimblebrain/request-file"]` | `HostCapabilityError` |
+| `uploadFiles` (also from `useFileUpload`) | `experimental["ai.nimblebrain/upload-files"]` | `HostCapabilityError`; check `hostSupports(app, "uploadFiles")` before offering a drop target |
 | `connect({ forwardKeys })` | `experimental["ai.nimblebrain/keydown"]` | keys are not captured; the browser handles them |
 
 ## Decide what to offer from the declaration
@@ -93,24 +99,30 @@ Each name below is both the method the app sends and the identifier the host dec
 
 | Extension | Name |
 |---|---|
-| Host actions (`action`, `useAction`) | `ai.nimblebrain/action` |
+| Open what a URI names (`open`, `useOpen`) | `ai.nimblebrain/open` |
+| Open this connector's settings (`openConnectorSettings`, `useOpenConnectorSettings`) | `ai.nimblebrain/open-connector-settings` |
+| Show a notice (`notify`, `useNotify`) | `ai.nimblebrain/notify` |
+| Report where the app is (`setLocation`, `useTrail`); the host answers a pick with `ai.nimblebrain/navigate` | `ai.nimblebrain/location` |
 | File picker (`pickFile`, `pickFiles`, `useFileUpload`), answered `{ files }` | `ai.nimblebrain/request-file` |
+| Store files the app holds (`uploadFiles`), answered `{ files }` | `ai.nimblebrain/upload-files` |
 | Keyboard forwarding (`forwardKeys`) | `ai.nimblebrain/keydown` |
 
 `NIMBLEBRAIN_EXTENSIONS` (package root) is the same table in code. The extensions are declared under
 `experimental` because MCP Apps has no field for extensions, and `experimental` is the only part of
-`hostCapabilities` whose contents a spec client keeps. Two NimbleBrain fields also ride inside spec
-messages, and other hosts ignore them: `workspace` in the host context, and
-`_meta["ai.nimblebrain/context"]` on `sendMessage`. The host's typeface is not one of them: it
+`hostCapabilities` whose contents a spec client keeps. Two NimbleBrain fields also ride in the
+host context, and other hosts leave them out: `workspace`, and `ai.nimblebrain/styles` (the
+`accent` and `processing` colours, which the spec has no key for). The host's typeface is not one of them: it
 arrives as `@font-face` CSS in the spec's `styles.css.fonts` (gotcha N), and an app with no fonts
 from the host falls back to web-safe stacks.
 
 Live refresh and file download are **not** extensions. `useDataSync` rides the spec's
 `notifications/resources/list_changed`, and `downloadFile` rides `ui/download-file`.
 
-An app does not read or write host-held state. There is no persistence channel, and nothing the
-host sends to the app triggers an action in it. An app reaches **its own server** and nothing else:
-`callTool` takes no target server, and cross-server work belongs to the agent.
+An app does not read or write host-held state. There is no persistence channel, and the one thing
+the host sends that moves the app is `ai.nimblebrain/navigate`, naming a trail entry the app
+reported or a record URI it was opened at. An app calls **its own server** and nothing else:
+`callTool` takes no target server, and cross-server work belongs to the agent. To show the user
+something another app owns, `open` its URI; the app never names the app that shows it.
 
 ## Serving one app to Claude and ChatGPT
 
