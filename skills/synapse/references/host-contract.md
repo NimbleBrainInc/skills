@@ -54,13 +54,17 @@ The HTML must be **identity-free and static** — never bake tenant/workspace da
 
 ## 3. The bridge (what the iframe and host exchange)
 
-The host mounts the HTML in a sandboxed iframe and speaks the MCP **Apps spec (`2026-01-26`)** over `postMessage`. From the host release that fixes [nimblebrain#1239](https://github.com/NimbleBrainInc/nimblebrain/issues/1239), it declares the spec capabilities it serves and the three `ai.nimblebrain/*` extensions in its `ui/initialize` answer. The file picker, host actions and keyboard forwarding then work here, and degrade as `portability.md` describes on other hosts. That host release takes the new names only, so an app built on an earlier `@nimblebrain/synapse` keeps rendering there but loses those three extensions, the host's typeface and the chat context on `sendMessage` — all silently. The `@nimblebrain/synapse` React SDK wraps all of it — you use hooks, not raw messages:
+The host mounts the HTML in a sandboxed iframe and speaks the MCP **Apps spec (`2026-01-26`)** over `postMessage`. It declares the spec capabilities it serves and the `ai.nimblebrain/*` extensions in its `ui/initialize` answer; those extensions work here and degrade as `portability.md` describes on other hosts. The `@nimblebrain/synapse` React SDK wraps all of it — you use hooks, not raw messages:
 
 - `useApp().callTool(name, args)` / `useCallTool(name)` → invoke your server's tools (`tools/call`).
 - `useDataSync(cb)` → re-fetch when your **server** announces a write. The server sends `notifications/resources/list_changed`, and the host relays it verbatim to that server's views. It covers every writer (the agent, another view, a webhook), and a write the server doesn't announce refreshes nothing.
 - `useTheme()` / `tokens` → host theme (light/dark via CSS variables).
 - `useModelContext(...)` → push the UI's current state so the agent can see what the user is looking at.
 - `useHostContext()` → workspace + host context.
+- `useTrail(trail, navigate)` → report where the app is; the host shows the title and breadcrumb and calls `navigate(id)` when the user picks a level. Make `navigate` resolve any record URI, not only the levels on screen: it is also how the app is opened at a record.
+- `useOpen()` → ask the host to show what a URI names. `useOpenConnectorSettings()` → this connector's settings page. `useNotify()` → a notice labelled with your app.
+
+**Being opened at a record.** When the agent or another app opens a URI, the host finds the one app whose server advertises a resource template (`resources/templates/list`) the URI expands from, shows it, and hands it the URI as `navigate` once the app has reported its trail. So give each record kind a URI template your server serves a read at, stamp that URI on the rows your tools return, and report it as the record's trail entry. A URI two apps claim opens neither.
 
 The UI talks **only** to your server's own tools over this bridge. It never reaches the host's internals, and it never needs server-to-server calls.
 
