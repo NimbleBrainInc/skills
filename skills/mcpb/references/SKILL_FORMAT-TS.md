@@ -24,6 +24,25 @@ description: Provides knowledge of how to use MCP <name> most effectively. It's 
 | `name` | Yes | Skill identifier, following the `mcp-<name>-service` convention |
 | `description` | Yes | One-line summary of what the skill provides |
 
+### When a NimbleBrain host loads it
+
+A NimbleBrain host reads an optional `metadata.nimblebrain` block to decide when the skill reaches the model. A skill without it is bound to every tool of the server.
+
+```yaml
+metadata:
+  nimblebrain:
+    tool-affinity:
+      - draft_email
+      - send_*
+```
+
+- **`tool-affinity`** names the server's own tools the skill governs, as bare names or globs; the host prefixes each with the server's install name. The skill reaches the model before the first call to one of them, so a call is never made without its guidance. A pattern that matches no tool binds nothing and the host logs a warning, so test the patterns against the registered tools.
+- **Omitted**, the skill is bound to every tool of the server. That suits a single usage guide. A server that ships several skills gives each the tools it governs, so one call does not deliver them all.
+- **`tool-affinity: []`** binds the skill to no tool. It is listed in the host's skill catalog and loads only when the model asks, which suits reference material no single call needs.
+- **`loading-strategy: always`** puts the skill in every turn's prompt. Use it only for short rules that apply whatever the model does.
+
+Details: [Skills published by an MCP server](https://docs.nimblebrain.ai/using/skills/#skills-published-by-an-mcp-server).
+
 ## Content Structure
 
 After the frontmatter, the Markdown body should contain:
@@ -67,3 +86,4 @@ At runtime, `readFileSync(join(__dirname, "SKILL.md"))` works because `__dirname
 - [ ] Context reuse specified (which outputs feed into which inputs)
 - [ ] Resource URI matches `skill://<name>/usage`
 - [ ] Server `instructions` parameter directs the LLM to read the skill resource
+- [ ] Each `tool-affinity` pattern matches a tool the server registers
