@@ -26,6 +26,7 @@ _Coming soon:_ install as a Claude Code plugin marketplace (`claude plugin marke
 | [`synapse`](./skills/synapse) | `--skill synapse` | Build a Synapse UI for an MCP server — a React app that renders in the NimbleBrain host. |
 | [`mcpb`](./skills/mcpb) | `--skill mcpb` | Build an MCP server end-to-end: scaffold from API docs → implement → validate the bundle → release to mpak. |
 | [`contributor`](./skills/contributor) | `--skill contributor` | Get started contributing to NimbleBrain open source: find work, set up your env, file issues, check on your work. |
+| [`setup`](./skills/setup) | `--skill setup` | Run the open source NimbleBrain runtime on your machine with Docker Compose, Apple Silicon included: a health check, one chat, and how to remove it. |
 
 ## Contributing
 
