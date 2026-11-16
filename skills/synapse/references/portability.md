@@ -140,9 +140,14 @@ Do not serve a second copy under another MIME type or bind it with a host-specif
 `ui.domain` unset unless the component needs a stable origin: each host then gives the frame its
 own sandbox origin.
 
-For a Python server, `nimblebrain-synapse`'s `SynapseUI` emits all of this from one declaration:
-the resource, the tool `_meta`, the `io.modelcontextprotocol/ui` extension declaration, and an
-`auth_error_result` helper for the sign-in challenge. Its README has the API.
+On a FastMCP 4 server, `fastmcp.apps.AppConfig` writes the `ui.*` keys: `app=AppConfig(csp=ResourceCSP(...))`
+on the resource, and `app=AppConfig(resource_uri=..., visibility=[...])` on each tool. ChatGPT also
+reads `openai/*` keys of its own, added as plain `meta=`: `openai/widgetAccessible: true` on every
+tool the UI calls (ChatGPT defaults it to false, which leaves the UI read-only), and
+`openai/widgetDomain` on the resource when submitting an app. A server that mixes anonymous and
+signed-in tools answers an unauthenticated call with a result carrying `_meta["mcp/www_authenticate"]`.
+[Serve a Synapse UI from a FastMCP server](https://synapse.nimblebrain.ai/docs/quickstart-python/) and
+[ChatGPT compatibility](https://synapse.nimblebrain.ai/docs/guides/chatgpt/) have the code, and which host reads each key.
 
 Check a running server against each host's requirements before you submit it:
 
@@ -157,7 +162,7 @@ component rendered from a tool result (`useToolResult` / `useToolInput` / `useRe
 the contract above.
 
 `connectUI()` (→ `SynapseUIClient`, from `@nimblebrain/synapse/host`, and `window.SynapseUI` in
-the IIFE that `SynapseUI` inlines) is the small push-first client for a self-contained component
+the `@nimblebrain/synapse/iife/ui` script-tag build) is the small push-first client for a self-contained component
 that only renders a tool's output. It speaks MCP Apps and nothing else. Inside a frame it runs the
 `ui/*` handshake. Opened standalone, it renders the data baked into the page. The tool output
 arrives through `data()` / `onData()`. `capabilities()` (`pull`, `sendPrompt`, `openLink`) says
