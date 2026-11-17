@@ -53,7 +53,7 @@ flag.
 }
 ```
 
-`model_key` is `set`, `missing`, or `unknown` while the runtime is down. The key itself never appears in any output.
+`model_key` is `set` or `missing`, read from the install's `.env`. The key itself never appears in any output.
 
 `init` on a machine that already has an install answers its status with `"already": true` and changes nothing. When `init` could not connect the agent, it still succeeds and adds `"manual"`: the exact command or setting to add by hand. When it ends on `MODEL_KEY_MISSING`, the failure carries the full status too, so the agent still learns the URL and MCP endpoints.
 
