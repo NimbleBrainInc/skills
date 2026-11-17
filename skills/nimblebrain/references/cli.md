@@ -64,7 +64,9 @@ flag.
 | `ARCH_UNSUPPORTED` | No runtime image for this CPU architecture. |
 | `LOW_MEMORY` | Docker has less memory than the runtime needs. |
 | `PORT_IN_USE` | Another process holds the port. |
+| `NOT_INSTALLED` | There is no install in the CLI's home (`~/.nimblebrain-local`, or `NIMBLEBRAIN_HOME`). Run `npx nimblebrain`. |
 | `NOT_OURS` | An install the CLI did not make holds the name or the data volume. |
+| `USAGE` | An unknown command or flag (exit 2). |
 | `NETWORK` | A download failed. |
 | `MODEL_KEY_MISSING` | The runtime is up; chat needs a key (`npx nimblebrain key`). |
 | `HEALTH_TIMEOUT` | The runtime did not report healthy in time. |
