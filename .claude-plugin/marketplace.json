@@ -1,0 +1,39 @@
+{
+  "name": "nimblebrain-skills",
+  "owner": {
+    "name": "NimbleBrain"
+  },
+  "metadata": {
+    "description": "Agent skills for setting up, using and building for NimbleBrain, the open-source runtime for agents and MCP apps",
+    "version": "1.0.0"
+  },
+  "plugins": [
+    {
+      "name": "nimblebrain",
+      "description": "Set up NimbleBrain on this machine, connect this agent to it over MCP, and work inside it. Use for anything about NimbleBrain: installing, running, connecting, updating, or using its apps.",
+      "source": "./",
+      "strict": false,
+      "homepage": "https://nimblebrain.ai/developers",
+      "skills": ["./skills/nimblebrain"]
+    },
+    {
+      "name": "nimblebrain-builder",
+      "description": "Build for NimbleBrain: Synapse UIs, MCP servers and bundles, mpak publishing, and MCP tool design.",
+      "source": "./",
+      "strict": false,
+      "skills": [
+        "./skills/synapse",
+        "./skills/mcpb",
+        "./skills/mpak",
+        "./skills/mcp-best-practices"
+      ]
+    },
+    {
+      "name": "nimblebrain-contributor",
+      "description": "Contribute to NimbleBrain open source: find work, set up your environment, file issues, check on your work.",
+      "source": "./",
+      "strict": false,
+      "skills": ["./skills/contributor"]
+    }
+  ]
+}

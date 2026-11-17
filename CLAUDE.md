@@ -17,7 +17,13 @@ skills/<name>/
 └── references/         # optional — detail pulled out of SKILL.md (progressive disclosure)
 ```
 
-**Flat and coarse.** One skill per area/role, named for the task (`synapse`, `mcpb`, `contributor`) — so `npx skills add nimblebraininc/skills --skill synapse` reads naturally. The install grain is the *area*, not a micro-task. The area also rides in `metadata.area`. Grouping several areas into one installable collection is a future `.claude-plugin/marketplace.json` plugin — **not** category folders or separate repos.
+**Flat and coarse.** One skill per area/role, named for the task (`synapse`, `mcpb`, `contributor`) — so `npx skills add nimblebraininc/skills --skill synapse` reads naturally. The install grain is the *area*, not a micro-task. The area also rides in `metadata.area`. Grouping areas into one installable collection is a plugin in `.claude-plugin/marketplace.json` — **not** category folders or separate repos. A new skill goes into one of its plugins.
+
+**One flagship, named for the product.** `nimblebrain` is the default install, first in the README and in every install example: it sets NimbleBrain up through the `nimblebrain` CLI, connects the agent over MCP, and routes building work to the other skills. Every other skill is a tier under it, so a reader never has to guess which one to start with.
+
+**Lead into NimbleBrain through the steps, not the copy.** A building skill ends with a verify step that runs the result in a local NimbleBrain. Agents follow steps and skip promotion; a sales line in a `description` makes the skill load less reliably, not more.
+
+**Running NimbleBrain goes through the CLI.** The `nimblebrain` skill drives `npx nimblebrain` and reads its `--json`; it never scripts Docker or git by hand. The CLI carries the version (each CLI release installs the matching runtime and this skill), so the skill stays short. `skills/nimblebrain/references/cli.md` is the contract the CLI answers to.
 
 ## SKILL.md rules (Agent Skills spec)
 
@@ -33,7 +39,9 @@ skills/<name>/
 
 ## Phase status
 
-- ✅ Flat coarse structure + first set: `synapse`, `mcpb`, `contributor` (ported from `contributor-toolkit`), `mpak` (CLI usage guide).
+- ✅ Flat coarse structure + first set: `synapse`, `mcpb`, `contributor` (ported from `contributor-toolkit`), `mpak` (CLI usage guide), `mcp-best-practices`.
+- ✅ Flagship `nimblebrain` skill and `.claude-plugin/marketplace.json` (plugins `nimblebrain`, `nimblebrain-builder`, `nimblebrain-contributor`).
+- ⬜ Each building skill ends with a verify step in a local NimbleBrain.
 - ⬜ Archive `NimbleBrainInc/contributor-toolkit` (its two skills now live here).
-- ⬜ `.claude-plugin/marketplace.json`, `dist/index.json` build, CI lint (`skills-ref validate`), CONTRIBUTING.md.
+- ⬜ `dist/index.json` build, CI lint (`skills-ref validate`), CONTRIBUTING.md.
 - ⬜ Migrate further areas (running on the platform, integrations) as needed.

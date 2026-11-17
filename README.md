@@ -1,37 +1,68 @@
 # NimbleBrain Skills
 
-Agent Skills for building on and working with NimbleBrain — installable into Claude Code, Cursor, and any agent that supports the [Agent Skills standard](https://agentskills.io).
+Agent Skills for [NimbleBrain](https://github.com/NimbleBrainInc/nimblebrain), the
+open-source runtime that runs agents and MCP apps on your own machine with any model.
+They install into Claude Code, Cursor, Codex and any agent that supports the
+[Agent Skills standard](https://agentskills.io).
 
-Each skill is a self-contained directory (`skills/<name>/SKILL.md` + optional `references/`). Skills are coarse and named for what you're doing — you install the one that matches your task, not a pile of micro-skills.
-
-## Install
+## Start here: `nimblebrain`
 
 ```bash
-# one skill (the common case)
-npx skills add nimblebraininc/skills --skill synapse
-
-# the whole set
-npx skills add nimblebraininc/skills
-
-# list what's available
-npx skills add nimblebraininc/skills --list
+npx skills add nimblebraininc/skills --skill nimblebrain
 ```
 
-_Coming soon:_ install as a Claude Code plugin marketplace (`claude plugin marketplace add nimblebraininc/skills`), once the `.claude-plugin/marketplace.json` manifest lands.
+The [`nimblebrain`](./skills/nimblebrain) skill sets NimbleBrain up on your machine,
+connects your agent to it over MCP, and works inside it. Ask your agent to "set up
+NimbleBrain". If you would rather run it yourself, `npx nimblebrain` does the same
+setup and installs this skill for your agent at the end.
 
-## Available skills
+## Building for NimbleBrain
+
+Install the one for the job. Each finishes by running what you built in your local
+NimbleBrain.
 
 | Skill | Install | What it does |
 |-------|---------|--------------|
-| [`synapse`](./skills/synapse) | `--skill synapse` | Build a Synapse UI for an MCP server — a React app that renders in the NimbleBrain host. |
-| [`mcpb`](./skills/mcpb) | `--skill mcpb` | Build an MCP server end-to-end: scaffold from API docs → implement → validate the bundle → release to mpak. |
-| [`contributor`](./skills/contributor) | `--skill contributor` | Get started contributing to NimbleBrain open source: find work, set up your env, file issues, check on your work. |
+| [`synapse`](./skills/synapse) | `--skill synapse` | Build a Synapse UI for an MCP server: a React app that renders inside NimbleBrain, Claude and ChatGPT. |
+| [`mcpb`](./skills/mcpb) | `--skill mcpb` | Build an MCP server end to end: scaffold from API docs, implement, validate the bundle, release to mpak. |
+| [`mpak`](./skills/mpak) | `--skill mpak` | Find, install, run and publish MCP server bundles and skills with the mpak CLI. |
+| [`mcp-best-practices`](./skills/mcp-best-practices) | `--skill mcp-best-practices` | Name, describe and shape an MCP server's tools so a model calls them well. |
 
-## Contributing
+## Contributing to NimbleBrain
+
+| Skill | Install | What it does |
+|-------|---------|--------------|
+| [`contributor`](./skills/contributor) | `--skill contributor` | Contribute to NimbleBrain open source: find work, set up your environment, file issues, check on your work. |
+
+## Other ways to install
+
+```bash
+# everything
+npx skills add nimblebraininc/skills
+
+# list what's here
+npx skills add nimblebraininc/skills --list
+
+# as Claude Code plugins
+claude plugin marketplace add nimblebraininc/skills
+claude plugin install nimblebrain@nimblebrain-skills
+claude plugin install nimblebrain-builder@nimblebrain-skills
+claude plugin install nimblebrain-contributor@nimblebrain-skills
+```
+
+The plugins group the skills above: `nimblebrain` is the flagship skill,
+`nimblebrain-builder` the four building skills, `nimblebrain-contributor` the
+contributor skill.
+
+## Writing a skill
 
 A skill is a directory `skills/<name>/` containing a `SKILL.md` with YAML frontmatter:
-- **`name`** — kebab-case, must equal the directory name.
-- **`description`** — what it does *and* when to use it, with trigger phrases (this is the activation surface).
-- Optional `license`, `compatibility`, `allowed-tools`, and free-form `metadata` (`area`, `version`, `author`).
 
-Keep the `SKILL.md` body focused; push depth into `references/`.
+- **`name`**: kebab-case, equal to the directory name.
+- **`description`**: what it does *and* when to use it, with trigger phrases. This is
+  what an agent reads to decide whether to load the skill.
+- Optional `license`, `compatibility`, `allowed-tools`, and free-form `metadata`
+  (`area`, `version`, `author`).
+
+Keep the `SKILL.md` body focused and push depth into `references/`. A new skill also
+goes into a plugin in `.claude-plugin/marketplace.json`.
