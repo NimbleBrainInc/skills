@@ -30,6 +30,8 @@ release installs the runtime release of the same version.
 | `--yes` | Take the default at every prompt. With no terminal attached, the CLI behaves as if this were set, and fails rather than wait for input. |
 | `--agent <name>` | `claude-code`, `cursor`, `codex` or `none`: the agent `init` connects. |
 | `--port <n>` | The local port (default `27246`). |
+| `--provider <name>` | For `key`: `anthropic` (default), `openai`, `google`, `greenpt`, `nebius` or `xai`. |
+| `--home <dir>` | Where the install lives (default `~/.nimblebrain-local`, or `NIMBLEBRAIN_HOME`). |
 
 ## The JSON
 
@@ -46,12 +48,14 @@ flag.
   "health": "ok",
   "url": "http://127.0.0.1:27246",
   "workspaces": [{ "id": "ws_8f3a…", "name": "Default", "mcp": "http://127.0.0.1:27246/mcp/ws_8f3a…" }],
-  "agent": { "connected": "claude-code", "skill": "nimblebrain@0.70.0" },
+  "agent": { "connected": "claude-code", "skill": "nimblebrain" },
   "model_key": "set"
 }
 ```
 
-`model_key` is `set` or `missing`. The key itself never appears in any output.
+`model_key` is `set`, `missing`, or `unknown` while the runtime is down. The key itself never appears in any output.
+
+`init` on a machine that already has an install answers its status with `"already": true` and changes nothing. When `init` could not connect the agent, it still succeeds and adds `"manual"`: the exact command or setting to add by hand. When it ends on `MODEL_KEY_MISSING`, the failure carries the full status too, so the agent still learns the URL and MCP endpoints.
 
 ## Error codes
 
@@ -71,5 +75,8 @@ flag.
 | `MODEL_KEY_MISSING` | The runtime is up; chat needs a key (`npx nimblebrain key`). |
 | `HEALTH_TIMEOUT` | The runtime did not report healthy in time. |
 | `AGENT_UNSUPPORTED` | `--agent` names an agent the CLI cannot connect. |
+| `START_FAILED` | Compose could not start the runtime; `message` is its last error line. |
+| `NEEDS_TERMINAL` | `key` was run with no terminal attached. A person runs it. |
+| `CANCELLED` | The person declined, or `uninstall` ran without `--yes` and no terminal. Nothing changed. |
 
 `references/troubleshooting.md` gives the cause and fix for each.
