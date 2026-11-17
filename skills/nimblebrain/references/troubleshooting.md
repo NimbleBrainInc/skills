@@ -15,6 +15,7 @@ diagnosing: never print or open the files that hold it.
 | `NOT_OURS` | An install the CLI did not make holds the name or the data volume. | Report it and stop. Never remove another install's data. |
 | `NETWORK` | A download failed: no network, or the image registry is unreachable. | Check the connection, then run the same command again. |
 | `MODEL_KEY_MISSING` | No key is stored. Everything but chat works. | The person runs `npx nimblebrain key` in their own terminal. |
+| `INTERRUPTED` | The CLI was stopped (a signal, Ctrl-C, a killed session) before it answered. | Run `npx nimblebrain status --json` to see what is in place, then run the same command again; `init` is safe to repeat. |
 | `HEALTH_TIMEOUT` | The runtime is still starting, or it exited. | Run `logs --json` and report the last error line as written. |
 | Chat shows an error | The key is wrong, expired, out of credit, or for another provider. | The person runs `npx nimblebrain key` again. |
 | The agent connects, then fails with `-32022` or "unsupported protocol version" | The agent's MCP client is older than the revision the runtime serves. | Update the agent. |

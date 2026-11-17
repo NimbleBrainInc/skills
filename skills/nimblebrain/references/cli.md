@@ -78,5 +78,6 @@ flag.
 | `START_FAILED` | Compose could not start the runtime; `message` is its last error line. |
 | `NEEDS_TERMINAL` | `key` was run with no terminal attached. A person runs it. |
 | `CANCELLED` | The person declined, or `uninstall` ran without `--yes` and no terminal. Nothing changed. |
+| `INTERRUPTED` | The CLI was stopped before it finished; `exit_code` says how. Run `status`, then the same command again. |
 
 `references/troubleshooting.md` gives the cause and fix for each.
