@@ -23,7 +23,7 @@ From the installed package (`node_modules/@nimblebrain/synapse/dist/*.d.ts`) or 
 - the `ui` entry — the **component library** (`AppFrame`, `ListDetailLayout`, `ListRow`, `Table`, `Badge`, `Prose`, `ConfirmDialog`, `tokens`, …). Don't hand-roll styling.
 - the type exports — `ToolCallResult`, `Theme`, the `App` interface (including `hostCapabilities`), `HostCapabilityError`, `hostSupports`, `NIMBLEBRAIN_EXTENSIONS`.
 
-Then read **`references/gotchas.md`** (non-obvious API facts that each save a debugging cycle) and **`references/host-contract.md`** (the NimbleBrain manifest declaration + the bridge). Skim these first; they're short and they're the difference between working and "why is every tool call returning `unauthenticated`."
+Then read **`references/gotchas.md`** (non-obvious API facts that each save a debugging cycle) and **`references/host-contract.md`** (the catalog-entry `_meta` block + the bridge). Skim these first; they're short and they're the difference between working and "why is every tool call returning `unauthenticated`."
 
 ## Portability — this is an MCP app, not a NimbleBrain app
 
@@ -93,7 +93,7 @@ entry points: **`references/portability.md`**.
 
 9. **Verify** — `npx tsc --noEmit` **and** `npm run build` (Vite/esbuild won't type-check on its own). Then run the **server project's own lint/format/test gate** (e.g. `make verify`, `ruff format --check`), not just the UI type-check — a format-only diff will redden CI even when types pass. **Toggle the preview between light and dark and eyeball every surface** — theme-blind color passes `tsc`/`build` and only breaks in one mode. Every `tokens.*` is backed in both; your own vars are not (gotcha L). Confirm the server serves `ui://<name>/main` as `text/html;profile=mcp-app`, and that a write through the preview refreshes the view (the preview relays your server's `list_changed`, gotcha F).
 
-10. **Run it in NimbleBrain.** The `nimblebrain` skill sets up a local NimbleBrain (`npx nimblebrain`). Serve your server over HTTP, connect it to a workspace as [Connect it to NimbleBrain](https://docs.nimblebrain.ai/server-sdk/quickstart/#5-connect-it-to-nimblebrain) describes, open the app from the sidebar, and check what the preview can't: the host's theme and fonts, a write made by the agent refreshing the view, and every NimbleBrain extension the app uses.
+10. **Run it in NimbleBrain.** The `nimblebrain` skill sets up a local NimbleBrain (`npx nimblebrain`). Serve your server over HTTP, connect it to a workspace as [Connect it to NimbleBrain](https://docs.nimblebrain.ai/server-sdk/quickstart/#5-connect-it-to-nimblebrain) describes (that section runs NimbleBrain from a source checkout), and have the agent call your tools, including a write. A server connected by URL has no catalog entry, so it gets no placement and no sidebar entry: the app itself (the host's theme and fonts, a write by the agent refreshing the view, the NimbleBrain extensions it uses) shows in NimbleBrain only once it is installed from the step-6 catalog entry.
 
 ## Out of scope
 - Host-side rendering — the host already implements placement → iframe → bridge; you build and serve the UI and write the placement for the catalog entry, nothing more.
