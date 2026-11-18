@@ -40,7 +40,7 @@ CLI's version; `status` reports both.
 | `--local-model <model>` | For `init`: run on this Ollama model instead of a hosted key, without asking. Pass it only when the person chose a local model. |
 | `--runtime <tag>` | For `init` and `update`: the NimbleBrain release to install, such as `v0.74.0`. Default: the newest. |
 | `--telemetry <on\|off>` | For `init`: an answer the person already gave about anonymous usage data. Never pass it on your own judgment. |
-| `--name <serverName>` | For `mcp add`: the name to add the server under. Default: the name in its Server Card, else the URL's host and port. Lowercase letters, digits and hyphens. |
+| `--name <serverName>` | For `mcp add`: the name to add the server under. Default: the name in its Server Card, else the URL's host and port. The runtime lowercases it and turns any other character into a hyphen. |
 | `--workspace <id>` | For `mcp`: the workspace to act in. Default: the first workspace `status` lists, the one `init` connected the agent to. |
 | `--home <dir>` | Where the install lives (default `~/.nimblebrain-local`, or `NIMBLEBRAIN_HOME`). A home whose folder has another name is a separate install, with its own containers, data volume and port; pass the same `--home` to every command for it. Give a second install `--agent none`: the agent has one `nimblebrain` server, which a second install would take over and its `uninstall` would remove. |
 
@@ -133,7 +133,7 @@ to the network unless a firewall stops it, so say so before suggesting it.
 | `DIRECT_URL_NOT_ALLOWED` | The runtime does not take a server by URL: the install was not made by `npx nimblebrain`, or predates this feature. |
 | `URL_NOT_LOOPBACK` | `mcp add` was given a URL off this machine. Only `localhost`, `127.0.0.1` and `[::1]` are accepted. |
 | `URL_INVALID` | `mcp add` was not given a full MCP URL. |
-| `INVALID_SERVER_NAME` | `--name` is not lowercase letters, digits and hyphens. |
+| `INVALID_SERVER_NAME` | `--name`, once normalized, is empty or reserved by the runtime. |
 | `NAME_TAKEN` | The workspace already has a server by that name. |
 | `NAME_IS_CATALOG_ENTRY` | The name belongs to a catalog connector. |
 | `REQUEST_FAILED` | The runtime refused or failed the request; `message` says why. |

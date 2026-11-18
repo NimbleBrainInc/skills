@@ -29,7 +29,7 @@ diagnosing: never print or open the files that hold it.
 | `DIRECT_URL_NOT_ALLOWED` | The runtime does not take a server by URL. | Run `npx nimblebrain update --json`. On an install the CLI did not make, the server goes in the instance's connector catalog instead. |
 | `URL_NOT_LOOPBACK` | The URL is not on this machine. | Run the server locally and pass its `127.0.0.1` URL. A remote server is a connector, not `mcp add`. |
 | `URL_INVALID` | Not a full MCP URL. | Pass the whole URL, such as `http://127.0.0.1:8000/mcp`. |
-| `INVALID_SERVER_NAME` | `--name` has characters other than lowercase letters, digits and hyphens. | Pass another name with `--name`. |
+| `INVALID_SERVER_NAME` | `--name`, once lowercased with other characters turned into hyphens, is empty or a name the runtime reserves. | Pass another name with `--name`, one with letters or digits that the runtime does not reserve; `message` shows the name it rejected. |
 | `NAME_TAKEN` | The workspace has a server by that name. | Pass another `--name`, or remove the old one with `mcp remove`, on the person's say-so. |
 | `NAME_IS_CATALOG_ENTRY` | The name belongs to a catalog connector. | Pass another `--name`. |
 | `REQUEST_FAILED` | The runtime refused or failed the request. | Read `message`, then `npx nimblebrain logs --json` for the last error line. |
