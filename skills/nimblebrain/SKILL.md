@@ -73,13 +73,16 @@ If they have no key yet, go on without one and say chat is not tested.
 
 If they would rather not use a hosted key, NimbleBrain's agents can run on a local
 model through Ollama (free, slower; https://docs.nimblebrain.ai/config/local-models/
-lists what has been tested). Once they have installed and started Ollama:
+lists what has been tested). Once Ollama is installed:
 
 ```bash
 npx nimblebrain local-model --yes --json
 ```
 
-It downloads `gemma4:e4b` (several GB) if it is missing, so say so first. `status`
+It starts Ollama if it is not running (a Homebrew install then starts at every login
+too) and downloads `gemma4:e4b` (several GB) if it is missing, so say both first. When
+Ollama is not installed, the error's `fix` names the install step; the CLI never
+installs it. `status`
 then reports `local_model`, and a missing key is no longer an error.
 
 ## 2. Check it, and that you are connected
@@ -124,6 +127,10 @@ Route to the skill for the job. Install it if it is missing:
 | An MCP server for an API or a system, an app's server, or a review of a server's tools | `mcp-server` (with `synapse` for an app's interface) |
 | A screen for an MCP server, or an app's interface inside NimbleBrain | `synapse` |
 
+To try a server the person is building in their local NimbleBrain, run it on
+`127.0.0.1` and add it once with `npx nimblebrain mcp add <url> --json`
+(`references/cli.md`, *Developing a server*).
+
 ## 5. Keep it running
 
 | Ask | Command |
@@ -134,7 +141,7 @@ Route to the skill for the job. Install it if it is missing:
 | Start it again | `npx nimblebrain up --json` |
 | Move to the newest release | `npx nimblebrain update --json` |
 | Change the model key | the person runs `npx nimblebrain key` |
-| Run on a local model instead | `npx nimblebrain local-model --yes --json`, after the person agrees to the download |
+| Run on a local model instead | `npx nimblebrain local-model --yes --json`, after the person agrees to the download and, if Ollama is not running, to the CLI starting it |
 | Remove it and all its data | `npx nimblebrain uninstall --yes --json`, only on the person's own yes |
 
 ## References
