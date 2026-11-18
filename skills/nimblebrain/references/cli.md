@@ -37,7 +37,7 @@ CLI's version; `status` reports both.
 | `--local-model <model>` | For `init`: run on this Ollama model instead of a hosted key, without asking. Pass it only when the person chose a local model. |
 | `--runtime <tag>` | For `init` and `update`: the NimbleBrain release to install, such as `v0.74.0`. Default: the newest. |
 | `--telemetry <on\|off>` | For `init`: an answer the person already gave about anonymous usage data. Never pass it on your own judgment. |
-| `--home <dir>` | Where the install lives (default `~/.nimblebrain-local`, or `NIMBLEBRAIN_HOME`). |
+| `--home <dir>` | Where the install lives (default `~/.nimblebrain-local`, or `NIMBLEBRAIN_HOME`). A home whose folder has another name is a separate install, with its own containers, data volume and port; pass the same `--home` to every command for it. Give a second install `--agent none`: the agent has one `nimblebrain` server, which a second install would take over and its `uninstall` would remove. |
 
 ## The JSON
 
@@ -80,7 +80,7 @@ flag.
 | `LOW_MEMORY` | Docker has less memory than the runtime needs. |
 | `PORT_IN_USE` | Another process holds the port. |
 | `NOT_INSTALLED` | There is no install in the CLI's home (`~/.nimblebrain-local`, or `NIMBLEBRAIN_HOME`). Run `npx nimblebrain`. |
-| `NOT_OURS` | An install the CLI did not make holds the name or the data volume. |
+| `NOT_OURS` | An install the CLI did not make holds this home's Compose project or data volume. The project takes the home folder's name, so two homes whose folders share a name collide. |
 | `USAGE` | An unknown command, flag or flag value (`--port`, `--telemetry`, `--provider` on `key`), or `update --runtime` naming a release older than the install (exit 2). |
 | `NETWORK` | A download failed. |
 | `MODEL_KEY_MISSING` | The runtime is up; chat needs a key (`npx nimblebrain key`). |
