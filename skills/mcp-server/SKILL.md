@@ -133,15 +133,28 @@ For an app, the `synapse` skill builds the interface: a `ui://` resource the ser
 serves with FastMCP's `AppConfig`, and the tools bound to it. Install it if it is
 missing (`npx skills add nimblebraininc/skills --skill synapse`).
 
-### 9. Package it (optional)
+### 9. Write the server's `server.json` for deployment
+
+Every server gets a `server.json` beside its Server Card: an MCP Registry `ServerDetail`
+with its `$schema`, restating the card's `name`, `title`, `description`, `version`,
+`icons` and `_meta["ai.nimblebrain/host"].placements`, plus the production `remotes`
+(`[{"type": "streamable-http", "url": "<deployed URL>"}]`) and, for a published package,
+`packages`. The card serves a host that has only a URL (a local NimbleBrain's `mcp add`);
+`server.json` is what an operator adds to a deployed NimbleBrain's connectors catalog,
+and what `mcp-publisher` lists on the official MCP Registry. The code is the one source
+of metadata: compare `curl -s <url>/server-card` with `server.json` and keep them in
+agreement. Example, rules and publishing: `references/deploy.md`.
+
+### 10. Package it (optional)
 
 Only if people will run it on their own machine: publish the package to PyPI or npm,
-then wrap it in a bundle for desktop hosts. `references/packaging.md`.
+then wrap it in a bundle for desktop hosts. `references/packaging.md`. Add the package
+to `server.json`'s `packages` once it is published.
 
 ### Done
 
 Report: the repository, the tools and their kinds, the checks that passed, the URL it
-serves on, that it is connected in NimbleBrain and which task the agent completed with
+serves on, its `server.json` (in agreement with the card), that it is connected in NimbleBrain and which task the agent completed with
 it, and the review's findings and how each was resolved.
 
 ## Review a server
@@ -206,4 +219,5 @@ host's behaviour changes, not by how many rules a fix touches.
 - `references/resources-and-prompts.md`: field, URI-scheme and error rules for those primitives
 - `references/python.md`: the Python template and `nimblebrain-server-sdk`
 - `references/typescript.md`: the TypeScript template, and writing the same against the protocol
+- `references/deploy.md`: the server's `server.json`, a catalog entry, and the official MCP Registry
 - `references/packaging.md`: publishing the package, and a `uv` bundle for desktop hosts

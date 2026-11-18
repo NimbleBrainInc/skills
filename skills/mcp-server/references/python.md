@@ -175,6 +175,8 @@ Check it: `curl -s http://127.0.0.1:8000/mcp/server-card`.
 
 On an older SDK pin, skip the card: the server still connects, named by its `serverInfo`.
 
+The same values, plus the deployed URL, go in the repository's `server.json` (`references/deploy.md`); keep the two in agreement.
+
 ## An app's server half
 
 An app is the same server plus a `ui://` resource that FastMCP 4 serves with `fastmcp.apps.AppConfig`, and tools bound to it. No extra package is needed on the server. Build the interface with the `synapse` skill; it covers the resource, the CSP, and binding tools to the view. Write tools so they work for the agent with no interface: the view is a second caller of the same tools.

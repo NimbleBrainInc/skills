@@ -62,6 +62,6 @@ After the PyPI publish, in the same tag-triggered workflow:
 4. Create the GitHub release with the bundle and its `uv.lock`.
 5. If you want the bundle listed, run `mcpb-pack` again with `build: false`, `announce: true` and `announce-required: true`. It announces to the mpak registry with the job's OIDC token. `announce-required` defaults to `false`, under which a failed announce does not fail the job, so set it.
 
-`mcpb-pack` v3 reads `manifest.json` only; no `server.json` or other registry file is needed. Pin it and the other actions to a commit SHA in a release workflow.
+`mcpb-pack` v3 reads `manifest.json` only and does not read `server.json`. The server's `server.json` (`references/deploy.md`) is still kept, for deployment and the official MCP Registry: add the published package to its `packages`. Pin it and the other actions to a commit SHA in a release workflow.
 
 Then install the bundle in a desktop host, configure it, and call a tool, before you announce the release.
