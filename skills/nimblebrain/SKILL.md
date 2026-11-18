@@ -124,13 +124,12 @@ Route to the skill for the job. Install it if it is missing:
 
 | The person wants | Skill |
 |---|---|
-| A screen for an MCP server, or an app inside NimbleBrain | `synapse` |
-| An MCP server for an API or a system | `mcpb` |
-| A review of an MCP server's tool design | `mcp-best-practices` |
+| An MCP server for an API or a system, an app's server, or a review of a server's tools | `mcp-server` (with `synapse` for an app's interface) |
+| A screen for an MCP server, or an app's interface inside NimbleBrain | `synapse` |
 
 To try a server the person is building in their local NimbleBrain, run it on
 `127.0.0.1` and add it once with `npx nimblebrain mcp add <url> --json`
-(`references/cli.md`, *A server on this machine*).
+(`references/cli.md`, *Developing a server*).
 
 ## 5. Keep it running
 
