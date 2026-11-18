@@ -24,7 +24,6 @@ Install the one for the job.
 |-------|---------|--------------|
 | [`synapse`](./skills/synapse) | `--skill synapse` | Build a Synapse UI for an MCP server: a React app that renders inside NimbleBrain, Claude and ChatGPT. |
 | [`mcpb`](./skills/mcpb) | `--skill mcpb` | Build an MCP server end to end: scaffold from API docs, implement, validate the bundle, release to mpak. |
-| [`mpak`](./skills/mpak) | `--skill mpak` | Find, install, run and publish MCP server bundles and skills with the mpak CLI. |
 | [`mcp-best-practices`](./skills/mcp-best-practices) | `--skill mcp-best-practices` | Name, describe and shape an MCP server's tools so a model calls them well. |
 
 ## Contributing to NimbleBrain
@@ -50,7 +49,7 @@ claude plugin install nimblebrain-contributor@nimblebrain-skills
 ```
 
 The plugins group the skills above: `nimblebrain` is the flagship skill,
-`nimblebrain-builder` the four building skills, `nimblebrain-contributor` the
+`nimblebrain-builder` the three building skills, `nimblebrain-contributor` the
 contributor skill.
 
 ## Writing a skill

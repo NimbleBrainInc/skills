@@ -111,7 +111,6 @@ Route to the skill for the job. Install it if it is missing:
 |---|---|
 | A screen for an MCP server, or an app inside NimbleBrain | `synapse` |
 | An MCP server for an API or a system | `mcpb` |
-| To find, install or publish a server bundle | `mpak` |
 | A review of an MCP server's tool design | `mcp-best-practices` |
 
 ## 5. Keep it running
