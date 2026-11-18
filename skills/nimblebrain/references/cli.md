@@ -17,7 +17,7 @@ CLI's version; `status` reports both.
 |---|---|
 | `init` (the default) | Checks the machine, starts the runtime, connects the agent named by `--agent`, installs this skill for it. On a machine that already has an install, reports it and changes nothing. |
 | `doctor` | Checks Docker, Compose v2, CPU architecture, memory and the port. Installs nothing. |
-| `status` | Version, health, URL, each workspace's MCP URL, the connected agent, whether a model key is set, and the telemetry answer. |
+| `status` | Version, health, URL, each workspace's MCP URL, the connected agent, whether a model key is set, the telemetry answer, and whether the release can reach a server on this machine (`host_loopback`). |
 | `key` | Takes the model key at a hidden prompt, stores it readable by this user only, and restarts the runtime so it takes effect. Interactive only: a person runs it. |
 | `local-model [model]` | Runs NimbleBrain's own agents on a model served by Ollama on this machine instead of a hosted key: checks Ollama, downloads the model if missing (default `gemma4:e4b`; asks first at a terminal), refuses one without tool calling, prepares a copy with a 32k context window, and restarts the runtime. Needs a runtime release that takes a local model. |
 | `up` / `down` | Start or stop the runtime. Data survives `down`. |
@@ -92,8 +92,9 @@ npx nimblebrain mcp add http://127.0.0.1:8000/mcp --json
 
 `dialed` is where the runtime, inside Docker, connects. A `warning` means the server is not
 running yet: the row is stored, and it connects once the server starts and is reconnected
-from the Connectors page. The server stays added across `down`, `up` and `update`, and a
-restarted server reconnects at the same URL. On Linux, `host.docker.internal` is the Docker
+from the Connectors page. A `notice` passes on the runtime's message about the new server.
+The server stays added across `down`, `up` and `update`, and a restarted server reconnects
+at the same URL. On Linux, `host.docker.internal` is the Docker
 bridge, so the server must listen on the bridge address or `0.0.0.0`; `0.0.0.0` can expose
 it to the network, so say so before suggesting it.
 

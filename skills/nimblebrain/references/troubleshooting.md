@@ -26,6 +26,10 @@ diagnosing: never print or open the files that hold it.
 | `UPDATE_REQUIRED` | `mcp add` on an install from before runtime `v0.76.0`, which cannot reach this machine. | Run `npx nimblebrain update --json`, then `mcp add` again. Data survives the update. |
 | `URL_NOT_LOOPBACK`, `URL_INVALID` | The URL is not an `http(s)` URL on `localhost`, `127.0.0.1` or `::1`. | Use the server's loopback URL, such as `http://127.0.0.1:8000/mcp`. |
 | `NAME_TAKEN`, `NAME_IS_CATALOG_ENTRY`, `INVALID_SERVER_NAME` | The name is in use in the workspace, belongs to a catalog connector, or cannot name a server. | Pass another `--name`; for `NAME_TAKEN`, `mcp list` shows what holds it. |
+| `WORKSPACE_NOT_FOUND` | `--workspace` names no workspace. | Pick one from the answer's `workspaces` (or `status --json`) and pass it with `--workspace`. |
+| `SERVER_NOT_FOUND` | `mcp remove` names no server in the workspace. | Run `npx nimblebrain mcp list --json` for the names, then remove by one of them. |
+| `DIRECT_URL_NOT_ALLOWED` | The instance is not a local install made by `npx nimblebrain`, so it adds servers only from its catalog. | Run `npx nimblebrain update --json`, or add the server to the instance's connector catalog. |
+| `REQUEST_FAILED` | The runtime refused the request for another reason; `message` carries its text. | Run `logs --json`, report the last error line as written, then run the command again once it is addressed. |
 | `mcp add` succeeds with a `warning`, or the server shows as not running | The server was not running when it was added, or it listens where Docker cannot reach it. | Start the server; on Linux it must listen on the bridge address or `0.0.0.0`. Then reconnect it from the Connectors page. |
 | `TELEMETRY_LOCKED` | `DO_NOT_TRACK` (or `NB_TELEMETRY_DISABLED`) is set, or this install has nowhere to send data. | Nothing to do: telemetry stays off. Tell the person if they asked to turn it on. |
 | `LOCAL_MODEL_UNREACHABLE` | Ollama is not installed, or not running on `127.0.0.1:11434`. | The person installs Ollama (https://ollama.com/download) and starts it; run the command again. |
