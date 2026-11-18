@@ -17,7 +17,7 @@ skills/<name>/
 └── references/         # optional — detail pulled out of SKILL.md (progressive disclosure)
 ```
 
-**Flat and coarse.** One skill per area/role, named for the task (`synapse`, `mcpb`, `contributor`) — so `npx skills add nimblebraininc/skills --skill synapse` reads naturally. The install grain is the *area*, not a micro-task. The area also rides in `metadata.area`. Grouping areas into one installable collection is a plugin in `.claude-plugin/marketplace.json` — **not** category folders or separate repos. A new skill goes into one of its plugins.
+**Flat and coarse.** One skill per area/role, named for the task (`synapse`, `mcpb`) — so `npx skills add nimblebraininc/skills --skill synapse` reads naturally. The install grain is the *area*, not a micro-task. The area also rides in `metadata.area`. Grouping areas into one installable collection is a plugin in `.claude-plugin/marketplace.json` — **not** category folders or separate repos. A new skill goes into one of its plugins.
 
 **One flagship, named for the product.** `nimblebrain` is the default install, first in the README and in every install example: it sets NimbleBrain up through the `nimblebrain` CLI, connects the agent over MCP, and routes building work to the other skills. Every other skill is a tier under it, so a reader never has to guess which one to start with.
 
@@ -39,9 +39,8 @@ skills/<name>/
 
 ## Phase status
 
-- ✅ Flat coarse structure + first set: `synapse`, `mcpb`, `contributor` (ported from `contributor-toolkit`), `mpak` (CLI usage guide), `mcp-best-practices`.
-- ✅ Flagship `nimblebrain` skill and `.claude-plugin/marketplace.json` (plugins `nimblebrain`, `nimblebrain-builder`, `nimblebrain-contributor`).
+- ✅ Flat coarse structure + first set: `synapse`, `mcpb`, `mpak` (CLI usage guide), `mcp-best-practices`.
+- ✅ Flagship `nimblebrain` skill and `.claude-plugin/marketplace.json` (plugins `nimblebrain`, `nimblebrain-builder`).
 - ⬜ Each building skill ends with a verify step in a local NimbleBrain.
-- ⬜ Archive `NimbleBrainInc/contributor-toolkit` (its two skills now live here).
 - ⬜ `dist/index.json` build, CI lint (`skills-ref validate`), CONTRIBUTING.md.
 - ⬜ Migrate further areas (running on the platform, integrations) as needed.

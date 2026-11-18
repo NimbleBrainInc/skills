@@ -29,9 +29,8 @@ Install the one for the job.
 
 ## Contributing to NimbleBrain
 
-| Skill | Install | What it does |
-|-------|---------|--------------|
-| [`contributor`](./skills/contributor) | `--skill contributor` | Contribute to NimbleBrain open source: find work, set up your environment, file issues, check on your work. |
+To contribute to the runtime itself, start with its
+[CONTRIBUTING.md](https://github.com/NimbleBrainInc/nimblebrain/blob/main/CONTRIBUTING.md).
 
 ## Other ways to install
 
@@ -46,12 +45,10 @@ npx skills add nimblebraininc/skills --list
 claude plugin marketplace add nimblebraininc/skills
 claude plugin install nimblebrain@nimblebrain-skills
 claude plugin install nimblebrain-builder@nimblebrain-skills
-claude plugin install nimblebrain-contributor@nimblebrain-skills
 ```
 
 The plugins group the skills above: `nimblebrain` is the flagship skill,
-`nimblebrain-builder` the four building skills, `nimblebrain-contributor` the
-contributor skill.
+`nimblebrain-builder` the building skills.
 
 ## Writing a skill
 
