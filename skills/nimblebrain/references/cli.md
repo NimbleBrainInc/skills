@@ -2,9 +2,10 @@
 
 The CLI installs and operates a NimbleBrain runtime on this machine: it checks the
 machine, starts the runtime's release images in Docker, takes the model key, connects a
-coding agent, and updates or removes the install. It has no commands for what happens
-inside the runtime. Apps, connectors, tasks and chat go through the workspace's MCP
-endpoint.
+coding agent, and updates or removes the install. Apps, connectors, tasks and chat go
+through the workspace's MCP endpoint. The one exception is `mcp`, a thin client for adding
+an MCP server you are building on this machine: the runtime stores and connects it, and the
+CLI stores nothing.
 
 Run it with `npx nimblebrain`. The CLI is versioned on its own: it installs the newest
 NimbleBrain release, or the one `--runtime` names, from `v0.73.0` on. `--version` is the
@@ -16,7 +17,7 @@ CLI's version; `status` reports both.
 |---|---|
 | `init` (the default) | Checks the machine, starts the runtime, connects the agent named by `--agent`, installs this skill for it. On a machine that already has an install, reports it and changes nothing. |
 | `doctor` | Checks Docker, Compose v2, CPU architecture, memory and the port. Installs nothing. |
-| `status` | Version, health, URL, each workspace's MCP URL, the connected agent, whether a model key is set, and the telemetry answer. |
+| `status` | Version, health, URL, each workspace's MCP URL, the connected agent, whether a model key is set, the telemetry answer, and whether the release can reach a server on this machine (`host_loopback`). |
 | `key` | Takes the model key at a hidden prompt, stores it readable by this user only, and restarts the runtime so it takes effect. Interactive only: a person runs it. |
 | `local-model [model]` | Runs NimbleBrain's own agents on a model served by Ollama on this machine instead of a hosted key: checks Ollama, downloads the model if missing (default `gemma4:e4b`; asks first at a terminal), refuses one without tool calling, prepares a copy with a 32k context window, and restarts the runtime. Needs a runtime release that takes a local model. |
 | `up` / `down` | Start or stop the runtime. Data survives `down`. |
@@ -24,6 +25,9 @@ CLI's version; `status` reports both.
 | `update` | Moves to the newest runtime release (or `--runtime`), keeping data. Never backwards. |
 | `uninstall` | Removes the containers, images and the data volume. Asks to confirm unless `--yes` is passed; with `--json` or no terminal attached it needs `--yes`, or it answers `CANCELLED`. |
 | `telemetry [on\|off\|status]` | Whether this install sends anonymous usage data. `on` and `off` record a person's answer and need the runtime running. |
+| `mcp add <url>` | Adds an MCP server running on this machine to a workspace, by its loopback URL (`localhost`, `127.0.0.1` or `::1`). The runtime reads the server's Server Card at `<url>/server-card` for its title, icon and sidebar placements. Needs the runtime running and a release with `host_loopback: true`. |
+| `mcp list` | The servers in a workspace, with URL and status. |
+| `mcp remove <serverName>` | Removes a server from a workspace. |
 
 ## Flags
 
@@ -37,6 +41,8 @@ CLI's version; `status` reports both.
 | `--local-model <model>` | For `init`: run on this Ollama model instead of a hosted key, without asking. Pass it only when the person chose a local model. |
 | `--runtime <tag>` | For `init` and `update`: the NimbleBrain release to install, such as `v0.74.0`. Default: the newest. |
 | `--telemetry <on\|off>` | For `init`: an answer the person already gave about anonymous usage data. Never pass it on your own judgment. |
+| `--name <serverName>` | For `mcp add`: the name to add the server under. Default: the name in its Server Card, else the URL's host and port. |
+| `--workspace <wsId>` | For `mcp`: the workspace to act in. Default: the first in `status`'s `workspaces`, the one `init` connected. |
 | `--home <dir>` | Where the install lives (default `~/.nimblebrain-local`, or `NIMBLEBRAIN_HOME`). A home whose folder has another name is a separate install, with its own containers, data volume and port; pass the same `--home` to every command for it. Give a second install `--agent none`: the agent has one `nimblebrain` server, which a second install would take over and its `uninstall` would remove. |
 
 ## The JSON
@@ -50,23 +56,50 @@ flag.
 ```json
 {
   "ok": true,
-  "version": "0.74.0",
-  "cli_version": "0.1.1",
+  "version": "0.76.0",
+  "cli_version": "0.3.0",
   "health": "ok",
   "url": "http://127.0.0.1:27246",
   "workspaces": [{ "id": "ws_8f3a…", "name": "Default", "mcp": "http://127.0.0.1:27246/mcp/ws_8f3a…" }],
   "agent": { "connected": "claude-code", "skill": "nimblebrain" },
   "model_key": "set",
   "local_model": null,
+  "host_loopback": true,
   "telemetry": { "state": "on" }
 }
 ```
 
 `model_key` is `set` or `missing`, read from the install's `.env`. The key itself never appears in any output. `local_model` names the Ollama model NimbleBrain's agents run on (`nimblebrain-gemma4-e4b`), or is `null` for a hosted key; with one set, a missing key is not an error.
 
+`host_loopback` says whether the installed release can reach a server on this machine. It is
+`false` on an install from before runtime `v0.76.0`; `npx nimblebrain update` makes it `true`.
+
 `telemetry.state` is `on`, `off` or `undecided`. While it is `undecided`, `telemetry.ask` holds the question to put to the person and `telemetry.set` the command that records the answer (`npx nimblebrain telemetry on` or `off`); nothing is sent before a yes. `telemetry.locked` is present when no one can change it here (`do_not_track`, `no_destination` or `operator`).
 
 `init` on a machine that already has an install answers its status with `"already": true` and changes nothing. When `init` could not connect the agent, it still succeeds and adds `"manual"`: the exact command or setting to add by hand. When it ends on `MODEL_KEY_MISSING`, the failure carries the full status too, so the agent still learns the URL and MCP endpoints.
+
+## Developing a server
+
+Run the server over HTTP on `127.0.0.1`, then add it once:
+
+```bash
+npx nimblebrain mcp add http://127.0.0.1:8000/mcp --json
+```
+
+```json
+{ "ok": true, "serverName": "notes", "url": "http://127.0.0.1:8000/mcp", "dialed": "http://host.docker.internal:8000/mcp", "placements": [], "wsId": "ws_8f3a…" }
+```
+
+`dialed` is where the runtime, inside Docker, connects. A `warning` means the server is not
+running yet: the row is stored, and it connects once the server starts and is reconnected
+from the Connectors page. A `notice` passes on the runtime's message about the new server.
+The server stays added across `down`, `up` and `update`, and a restarted server reconnects
+at the same URL. On Linux, `host.docker.internal` is the Docker
+bridge, so the server must listen on the bridge address or `0.0.0.0`; `0.0.0.0` can expose
+it to the network, so say so before suggesting it.
+
+`mcp list` answers `{ "ok": true, "wsId": "…", "servers": [{ "serverName", "displayName", "url", "state", "status", "statusReason", "toolCount" }] }`;
+`mcp remove` answers `{ "ok": true, "serverName": "…", "wsId": "…" }`.
 
 ## Error codes
 
@@ -90,12 +123,22 @@ flag.
 | `NEEDS_TERMINAL` | `key` was run with no terminal attached. A person runs it. |
 | `CANCELLED` | The person declined, or `uninstall` ran without `--yes` while `--json` was passed or no terminal was attached. Nothing changed. |
 | `RUNTIME_UNSUPPORTED` | The release `--runtime` names is older than this CLI supports, or its Compose file cannot be driven. |
-| `NOT_RUNNING` | `telemetry on\|off` needs the runtime up (`npx nimblebrain up`). |
+| `NOT_RUNNING` | `telemetry on\|off` and every `mcp` command need the runtime up (`npx nimblebrain up`). |
 | `TELEMETRY_LOCKED` | `DO_NOT_TRACK` or the install's configuration decides telemetry; nothing to change. |
 | `LOCAL_MODEL_UNREACHABLE` | Ollama does not answer on `127.0.0.1:11434`. The person installs and starts it (https://ollama.com/download). |
 | `LOCAL_MODEL_MISSING` | Ollama does not have the model, and it was not downloaded (declined, or the download failed). |
 | `LOCAL_MODEL_NO_TOOLS` | The model cannot call tools, which NimbleBrain's agents need. Choose one listed on https://docs.nimblebrain.ai/config/local-models/. |
 | `LOCAL_CONTEXT_SMALL` | `doctor`: the model's context window is below 32k. Run `npx nimblebrain local-model` again. |
 | `INTERRUPTED` | The CLI was stopped before it finished; `exit_code` says how. Run `status`, then the same command again. |
+| `UPDATE_REQUIRED` | `mcp add` on a release that cannot reach this machine (`host_loopback: false`). Run `npx nimblebrain update`. |
+| `WORKSPACE_NOT_FOUND` | `--workspace` names no workspace; the answer lists the ones there are in `workspaces`. |
+| `SERVER_NOT_FOUND` | `mcp remove` names no server in the workspace. |
+| `URL_INVALID` | The URL is not an `http` or `https` URL the runtime accepts. |
+| `URL_NOT_LOOPBACK` | The URL is not on this machine (`localhost`, `127.0.0.1` or `::1`). |
+| `INVALID_SERVER_NAME` | The name cannot name a server. Pass another `--name`. |
+| `NAME_TAKEN` | The workspace already has a server by that name. Pass another `--name`, or `mcp remove` the old one first. |
+| `NAME_IS_CATALOG_ENTRY` | A catalog connector owns the name. Pass another `--name`. |
+| `DIRECT_URL_NOT_ALLOWED` | The instance is not a local install with the `dev` sign-in, so it adds servers only from its catalog. |
+| `REQUEST_FAILED` | The runtime refused the request for another reason; `message` carries its text. |
 
 `references/troubleshooting.md` gives the cause and fix for each.
