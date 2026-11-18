@@ -125,6 +125,10 @@ Route to the skill for the job. Install it if it is missing:
 | An MCP server for an API or a system | `mcpb` |
 | A review of an MCP server's tool design | `mcp-best-practices` |
 
+To try a server the person is building in their local NimbleBrain, run it on
+`127.0.0.1` and add it once with `npx nimblebrain mcp add <url> --json`
+(`references/cli.md`, *A server on this machine*).
+
 ## 5. Keep it running
 
 | Ask | Command |

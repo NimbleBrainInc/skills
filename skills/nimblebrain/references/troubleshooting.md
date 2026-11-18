@@ -22,7 +22,17 @@ diagnosing: never print or open the files that hold it.
 | `NOT_OURS` | An install the CLI did not make holds this home's Compose project or data volume. | Report it and stop. Never remove another install's data. For a second install, use a `--home` whose folder has another name. |
 | `NETWORK` | A download failed: no network, or the image registry is unreachable. | Check the connection, then run the same command again. |
 | `MODEL_KEY_MISSING` | No key is stored. Everything but chat works. | The person runs `npx nimblebrain key` in their own terminal. |
-| `NOT_RUNNING` | `telemetry on` or `off` was run while the runtime is stopped; the runtime records the answer. | Run `npx nimblebrain up --json`, then the telemetry command again. |
+| `NOT_RUNNING` | `telemetry on` or `off`, or an `mcp` command, was run while the runtime is stopped; the runtime answers them. | Run `npx nimblebrain up --json`, then the same command again. |
+| `UPDATE_REQUIRED` | `mcp add` on a release that cannot reach servers on this machine. | Run `npx nimblebrain update --json`, then `mcp add` again. |
+| `WORKSPACE_NOT_FOUND` | `--workspace` names no workspace on this install. | Read the workspace ids from `npx nimblebrain status --json` and pass one. |
+| `SERVER_NOT_FOUND` | `mcp remove` names no server in the workspace. | Run `npx nimblebrain mcp list --json` for the names. |
+| `DIRECT_URL_NOT_ALLOWED` | The runtime does not take a server by URL. | Run `npx nimblebrain update --json`. On an install the CLI did not make, the server goes in the instance's connector catalog instead. |
+| `URL_NOT_LOOPBACK` | The URL is not on this machine. | Run the server locally and pass its `127.0.0.1` URL. A remote server is a connector, not `mcp add`. |
+| `URL_INVALID` | Not a full MCP URL. | Pass the whole URL, such as `http://127.0.0.1:8000/mcp`. |
+| `INVALID_SERVER_NAME` | `--name` has characters other than lowercase letters, digits and hyphens. | Pass another name with `--name`. |
+| `NAME_TAKEN` | The workspace has a server by that name. | Pass another `--name`, or remove the old one with `mcp remove`, on the person's say-so. |
+| `NAME_IS_CATALOG_ENTRY` | The name belongs to a catalog connector. | Pass another `--name`. |
+| `REQUEST_FAILED` | The runtime refused or failed the request. | Read `message`, then `npx nimblebrain logs --json` for the last error line. |
 | `TELEMETRY_LOCKED` | `DO_NOT_TRACK` (or `NB_TELEMETRY_DISABLED`) is set, or this install has nowhere to send data. | Nothing to do: telemetry stays off. Tell the person if they asked to turn it on. |
 | `LOCAL_MODEL_UNREACHABLE` | Ollama is not installed, or not running on `127.0.0.1:11434`. | The person installs Ollama (https://ollama.com/download) and starts it; run the command again. |
 | `LOCAL_MODEL_MISSING` | The model is not on Ollama: the download was declined, failed, or ran out of disk. | With the person's yes, run `npx nimblebrain local-model --yes --json` again, or `ollama pull <model>` first. |
