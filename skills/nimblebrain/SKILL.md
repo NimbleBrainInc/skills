@@ -2,7 +2,7 @@
 name: nimblebrain
 description: Sets up, connects and uses NimbleBrain, the open-source runtime that runs agents and MCP apps on your own machine with any model. Installs and starts it with the `nimblebrain` CLI, connects this coding agent to a workspace over MCP, then works inside it, and routes building an app or an MCP server to the right skill. Use for anything about NimbleBrain. Triggers include "set up NimbleBrain", "install NimbleBrain", "run NimbleBrain locally", "connect to NimbleBrain", "what can my NimbleBrain do", "is NimbleBrain running", "update NimbleBrain".
 license: MIT
-compatibility: Node.js 20+ (for `npx`). Docker Engine 24+ with Docker Compose v2, running, with about 2 GB of free memory. A model API key (Anthropic by default) for chat; everything else works without one.
+compatibility: Node.js 20+ (for `npx`). Docker Engine 24+ with Docker Compose v2, running, with about 2 GB of free memory. A model API key (Anthropic by default) or a local model through Ollama for chat; everything else works without one.
 allowed-tools: Read Bash AskUserQuestion
 metadata:
   area: nimblebrain
@@ -71,6 +71,17 @@ npx nimblebrain key
 
 If they have no key yet, go on without one and say chat is not tested.
 
+If they would rather not use a hosted key, NimbleBrain's agents can run on a local
+model through Ollama (free, slower; https://docs.nimblebrain.ai/config/local-models/
+lists what has been tested). Once they have installed and started Ollama:
+
+```bash
+npx nimblebrain local-model --yes --json
+```
+
+It downloads `gemma4:e4b` (several GB) if it is missing, so say so first. `status`
+then reports `local_model`, and a missing key is no longer an error.
+
 ## 2. Check it, and that you are connected
 
 ```bash
@@ -85,9 +96,10 @@ the skill it installed.
 Your new MCP server is usually available only from the next session. If you cannot see
 its tools yet, say so and finish the report; the person reopens their agent to use it.
 
-Health shows the runtime is up, not that the key works. If a key is set, send one chat
-through the workspace's tools, or ask the person to open `http://127.0.0.1:27246`,
-send `What can you help me with?`, and tell you whether a reply came.
+Health shows the runtime is up, not that the model answers. If `model_key` is `set` or
+`local_model` is not `null`, send one chat through the workspace's tools, or ask the
+person to open `http://127.0.0.1:27246`, send `What can you help me with?`, and tell
+you whether a reply came.
 
 Report briefly: the URL, the version, chat confirmed or not, and how to stop it
 (`npx nimblebrain down`). Data survives `down`.
@@ -123,6 +135,7 @@ Route to the skill for the job. Install it if it is missing:
 | Start it again | `npx nimblebrain up --json` |
 | Move to the newest release | `npx nimblebrain update --json` |
 | Change the model key | the person runs `npx nimblebrain key` |
+| Run on a local model instead | `npx nimblebrain local-model --yes --json`, after the person agrees to the download |
 | Remove it and all its data | `npx nimblebrain uninstall --yes --json`, only on the person's own yes |
 
 ## References

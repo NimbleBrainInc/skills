@@ -18,6 +18,7 @@ CLI's version; `status` reports both.
 | `doctor` | Checks Docker, Compose v2, CPU architecture, memory and the port. Installs nothing. |
 | `status` | Version, health, URL, each workspace's MCP URL, the connected agent, whether a model key is set, and the telemetry answer. |
 | `key` | Takes the model key at a hidden prompt, stores it readable by this user only, and restarts the runtime so it takes effect. Interactive only: a person runs it. |
+| `local-model [model]` | Runs NimbleBrain's own agents on a model served by Ollama on this machine instead of a hosted key: checks Ollama, downloads the model if missing (default `gemma4:e4b`; asks first at a terminal), refuses one without tool calling, prepares a copy with a 32k context window, and restarts the runtime. Needs a runtime release that takes a local model. |
 | `up` / `down` | Start or stop the runtime. Data survives `down`. |
 | `logs` | Recent runtime log lines. |
 | `update` | Moves to the newest runtime release (or `--runtime`), keeping data. Never backwards. |
@@ -33,6 +34,7 @@ CLI's version; `status` reports both.
 | `--agent <name>` | `claude-code`, `cursor`, `codex` or `none`: the agent `init` connects. |
 | `--port <n>` | The local port (default `27246`). |
 | `--provider <name>` | For `key`: `anthropic` (default), `openai`, `google`, `greenpt`, `nebius` or `xai`. |
+| `--local-model <model>` | For `init`: run on this Ollama model instead of a hosted key, without asking. Pass it only when the person chose a local model. |
 | `--runtime <tag>` | For `init` and `update`: the NimbleBrain release to install, such as `v0.74.0`. Default: the newest. |
 | `--telemetry <on\|off>` | For `init`: an answer the person already gave about anonymous usage data. Never pass it on your own judgment. |
 | `--home <dir>` | Where the install lives (default `~/.nimblebrain-local`, or `NIMBLEBRAIN_HOME`). |
@@ -55,11 +57,12 @@ flag.
   "workspaces": [{ "id": "ws_8f3a…", "name": "Default", "mcp": "http://127.0.0.1:27246/mcp/ws_8f3a…" }],
   "agent": { "connected": "claude-code", "skill": "nimblebrain" },
   "model_key": "set",
+  "local_model": null,
   "telemetry": { "state": "on" }
 }
 ```
 
-`model_key` is `set` or `missing`, read from the install's `.env`. The key itself never appears in any output.
+`model_key` is `set` or `missing`, read from the install's `.env`. The key itself never appears in any output. `local_model` names the Ollama model NimbleBrain's agents run on (`nimblebrain-gemma4-e4b`), or is `null` for a hosted key; with one set, a missing key is not an error.
 
 `telemetry.state` is `on`, `off` or `undecided`. While it is `undecided`, `telemetry.ask` holds the question to put to the person and `telemetry.set` the command that records the answer (`npx nimblebrain telemetry on` or `off`); nothing is sent before a yes. `telemetry.locked` is present when no one can change it here (`do_not_track`, `no_destination` or `operator`).
 
@@ -89,6 +92,10 @@ flag.
 | `RUNTIME_UNSUPPORTED` | The release `--runtime` names is older than this CLI supports, or its Compose file cannot be driven. |
 | `NOT_RUNNING` | `telemetry on\|off` needs the runtime up (`npx nimblebrain up`). |
 | `TELEMETRY_LOCKED` | `DO_NOT_TRACK` or the install's configuration decides telemetry; nothing to change. |
+| `LOCAL_MODEL_UNREACHABLE` | Ollama does not answer on `127.0.0.1:11434`. The person installs and starts it (https://ollama.com/download). |
+| `LOCAL_MODEL_MISSING` | Ollama does not have the model, and it was not downloaded (declined, or the download failed). |
+| `LOCAL_MODEL_NO_TOOLS` | The model cannot call tools, which NimbleBrain's agents need. Choose one listed on https://docs.nimblebrain.ai/config/local-models/. |
+| `LOCAL_CONTEXT_SMALL` | `doctor`: the model's context window is below 32k. Run `npx nimblebrain local-model` again. |
 | `INTERRUPTED` | The CLI was stopped before it finished; `exit_code` says how. Run `status`, then the same command again. |
 
 `references/troubleshooting.md` gives the cause and fix for each.

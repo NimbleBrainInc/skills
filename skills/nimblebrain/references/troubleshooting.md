@@ -24,6 +24,10 @@ diagnosing: never print or open the files that hold it.
 | `MODEL_KEY_MISSING` | No key is stored. Everything but chat works. | The person runs `npx nimblebrain key` in their own terminal. |
 | `NOT_RUNNING` | `telemetry on` or `off` was run while the runtime is stopped; the runtime records the answer. | Run `npx nimblebrain up --json`, then the telemetry command again. |
 | `TELEMETRY_LOCKED` | `DO_NOT_TRACK` (or `NB_TELEMETRY_DISABLED`) is set, or this install has nowhere to send data. | Nothing to do: telemetry stays off. Tell the person if they asked to turn it on. |
+| `LOCAL_MODEL_UNREACHABLE` | Ollama is not installed, or not running on `127.0.0.1:11434`. | The person installs Ollama (https://ollama.com/download) and starts it; run the command again. |
+| `LOCAL_MODEL_MISSING` | The model is not on Ollama: the download was declined, failed, or ran out of disk. | With the person's yes, run `npx nimblebrain local-model --yes --json` again, or `ollama pull <model>` first. |
+| `LOCAL_MODEL_NO_TOOLS` | The model cannot call tools. | Use a model with tool calling, such as `gemma4:e4b`. |
+| `LOCAL_CONTEXT_SMALL` | `doctor` found the model's context window below 32k, so long prompts would be cut. | Run `npx nimblebrain local-model --yes --json` again. |
 | `INTERRUPTED` | The CLI was stopped (a signal, Ctrl-C, a killed session) before it answered. | Run `npx nimblebrain status --json` to see what is in place, then run the same command again; `init` is safe to repeat. |
 | `HEALTH_TIMEOUT` | The runtime is still starting, or it exited. | Run `logs --json` and report the last error line as written. |
 | Chat shows an error | The key is wrong, expired, out of credit, or for another provider. | The person runs `npx nimblebrain key` again. |
