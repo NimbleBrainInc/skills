@@ -1,8 +1,8 @@
 # Resources and prompts
 
-Read this when the server advertises either primitive. Source: the MCP specification, [*Server / Resources*](https://modelcontextprotocol.io/specification/draft/server/resources) and [*Server / Prompts*](https://modelcontextprotocol.io/specification/draft/server/prompts). Same rule as the other reference files — the quotes are a cache; re-derive from the link before filing on wording.
+Read this when the server advertises either primitive. Source: the MCP specification, [*Server / Resources*](https://modelcontextprotocol.io/specification/2026-07-28/server/resources) and [*Server / Prompts*](https://modelcontextprotocol.io/specification/2026-07-28/server/prompts). As in the other reference files, the quotes are pinned to the `2026-07-28` revision; for a server on an older version, confirm the rule on that version's page before filing it.
 
-The rungs in `SKILL.md` still apply — the surface is prompt, the boundary is untrusted — but both primitives differ from tools in who decides when they are used, and that changes what a good description is doing.
+The rungs in `design.md` still apply — the surface is prompt, the boundary is untrusted — but both primitives differ from tools in who decides when they are used, and that changes what a good description is doing.
 
 ## Who controls what
 
@@ -39,7 +39,7 @@ A resource with no `audience` gives the host nothing to filter on. If a resource
 
 ### Errors
 
-From [*Server / Resources* → Error Handling](https://modelcontextprotocol.io/specification/draft/server/resources#error-handling). Sharper than the tool rules, and worth checking directly:
+From [*Server / Resources* → Error Handling](https://modelcontextprotocol.io/specification/2026-07-28/server/resources#error-handling). Sharper than the tool rules, and worth checking directly:
 
 > If the requested resource does not exist, servers **MUST** return a JSON-RPC error with code `-32602` (Invalid Params). Servers **SHOULD** return `-32603` for internal errors.
 > Servers **MUST NOT** return an empty `contents` array for a non-existent resource. An empty array is ambiguous—it could mean the resource exists but has no content, or that it doesn't exist at all.
@@ -50,7 +50,7 @@ Note the inversion against tools: a missing resource is a **protocol** error, wh
 
 ### Capabilities and templates
 
-A server declaring `resources` **MUST** answer `resources/list`. `listChanged` and `subscribe` are independent optional features — declare each only if it is implemented, and omit the object's contents entirely (`"resources": {}`) if neither is.
+A server declaring `resources` **MUST** answer `resources/list`. `listChanged` and `subscribe` are independent optional features: declare each only if it is implemented, and declare `"resources": {}` if neither is.
 
 Resource templates expose parameterized resources via RFC 6570 URI templates, listed at `resources/templates/list`, with arguments completable through the completion API.
 
@@ -78,7 +78,7 @@ Prefer `resource_link` over an embedded resource when the client can fetch it �
 
 ### Errors
 
-From [*Server / Prompts* → Error Handling](https://modelcontextprotocol.io/specification/draft/server/prompts#error-handling). Standard JSON-RPC codes, again unlike tools. `SHOULD`-level here, where the resources not-found code above is a `MUST`:
+From [*Server / Prompts* → Error Handling](https://modelcontextprotocol.io/specification/2026-07-28/server/prompts#error-handling). Standard JSON-RPC codes, again unlike tools. `SHOULD`-level here, where the resources not-found code above is a `MUST`:
 
 - Invalid prompt name — `-32602`
 - Missing required arguments — `-32602`

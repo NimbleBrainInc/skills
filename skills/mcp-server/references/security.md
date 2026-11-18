@@ -1,8 +1,8 @@
 # The boundary
 
-Source: the MCP specification's [*Security Best Practices*](https://modelcontextprotocol.io/specification/draft/basic/security_best_practices) page, plus the per-primitive security sections. As in `spec-citations.md`, the quotes here are a cache — re-derive from the link before a finding turns on wording or on the rule being in force for the negotiated version.
+Source: the MCP specification's [*Security Best Practices*](https://modelcontextprotocol.io/specification/2026-07-28/basic/security_best_practices) page, plus the per-primitive security sections. As in `spec-citations.md`, the quotes are pinned to the `2026-07-28` revision; for a server that negotiates an older version, confirm the rule on that version's page before filing it.
 
-The frame from `SKILL.md` holds throughout: **the boundary is untrusted**. Arguments arrive as model output, and model output is shaped by whatever the model last read — a web page, a document, another tool's result. Review each entry point as if the argument were attacker-chosen.
+The frame from `design.md` holds throughout: **the boundary is untrusted**. Arguments arrive as model output, and model output is shaped by whatever the model last read — a web page, a document, another tool's result. Review each entry point as if the argument were attacker-chosen.
 
 ## Token passthrough
 

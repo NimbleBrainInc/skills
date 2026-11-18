@@ -121,9 +121,8 @@ Route to the skill for the job. Install it if it is missing:
 
 | The person wants | Skill |
 |---|---|
-| A screen for an MCP server, or an app inside NimbleBrain | `synapse` |
-| An MCP server for an API or a system | `mcpb` |
-| A review of an MCP server's tool design | `mcp-best-practices` |
+| An MCP server for an API or a system, an app's server, or a review of a server's tools | `mcp-server` (with `synapse` for an app's interface) |
+| A screen for an MCP server, or an app's interface inside NimbleBrain | `synapse` |
 
 ## 5. Keep it running
 
