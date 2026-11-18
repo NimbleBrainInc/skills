@@ -39,7 +39,7 @@ skills/<name>/
 
 ## Phase status
 
-- ✅ Flat coarse structure + first set: `synapse`, `mcpb`, `mpak` (CLI usage guide), `mcp-best-practices`.
+- ✅ Flat coarse structure + first set: `synapse`, `mcpb`, `mcp-best-practices`.
 - ✅ Flagship `nimblebrain` skill and `.claude-plugin/marketplace.json` (plugins `nimblebrain`, `nimblebrain-builder`).
 - ⬜ Each building skill ends with a verify step in a local NimbleBrain.
 - ⬜ `dist/index.json` build, CI lint (`skills-ref validate`), CONTRIBUTING.md.

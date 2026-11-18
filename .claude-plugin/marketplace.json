@@ -18,13 +18,12 @@
     },
     {
       "name": "nimblebrain-builder",
-      "description": "Build for NimbleBrain: Synapse UIs, MCP servers and bundles, mpak publishing, and MCP tool design.",
+      "description": "Build for NimbleBrain: Synapse UIs, MCP servers and bundles, and MCP tool design.",
       "source": "./",
       "strict": false,
       "skills": [
         "./skills/synapse",
         "./skills/mcpb",
-        "./skills/mpak",
         "./skills/mcp-best-practices"
       ]
     }
