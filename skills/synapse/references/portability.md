@@ -37,7 +37,7 @@ Nothing is gated on the host's name.
 | `useResize`, `app.resize` | nothing | always sent — the spec gates it on nothing |
 | `useCallTool`, `app.callTool` | `serverTools` | `HostCapabilityError`; `useCallTool`'s `error` holds it |
 | `app.readServerResource` | `serverResources` | `HostCapabilityError` |
-| `useDataSync` | a host that relays `notifications/resources/list_changed` (declared as `serverResources.listChanged`) | the callback never runs. The hook only listens and does not read the declaration. **It also needs your server to announce its writes**, otherwise it stays silent on every host |
+| `useDataSync` | a host that relays `notifications/resources/list_changed` (declared as `serverResources.listChanged`) | no call on a write. The hook only listens and does not read the declaration. **It also needs your server to announce its writes**, otherwise no write refreshes the view on any host. On every host it re-reads when a tab hidden for a minute or more is shown again |
 | `useModelContext`, `app.updateModelContext` | `updateModelContext` | no-op |
 | `useSendMessage`, `app.sendMessage` | `message` | no-op. It takes the text alone; what the user is acting on goes in `updateModelContext` |
 | `app.openLink` | `openLinks` | opens the URL with `window.open` instead (also when the host refuses) |
