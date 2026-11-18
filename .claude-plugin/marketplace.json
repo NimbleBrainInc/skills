@@ -26,13 +26,6 @@
         "./skills/mcpb",
         "./skills/mcp-best-practices"
       ]
-    },
-    {
-      "name": "nimblebrain-contributor",
-      "description": "Contribute to NimbleBrain open source: find work, set up your environment, file issues, check on your work.",
-      "source": "./",
-      "strict": false,
-      "skills": ["./skills/contributor"]
     }
   ]
 }

@@ -43,7 +43,7 @@ If cold start, verify the basics before proceeding:
 3. **mpak CLI** — `mpak --version` succeeds
 4. **GitHub owner** — detect the user's login via `gh api user --jq .login` as a default, then ask: "Repo owner will be `<detected_login>` — or would you prefer a different org/account?" If the user specifies a different owner, use that as `<github_owner>`. The mpak registry allows any GitHub user or org to publish under their own scope (`@<owner>/*` must match the repo owner via OIDC), so this can be a personal account or any org the user has access to.
 
-If any check fails, tell the contributor what's missing — Python 3.13+ with `uv`/`ruff`/`ty` for Python, or Node 22+ with `npm` for TypeScript (the `contributor` skill's `references/DEV_SETUP.md` has the full walkthrough if they came from there). Don't block on optional tools (e.g., docker) — just note they're unavailable and skip the phases that need them.
+If any check fails, tell the contributor what's missing — Python 3.13+ with `uv`/`ruff`/`ty` for Python, or Node 22+ with `npm` for TypeScript. Don't block on optional tools (e.g., docker) — just note they're unavailable and skip the phases that need them.
 
 ## 0c: Language
 
