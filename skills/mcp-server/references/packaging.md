@@ -31,6 +31,7 @@ mcpb/
   "name": "@acme/tickets",
   "version": "1.2.0",
   "description": "…",
+  "icon": "icon.png",
   "server": {
     "type": "uv",
     "entry_point": "mcp_acme",

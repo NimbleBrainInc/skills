@@ -6,7 +6,7 @@ Guides, kept current with each release: [quickstart](https://docs.nimblebrain.ai
 
 ## Versions
 
-Python 3.13 or later, FastMCP 4.0 or later, `nimblebrain-server-sdk` 0.7 or later (`add_server_card` needs 0.8.0). The SDK is `0.x`: a minor release may change the Python API, so pin a minor range (`>=0.7,<0.8`) and move it on purpose. Use whatever the template's `pyproject.toml` pins unless you need a newer feature. Tooling is `uv`, `ruff` and `ty`.
+Python 3.13 or later, FastMCP 4.0 or later, `nimblebrain-server-sdk` 0.7 or later (`add_server_card` needs 0.8.0). The SDK is `0.x`: a minor release may change the Python API, so pin a minor range (`>=0.8,<0.9` for the card) and move it on purpose. Use whatever the template's `pyproject.toml` pins unless you need a newer feature. Tooling is `uv`, `ruff` and `ty`.
 
 ## Start from the template
 

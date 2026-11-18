@@ -92,7 +92,8 @@ In TypeScript, write the same four against the protocol (`references/typescript.
 ### 5. Test
 
 Unit tests with the upstream mocked, every tool's success and failure paths, run on
-both protocol eras (`2026-07-28` and `2025-11-25`), since a host may connect on either.
+both protocol eras (`2026-07-28` and `2025-11-25`), since a host may connect on either
+(TypeScript: `2025-11-25` only, per `references/typescript.md`).
 Then the template's whole check (`make check`, or `npm run check`). Do not move on with a
 failing check.
 
