@@ -34,7 +34,7 @@ diagnosing: never print or open the files that hold it.
 | `NAME_IS_CATALOG_ENTRY` | The name belongs to a catalog connector. | Pass another `--name`. |
 | `REQUEST_FAILED` | The runtime refused or failed the request. | Read `message`, then `npx nimblebrain logs --json` for the last error line. |
 | `TELEMETRY_LOCKED` | `DO_NOT_TRACK` (or `NB_TELEMETRY_DISABLED`) is set, or this install has nowhere to send data. | Nothing to do: telemetry stays off. Tell the person if they asked to turn it on. |
-| `LOCAL_MODEL_UNREACHABLE` | Ollama is not installed, or not running on `127.0.0.1:11434`. | The person installs Ollama (https://ollama.com/download) and starts it; run the command again. |
+| `LOCAL_MODEL_UNREACHABLE` | Ollama does not answer on `127.0.0.1:11434`: it is not installed, the person declined starting it, or it did not answer within 30 seconds of a start. | Give the error's `fix`, which names the step for this machine (`brew install ollama`, the download page, opening the app, or `sudo systemctl start ollama`); never install Ollama yourself. Then run the same command again. From `up`, NimbleBrain is already running; only its own agents wait on Ollama. |
 | `LOCAL_MODEL_MISSING` | The model is not on Ollama: the download was declined, failed, or ran out of disk. | With the person's yes, run `npx nimblebrain local-model --yes --json` again, or `ollama pull <model>` first. |
 | `LOCAL_MODEL_NO_TOOLS` | The model cannot call tools. | Use a model with tool calling, such as `gemma4:e4b`. |
 | `LOCAL_CONTEXT_SMALL` | `doctor` found the model's context window below 32k, so long prompts would be cut. | Run `npx nimblebrain local-model --yes --json` again. |

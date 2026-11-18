@@ -18,8 +18,8 @@ CLI's version; `status` reports both.
 | `doctor` | Checks Docker, Compose v2, CPU architecture, memory and the port. Installs nothing. |
 | `status` | Version, health, URL, each workspace's MCP URL, the connected agent, whether a model key is set, and the telemetry answer. |
 | `key` | Takes the model key at a hidden prompt, stores it readable by this user only, and restarts the runtime so it takes effect. Interactive only: a person runs it. |
-| `local-model [model]` | Runs NimbleBrain's own agents on a model served by Ollama on this machine instead of a hosted key: checks Ollama, downloads the model if missing (default `gemma4:e4b`; asks first at a terminal), refuses one without tool calling, prepares a copy with a 32k context window, and restarts the runtime. Needs a runtime release that takes a local model. |
-| `up` / `down` | Start or stop the runtime. Data survives `down`. |
+| `local-model [model]` | Runs NimbleBrain's own agents on a model served by Ollama on this machine instead of a hosted key: checks Ollama and, when it is installed but not running, starts it (asks first at a terminal; see *Ollama* below), downloads the model if missing (default `gemma4:e4b`; asks first at a terminal), refuses one without tool calling, prepares a copy with a 32k context window, and restarts the runtime. Needs a runtime release that takes a local model. |
+| `up` / `down` | Start or stop the runtime. Data survives `down`. On an install with a local model, `up` first starts Ollama if it is down, as after a reboot. |
 | `logs` | Recent runtime log lines. |
 | `update` | Moves to the newest runtime release (or `--runtime`), keeping data. Never backwards. |
 | `uninstall` | Removes the containers, images and the data volume. Asks to confirm unless `--yes` is passed; with `--json` or no terminal attached it needs `--yes`, or it answers `CANCELLED`. |
@@ -68,6 +68,10 @@ flag.
 ```
 
 `model_key` is `set` or `missing`, read from the install's `.env`. The key itself never appears in any output. `local_model` names the Ollama model NimbleBrain's agents run on (`nimblebrain-gemma4-e4b`), or is `null` for a hosted key; with one set, a missing key is not an error.
+
+### Ollama
+
+When Ollama is installed but not running, `init` (choosing `local`), `local-model` and `up` start it the way it was installed: the macOS app (`open -g -a Ollama`), Homebrew's service (`brew services start ollama`, which also starts it at every login), or the Linux service (`systemctl start ollama`, never with `sudo`). At a terminal they ask first; with `--yes`, `--json` or no terminal they take the default, yes. The answer carries the command run in `ollama_started`; tell the person what was started. `doctor` starts Ollama only on a person's yes. The CLI never installs Ollama: when it is missing, the error's `fix` names the install step for this machine.
 
 `telemetry.state` is `on`, `off` or `undecided`. While it is `undecided`, `telemetry.ask` holds the question to put to the person and `telemetry.set` the command that records the answer (`npx nimblebrain telemetry on` or `off`); nothing is sent before a yes. `telemetry.locked` is present when no one can change it here (`do_not_track`, `no_destination` or `operator`).
 
@@ -118,7 +122,7 @@ to the network unless a firewall stops it, so say so before suggesting it.
 | `RUNTIME_UNSUPPORTED` | The release `--runtime` names is older than this CLI supports, or its Compose file cannot be driven. |
 | `NOT_RUNNING` | `telemetry on\|off` and every `mcp` command need the runtime up (`npx nimblebrain up`). |
 | `TELEMETRY_LOCKED` | `DO_NOT_TRACK` or the install's configuration decides telemetry; nothing to change. |
-| `LOCAL_MODEL_UNREACHABLE` | Ollama does not answer on `127.0.0.1:11434`. The person installs and starts it (https://ollama.com/download). |
+| `LOCAL_MODEL_UNREACHABLE` | Ollama does not answer on `127.0.0.1:11434`: it is not installed, starting it was declined, or it did not answer after a start. `fix` names the step for this machine. From `up`, NimbleBrain is running anyway and the status comes with it. |
 | `LOCAL_MODEL_MISSING` | Ollama does not have the model, and it was not downloaded (declined, or the download failed). |
 | `LOCAL_MODEL_NO_TOOLS` | The model cannot call tools, which NimbleBrain's agents need. Choose one listed on https://docs.nimblebrain.ai/config/local-models/. |
 | `LOCAL_CONTEXT_SMALL` | `doctor`: the model's context window is below 32k. Run `npx nimblebrain local-model` again. |
