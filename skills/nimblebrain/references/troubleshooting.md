@@ -19,7 +19,7 @@ diagnosing: never print or open the files that hold it.
 | `NEEDS_TERMINAL` | `key` was run with no terminal attached. | The person runs `npx nimblebrain key` in their own terminal. Never pass the key yourself. |
 | `CANCELLED` | The person declined, or `uninstall` ran without `--yes` under `--json` or with no terminal. Nothing changed. | If the person said yes, run `npx nimblebrain uninstall --yes --json`; otherwise stop. |
 | `RUNTIME_UNSUPPORTED` | The release `--runtime` names is older than this CLI supports, or its Compose file cannot be driven. | Pass a newer `--runtime`, or leave it out for the newest release. |
-| `NOT_OURS` | An install the CLI did not make holds the name or the data volume. | Report it and stop. Never remove another install's data. |
+| `NOT_OURS` | An install the CLI did not make holds this home's Compose project or data volume. | Report it and stop. Never remove another install's data. For a second install, use a `--home` whose folder has another name. |
 | `NETWORK` | A download failed: no network, or the image registry is unreachable. | Check the connection, then run the same command again. |
 | `MODEL_KEY_MISSING` | No key is stored. Everything but chat works. | The person runs `npx nimblebrain key` in their own terminal. |
 | `NOT_RUNNING` | `telemetry on` or `off` was run while the runtime is stopped; the runtime records the answer. | Run `npx nimblebrain up --json`, then the telemetry command again. |
