@@ -12,6 +12,13 @@ diagnosing: never print or open the files that hold it.
 | `ARCH_UNSUPPORTED` | The runtime publishes no image for this CPU. | Say so and stop. Do not force another platform: under emulation the runtime crashes. |
 | `LOW_MEMORY` | Docker has less memory than the runtime needs (about 2 GB). | The person raises Docker's memory in its settings, then you run `init` again. |
 | `PORT_IN_USE` | Another process holds port 27246, often another NimbleBrain. | Run `status`: if this install is already running, there is nothing to do. Otherwise the person stops the other process, or you pass `--port` on their say-so. |
+| `NOT_INSTALLED` | There is no install in the CLI's home (`~/.nimblebrain-local`, or `NIMBLEBRAIN_HOME`). | Run `npx nimblebrain` to install it, or pass the `--home` the install uses. |
+| `USAGE` | An unknown command, flag or flag value, or `update --runtime` naming an older release (exit 2). | Check `npx nimblebrain --help` and fix the command. |
+| `AGENT_UNSUPPORTED` | `--agent` names an agent the CLI cannot connect. | Pass `--agent claude-code`, `cursor`, `codex` or `none`. |
+| `START_FAILED` | Compose could not start the runtime; `message` is its last error line. | Run `logs --json`, report the last error line as written, then run the command again once it is addressed. |
+| `NEEDS_TERMINAL` | `key` was run with no terminal attached. | The person runs `npx nimblebrain key` in their own terminal. Never pass the key yourself. |
+| `CANCELLED` | The person declined, or `uninstall` ran without `--yes` under `--json` or with no terminal. Nothing changed. | If the person said yes, run `npx nimblebrain uninstall --yes --json`; otherwise stop. |
+| `RUNTIME_UNSUPPORTED` | The release `--runtime` names is older than this CLI supports, or its Compose file cannot be driven. | Pass a newer `--runtime`, or leave it out for the newest release. |
 | `NOT_OURS` | An install the CLI did not make holds the name or the data volume. | Report it and stop. Never remove another install's data. |
 | `NETWORK` | A download failed: no network, or the image registry is unreachable. | Check the connection, then run the same command again. |
 | `MODEL_KEY_MISSING` | No key is stored. Everything but chat works. | The person runs `npx nimblebrain key` in their own terminal. |

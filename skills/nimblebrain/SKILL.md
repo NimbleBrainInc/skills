@@ -38,7 +38,7 @@ over MCP.
   `npx nimblebrain telemetry on` or `off` with their answer. Never answer it yourself,
   and never pass `--telemetry` unless they already told you.
 - **Anything that deletes data asks first.** `uninstall` removes every conversation.
-  Run it, or `down --volumes`, only on the person's own yes for that step.
+  Run it only on the person's own yes for that step; `down` keeps data.
 
 ## 1. Get it running
 
@@ -114,9 +114,6 @@ Route to the skill for the job. Install it if it is missing:
 | To find, install or publish a server bundle | `mpak` |
 | A review of an MCP server's tool design | `mcp-best-practices` |
 
-Each of those finishes by running the result in this NimbleBrain, so the person sees it
-working where they will use it.
-
 ## 5. Keep it running
 
 | Ask | Command |
@@ -127,7 +124,7 @@ working where they will use it.
 | Start it again | `npx nimblebrain up --json` |
 | Move to the newest release | `npx nimblebrain update --json` |
 | Change the model key | the person runs `npx nimblebrain key` |
-| Remove it and all its data | `npx nimblebrain uninstall --json`, only on its own yes |
+| Remove it and all its data | `npx nimblebrain uninstall --yes --json`, only on the person's own yes |
 
 ## References
 

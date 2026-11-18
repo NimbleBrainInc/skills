@@ -18,8 +18,7 @@ setup and installs this skill for your agent at the end.
 
 ## Building for NimbleBrain
 
-Install the one for the job. Each finishes by running what you built in your local
-NimbleBrain.
+Install the one for the job.
 
 | Skill | Install | What it does |
 |-------|---------|--------------|

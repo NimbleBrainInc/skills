@@ -21,7 +21,7 @@ CLI's version; `status` reports both.
 | `up` / `down` | Start or stop the runtime. Data survives `down`. |
 | `logs` | Recent runtime log lines. |
 | `update` | Moves to the newest runtime release (or `--runtime`), keeping data. Never backwards. |
-| `uninstall` | Removes the containers, images and the data volume. Asks to confirm unless `--yes` is passed. |
+| `uninstall` | Removes the containers, images and the data volume. Asks to confirm unless `--yes` is passed; with `--json` or no terminal attached it needs `--yes`, or it answers `CANCELLED`. |
 | `telemetry [on\|off\|status]` | Whether this install sends anonymous usage data. `on` and `off` record a person's answer and need the runtime running. |
 
 ## Flags
@@ -78,14 +78,14 @@ flag.
 | `PORT_IN_USE` | Another process holds the port. |
 | `NOT_INSTALLED` | There is no install in the CLI's home (`~/.nimblebrain-local`, or `NIMBLEBRAIN_HOME`). Run `npx nimblebrain`. |
 | `NOT_OURS` | An install the CLI did not make holds the name or the data volume. |
-| `USAGE` | An unknown command or flag (exit 2). |
+| `USAGE` | An unknown command, flag or flag value (`--port`, `--telemetry`, `--provider` on `key`), or `update --runtime` naming a release older than the install (exit 2). |
 | `NETWORK` | A download failed. |
 | `MODEL_KEY_MISSING` | The runtime is up; chat needs a key (`npx nimblebrain key`). |
 | `HEALTH_TIMEOUT` | The runtime did not report healthy in time. |
 | `AGENT_UNSUPPORTED` | `--agent` names an agent the CLI cannot connect. |
 | `START_FAILED` | Compose could not start the runtime; `message` is its last error line. |
 | `NEEDS_TERMINAL` | `key` was run with no terminal attached. A person runs it. |
-| `CANCELLED` | The person declined, or `uninstall` ran without `--yes` and no terminal. Nothing changed. |
+| `CANCELLED` | The person declined, or `uninstall` ran without `--yes` while `--json` was passed or no terminal was attached. Nothing changed. |
 | `RUNTIME_UNSUPPORTED` | The release `--runtime` names is older than this CLI supports, or its Compose file cannot be driven. |
 | `NOT_RUNNING` | `telemetry on\|off` needs the runtime up (`npx nimblebrain up`). |
 | `TELEMETRY_LOCKED` | `DO_NOT_TRACK` or the install's configuration decides telemetry; nothing to change. |
