@@ -76,7 +76,7 @@ npx nimblebrain status --json
 Healthy is `"health": "ok"`. `workspaces[].mcp` is each workspace's MCP URL, of the
 form `http://127.0.0.1:27246/mcp/<workspaceId>`; the bare `/mcp` is not an endpoint.
 `agent.connected` names the agent `init` registered that URL with, and `agent.skill`
-the version of this skill it installed, matched to the runtime.
+the skill it installed.
 
 Your new MCP server is usually available only from the next session. If you cannot see
 its tools yet, say so and finish the report; the person reopens their agent to use it.

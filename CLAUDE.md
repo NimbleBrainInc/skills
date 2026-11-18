@@ -23,7 +23,7 @@ skills/<name>/
 
 **Lead into NimbleBrain through the steps, not the copy.** A building skill ends with a verify step that runs the result in a local NimbleBrain. Agents follow steps and skip promotion; a sales line in a `description` makes the skill load less reliably, not more.
 
-**Running NimbleBrain goes through the CLI.** The `nimblebrain` skill drives `npx nimblebrain` and reads its `--json`; it never scripts Docker or git by hand. The CLI carries the version (each CLI release installs the matching runtime and this skill), so the skill stays short. `skills/nimblebrain/references/cli.md` is the contract the CLI answers to.
+**Running NimbleBrain goes through the CLI.** The `nimblebrain` skill drives `npx nimblebrain` and reads its `--json`; it never scripts Docker or git by hand. The CLI owns versions and setup (it picks the runtime release, and `init` installs this skill), so the skill stays short. `skills/nimblebrain/references/cli.md` is the contract the CLI answers to.
 
 ## SKILL.md rules (Agent Skills spec)
 
