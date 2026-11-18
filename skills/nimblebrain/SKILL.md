@@ -33,6 +33,10 @@ over MCP.
 - **The local instance is for this machine.** It signs nobody in: anyone who reaches its
   port is the admin. The CLI publishes it on `127.0.0.1` for that reason. Never widen
   it, tunnel it or put a proxy in front of it.
+- **Usage data is the person's call.** When a result carries `telemetry.state:
+  "undecided"`, put `telemetry.ask` to the person in their words and run
+  `npx nimblebrain telemetry on` or `off` with their answer. Never answer it yourself,
+  and never pass `--telemetry` unless they already told you.
 - **Anything that deletes data asks first.** `uninstall` removes every conversation.
   Run it, or `down --volumes`, only on the person's own yes for that step.
 

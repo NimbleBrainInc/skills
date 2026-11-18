@@ -15,13 +15,14 @@ CLI's version; `status` reports both.
 | Command | Does |
 |---|---|
 | `init` (the default) | Checks the machine, starts the runtime, connects the agent named by `--agent`, installs this skill for it. On a machine that already has an install, reports it and changes nothing. |
-| `doctor` | Checks Docker, Compose v2, memory, disk, CPU architecture and the port. Installs nothing. |
-| `status` | Version, health, URL, each workspace's MCP URL, the connected agent. |
+| `doctor` | Checks Docker, Compose v2, CPU architecture, memory and the port. Installs nothing. |
+| `status` | Version, health, URL, each workspace's MCP URL, the connected agent, whether a model key is set, and the telemetry answer. |
 | `key` | Takes the model key at a hidden prompt, stores it readable by this user only, and restarts the runtime so it takes effect. Interactive only: a person runs it. |
 | `up` / `down` | Start or stop the runtime. Data survives `down`. |
 | `logs` | Recent runtime log lines. |
 | `update` | Moves to the newest runtime release (or `--runtime`), keeping data. Never backwards. |
 | `uninstall` | Removes the containers, images and the data volume. Asks to confirm unless `--yes` is passed. |
+| `telemetry [on\|off\|status]` | Whether this install sends anonymous usage data. `on` and `off` record a person's answer and need the runtime running. |
 
 ## Flags
 
@@ -33,11 +34,12 @@ CLI's version; `status` reports both.
 | `--port <n>` | The local port (default `27246`). |
 | `--provider <name>` | For `key`: `anthropic` (default), `openai`, `google`, `greenpt`, `nebius` or `xai`. |
 | `--runtime <tag>` | For `init` and `update`: the NimbleBrain release to install, such as `v0.74.0`. Default: the newest. |
+| `--telemetry <on\|off>` | For `init`: an answer the person already gave about anonymous usage data. Never pass it on your own judgment. |
 | `--home <dir>` | Where the install lives (default `~/.nimblebrain-local`, or `NIMBLEBRAIN_HOME`). |
 
 ## The JSON
 
-Every command answers `{"ok": true, ...}` or `{"ok": false, "error": "<CODE>", "fix": "<one sentence>"}`.
+Every command answers `{"ok": true, ...}` or `{"ok": false, "error": "<CODE>", "message": "...", "fix": "<one sentence>"}`.
 The exit code is `0` when `ok` is true, `1` when it is false, `2` for a bad command or
 flag.
 
@@ -47,16 +49,19 @@ flag.
 {
   "ok": true,
   "version": "0.74.0",
-  "cli_version": "0.1.0",
+  "cli_version": "0.1.1",
   "health": "ok",
   "url": "http://127.0.0.1:27246",
   "workspaces": [{ "id": "ws_8f3a…", "name": "Default", "mcp": "http://127.0.0.1:27246/mcp/ws_8f3a…" }],
   "agent": { "connected": "claude-code", "skill": "nimblebrain" },
-  "model_key": "set"
+  "model_key": "set",
+  "telemetry": { "state": "on" }
 }
 ```
 
 `model_key` is `set` or `missing`, read from the install's `.env`. The key itself never appears in any output.
+
+`telemetry.state` is `on`, `off` or `undecided`. While it is `undecided`, `telemetry.ask` holds the question to put to the person and `telemetry.set` the command that records the answer (`npx nimblebrain telemetry on` or `off`); nothing is sent before a yes. `telemetry.locked` is present when no one can change it here (`do_not_track`, `no_destination` or `operator`).
 
 `init` on a machine that already has an install answers its status with `"already": true` and changes nothing. When `init` could not connect the agent, it still succeeds and adds `"manual"`: the exact command or setting to add by hand. When it ends on `MODEL_KEY_MISSING`, the failure carries the full status too, so the agent still learns the URL and MCP endpoints.
 
@@ -82,6 +87,8 @@ flag.
 | `NEEDS_TERMINAL` | `key` was run with no terminal attached. A person runs it. |
 | `CANCELLED` | The person declined, or `uninstall` ran without `--yes` and no terminal. Nothing changed. |
 | `RUNTIME_UNSUPPORTED` | The release `--runtime` names is older than this CLI supports, or its Compose file cannot be driven. |
+| `NOT_RUNNING` | `telemetry on\|off` needs the runtime up (`npx nimblebrain up`). |
+| `TELEMETRY_LOCKED` | `DO_NOT_TRACK` or the install's configuration decides telemetry; nothing to change. |
 | `INTERRUPTED` | The CLI was stopped before it finished; `exit_code` says how. Run `status`, then the same command again. |
 
 `references/troubleshooting.md` gives the cause and fix for each.
