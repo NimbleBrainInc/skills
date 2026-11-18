@@ -23,8 +23,7 @@ Install the one for the job.
 | Skill | Install | What it does |
 |-------|---------|--------------|
 | [`synapse`](./skills/synapse) | `--skill synapse` | Build a Synapse UI for an MCP server: a React app that renders inside NimbleBrain, Claude and ChatGPT. |
-| [`mcpb`](./skills/mcpb) | `--skill mcpb` | Build an MCP server end to end: scaffold from API docs, implement, validate the bundle, release to mpak. |
-| [`mcp-best-practices`](./skills/mcp-best-practices) | `--skill mcp-best-practices` | Name, describe and shape an MCP server's tools so a model calls them well. |
+| [`mcp-server`](./skills/mcp-server) | `--skill mcp-server` | Build an MCP server, or an app's server, for NimbleBrain or any MCP host, and review a server's tools so a model calls them well. |
 
 ## Contributing to NimbleBrain
 

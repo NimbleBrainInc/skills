@@ -64,7 +64,7 @@ entry points: **`references/portability.md`**.
 
 ## Process
 
-1. **Analyze the server** — language (Python/FastMCP or TS), the tool list + return shapes, where identity comes from (the MCP session, or HTTP headers a proxy in front of the server sets), and how it is deployed. NimbleBrain connects to a server over HTTP by URL, so the server runs as a service, often from a container image (which needs a Node build stage, step 7). A `.mcpb` bundle is only for desktop hosts.
+1. **Analyze the server** — language (Python/FastMCP or TS), the tool list + return shapes, where identity comes from (the MCP session, or HTTP headers a proxy in front of the server sets), and how it is deployed. NimbleBrain connects to a server over HTTP by URL, so the server runs as a service, often from a container image (which needs a Node build stage, step 7). A `.mcpb` bundle is only for desktop hosts. No server yet? Build it first with the `mcp-server` skill, then come back for the UI.
 
 2. **Scaffold `ui/`** — `package.json` (`react`/`react-dom` `^19`, `@nimblebrain/synapse@^0.40.0`, `@modelcontextprotocol/ext-apps@^2.0.0`, `@modelcontextprotocol/client@^2.0.0`, `@modelcontextprotocol/core@^2.0.0`, `zod@^4.2`, `vite`, `vite-plugin-singlefile`, `typescript`; add `marked` + `dompurify` only if you render markdown), `vite.config.ts` (`react()`, `viteSingleFile()`, `synapseVite()`, `build.assetsInlineLimit: Infinity`), a strict `tsconfig.json`, `index.html`, and `.gitignore` (`node_modules/`, `dist/`, `.vite/`). **Commit `package-lock.json`** so the build can `npm ci`.
 
