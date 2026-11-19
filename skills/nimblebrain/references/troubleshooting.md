@@ -22,7 +22,7 @@ diagnosing: never print or open the files that hold it.
 | `NOT_OURS` | An install the CLI did not make holds this home's Compose project or data volume. | Report it and stop. Never remove another install's data. For a second install, use a `--home` whose folder has another name. |
 | `NETWORK` | A download failed: no network, or the image registry is unreachable. | Check the connection, then run the same command again. |
 | `MODEL_KEY_MISSING` | No key is stored. Everything but chat works. | The person runs `npx nimblebrain key` in their own terminal. |
-| `NOT_RUNNING` | `telemetry on`/`off` or an `mcp` command was run while the runtime is stopped. | Run `npx nimblebrain up --json`, then the command again. |
+| `NOT_RUNNING` | `open`, `telemetry on`/`off` or an `mcp` command was run while the runtime is stopped. | Run `npx nimblebrain up --json`, then the command again. |
 | `UPDATE_REQUIRED` | `mcp add` on an install from before runtime `v0.76.0`, which cannot reach this machine. | Run `npx nimblebrain update --json`, then `mcp add` again. Data survives the update. |
 | `URL_NOT_LOOPBACK`, `URL_INVALID` | The URL is not an `http(s)` URL on `localhost`, `127.0.0.1` or `::1`. | Use the server's loopback URL, such as `http://127.0.0.1:8000/mcp`. |
 | `NAME_TAKEN`, `NAME_IS_CATALOG_ENTRY`, `INVALID_SERVER_NAME` | The name is in use in the workspace, belongs to a catalog connector, or is empty or reserved once lowercased with other characters turned into hyphens. | Pass another `--name`; for `NAME_TAKEN`, `mcp list` shows what holds it. |

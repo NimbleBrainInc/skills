@@ -136,6 +136,7 @@ To try a server the person is building in their local NimbleBrain, run it on
 | Ask | Command |
 |---|---|
 | Is it up, and where? | `npx nimblebrain status --json` |
+| Open it | `npx nimblebrain open --json`; on `opened: false`, give the person the `url`; on `NOT_RUNNING`, run `up` first |
 | Why did it fail? | `npx nimblebrain logs --json` (recent lines from the runtime) |
 | Stop it | `npx nimblebrain down --json` |
 | Start it again | `npx nimblebrain up --json` |
