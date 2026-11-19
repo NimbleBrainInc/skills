@@ -91,6 +91,9 @@ Other answers:
 
 The rules on the model key, telemetry and `uninstall` are in `SKILL.md`. Beyond those:
 
+- **`init --local-model`:** pass it only when the person chose a local model. It answers
+  the model question without asking, and the model it names can start a download of
+  several GB and start Ollama.
 - **Ollama:** when it is installed but not running, `init`, `local-model` and `up` start it
   the way it was installed: the macOS app, Homebrew's service (which also starts it at
   every login), or the Linux service, never with `sudo`. At a terminal they ask first;
