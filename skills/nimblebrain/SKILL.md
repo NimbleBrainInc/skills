@@ -29,7 +29,8 @@ over MCP.
   may want to rotate it.
 - **Read the CLI's JSON, not its prose.** Run every command with `--json` and branch on
   `ok` and `error`. Each error carries a `fix`; give that fix and stop. Do not improvise
-  another install route. `references/cli.md` lists the commands, fields and errors.
+  another install route. `npx nimblebrain help --json` lists every command, flag and
+  error code; `references/cli.md` covers what the answers carry.
 - **The local instance is for this machine.** It signs nobody in: anyone who reaches its
   port is the admin. The CLI publishes it on `127.0.0.1` for that reason. Never widen
   it, tunnel it or put a proxy in front of it.
@@ -147,5 +148,7 @@ To try a server the person is building in their local NimbleBrain, run it on
 
 ## References
 
-- `references/cli.md`: every command, flag, JSON field and error code
+- `npx nimblebrain help --json`: every command, flag and error code, from the CLI that runs
+- `references/cli.md`: the fields each answer carries, the CLI version each feature needs,
+  and the judgment around the commands
 - `references/troubleshooting.md`: symptom, cause and fix for each error
