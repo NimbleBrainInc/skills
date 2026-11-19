@@ -24,6 +24,7 @@ CLI's version; `status` reports both.
 | `logs` | Recent runtime log lines. |
 | `update` | Moves to the newest runtime release (or `--runtime`), keeping data. Never backwards. |
 | `uninstall` | Removes the containers, images and the data volume. Asks to confirm unless `--yes` is passed; with `--json` or no terminal attached it needs `--yes`, or it answers `CANCELLED`. |
+| `open` | Opens the install's web UI in the default browser. Answers `url` and `opened`; `opened: false` (no display, an SSH session, no opener) still succeeds, so give the person the `url`. Never starts NimbleBrain. |
 | `telemetry [on\|off\|status]` | Whether this install sends anonymous usage data. `on` and `off` record a person's answer and need the runtime running. |
 | `mcp add <url>` | Adds an MCP server running on this machine to a workspace, by its loopback URL (`localhost`, `127.0.0.1` or `::1`). The runtime reads the server's Server Card at `<url>/server-card` for its title, icon and sidebar placements. Needs the runtime running and a release with `host_loopback: true`. |
 | `mcp list` | The servers in a workspace, with URL and status. |
@@ -43,6 +44,7 @@ CLI's version; `status` reports both.
 | `--telemetry <on\|off>` | For `init`: an answer the person already gave about anonymous usage data. Never pass it on your own judgment. |
 | `--name <serverName>` | For `mcp add`: the name to add the server under. Default: the name in its Server Card, else the URL's host and port. The runtime lowercases it and turns any other character into a hyphen. |
 | `--workspace <wsId>` | For `mcp`: the workspace to act in. Default: the first in `status`'s `workspaces`, the one `init` connected. |
+| `--no-open` | For `init`: do not open the browser at the end. `init` opens it only for a person at a terminal, never under `--json` or with no terminal. |
 | `--home <dir>` | Where the install lives (default `~/.nimblebrain-local`, or `NIMBLEBRAIN_HOME`). A home whose folder has another name is a separate install, with its own containers, data volume and port; pass the same `--home` to every command for it. Give a second install `--agent none`: the agent has one `nimblebrain` server, which a second install would take over and its `uninstall` would remove. |
 
 ## The JSON
@@ -127,7 +129,7 @@ it to the network, so say so before suggesting it.
 | `NEEDS_TERMINAL` | `key` was run with no terminal attached. A person runs it. |
 | `CANCELLED` | The person declined, or `uninstall` ran without `--yes` while `--json` was passed or no terminal was attached. Nothing changed. |
 | `RUNTIME_UNSUPPORTED` | The release `--runtime` names is older than this CLI supports, or its Compose file cannot be driven. |
-| `NOT_RUNNING` | `telemetry on\|off` and every `mcp` command need the runtime up (`npx nimblebrain up`). |
+| `NOT_RUNNING` | `open`, `telemetry on\|off` and every `mcp` command need the runtime up (`npx nimblebrain up`). From `open`, it carries the `url`. |
 | `TELEMETRY_LOCKED` | `DO_NOT_TRACK` or the install's configuration decides telemetry; nothing to change. |
 | `LOCAL_MODEL_UNREACHABLE` | Ollama does not answer on `127.0.0.1:11434`: it is not installed, starting it was declined, or it did not answer after a start. `fix` names the step for this machine. From `up`, NimbleBrain is running anyway and the status comes with it. |
 | `LOCAL_MODEL_MISSING` | Ollama does not have the model, and it was not downloaded (declined, or the download failed). |
