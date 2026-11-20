@@ -34,8 +34,7 @@ exit code is `0` when `ok` is true.
 
 Give the answer's `fix`, not the default in `help --json`. The answer's is written for this
 machine and this install: it names the step for this OS, and carries `--home` when the
-install lives somewhere other than the default. A failure can carry more: `MODEL_KEY_MISSING`
-from `init` carries the full status, so the URL and MCP endpoints still arrive;
+install lives somewhere other than the default. A failure can carry more:
 `WORKSPACE_NOT_FOUND` lists the `workspaces` there are; `NOT_RUNNING` from `open` carries
 the `url`; `INTERRUPTED` carries `exit_code`. `references/troubleshooting.md` gives the
 cause behind each code.
