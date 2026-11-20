@@ -20,7 +20,7 @@ adds the cause and what to do beyond that fix; a code missing here needs nothing
 | `NEEDS_TERMINAL` | `key` was run with no terminal attached. | The person runs `npx nimblebrain key` in their own terminal. Never pass the key yourself. |
 | `CANCELLED` | The person declined, or `uninstall` ran without `--yes` under `--json` or with no terminal. Nothing changed. | If the person said yes, run `npx nimblebrain uninstall --yes --json`; otherwise stop. |
 | `NOT_OURS` | An install the CLI did not make holds this home's Compose project or data volume. | Report it and stop. Never remove another install's data. For a second install, use a `--home` whose folder has another name. |
-| `MODEL_KEY_MISSING` | No key is stored. Everything but chat works. | The person runs `npx nimblebrain key` in their own terminal. |
+| `MODEL_KEY_MISSING` | From a CLI before 0.7.0 only; a newer `init` succeeds with `model_key: "missing"`. No key is stored. Everything but chat works, and the failure carries the full status. | The person runs `npx nimblebrain key` in their own terminal, or `npx nimblebrain local-model` for a local model. |
 | `NOT_RUNNING` | `open`, `telemetry on`/`off` or an `mcp` command was run while the runtime is stopped. | Run `npx nimblebrain up --json`, then the command again. |
 | `UPDATE_REQUIRED` | `mcp add` on an install from before runtime `v0.76.0`, which cannot reach this machine. | Run `npx nimblebrain update --json`, then `mcp add` again. Data survives the update. |
 | `URL_NOT_LOOPBACK`, `URL_INVALID` | The URL is not an `http(s)` URL on `localhost`, `127.0.0.1` or `::1`. | Use the server's loopback URL, such as `http://127.0.0.1:8000/mcp`. |

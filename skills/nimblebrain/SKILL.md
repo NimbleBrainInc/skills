@@ -63,8 +63,9 @@ npx nimblebrain --yes --agent <claude-code|cursor|codex|none> --json
 Pass the agent you are. `init` is the default command, and it is safe to run again: on
 a machine that already has NimbleBrain it reports what is there and changes nothing.
 
-If it returns `MODEL_KEY_MISSING`, everything else is running; only chat needs the key.
-Ask the person to run this in their own terminal, then tell you when it is done:
+If the answer has `model_key: "missing"` and `local_model: null` (an older CLI returns
+`MODEL_KEY_MISSING` instead), everything else is running; only chat needs a model. Ask the
+person to run this in their own terminal, then tell you when it is done:
 
 ```bash
 npx nimblebrain key
