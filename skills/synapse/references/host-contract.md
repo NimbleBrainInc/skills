@@ -28,7 +28,7 @@ servers:
         url: https://tasks.example.com/mcp
     _meta:
       ai.nimblebrain/host:
-        host_version: "1.0"
+        hostVersion: "1.0"
         placements:
           - slot: sidebar.apps           # where in host chrome it appears
             resourceUri: ui://tasks/main # the resource your server serves (§2)
@@ -36,12 +36,12 @@ servers:
             label: Tasks                 # the sidebar entry's text
 ```
 
-Fields:
-- **`host_version`** — `"1.0"`. It is the contract's major version and changes only on a breaking change; every field is part of `1.0` and is turned on by declaring it. The host skips a catalog connector that declares another major.
-- **No `name`, `icon`, `category` or `primaryView`.** The host names your app from the catalog entry's `title` (or `name`) and shows the entry's `icons`. Each `icons[].src` must be an `http(s)` URL: the host drops a catalog entry whose icon is not. The host ignores those four keys like any unknown key.
+Fields (the extension identifier `ai.nimblebrain/host` is kebab-case; every field inside it is camelCase, as in MCP's own schema):
+- **`hostVersion`** — `"1.0"`. It is the contract's major version and changes only on a breaking change; every field is part of `1.0` and is turned on by declaring it. The host skips a catalog connector that declares another major.
+- **No `name`, `icon`, `category`, `primaryView` or `briefing`.** The host names your app from the catalog entry's `title` (or `name`) and shows the entry's `icons`. Each `icons[].src` must be an `http(s)` URL: the host drops a catalog entry whose icon is not. The host ignores those keys like any unknown key.
 - **`placements[]`** — each entry registers a surface in host chrome. `slot` ∈ `sidebar.apps` (or any `sidebar.<group>`) `| sidebar | sidebar.bottom | main | settings`; `resourceUri` is your `ui://` resource; plus `priority` (lower first, default `100`), `label`, `icon`, `route`. A placement `icon` (a Lucide name) shows only on a `sidebar.bottom` entry; a `sidebar.apps` entry shows the connector's catalog icon. A `settings` placement is your connector's section on its settings page and ignores `label` and `route`. **A placement is the "register a button in host chrome" mechanism — there is no separate `commands`/toolbar API.**
 - **`route`** — name it after your server (`tasks`, `tasks/archive`). A route belongs to one server: the host drops a placement whose route is one of the host's own views or is already held by another connector in the workspace.
-- **Other grants** — `hooks` (inbound webhooks), `notifications` (an outbox resource the host polls), `admin_tools` and `record_arguments`. Each is a grant the operator reviews; see [the manifest reference](https://docs.nimblebrain.ai/host/manifest/). The counts an app shows on the workspace overview are not declared here: the server reports them over MCP with the facets extension.
+- **Other grants** — `hooks` (inbound webhooks), `notifications` (an outbox resource the host polls), `adminTools` and `recordArguments`. Each is a grant the operator reviews; see [the manifest reference](https://docs.nimblebrain.ai/host/manifest/). The counts an app shows on the workspace overview are not declared here: the server reports them over MCP with the facets extension.
 
 The host reads this block from the catalog entry, registers the placements, and renders the `ui://` resource in a sandboxed iframe. You don't write any host code.
 

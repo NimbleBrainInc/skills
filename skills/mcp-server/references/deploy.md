@@ -20,7 +20,7 @@ The card is built from code, so the code is the source. `server.json` restates t
 | `title`, `description` | the `add_server_card(title=, description=)` values (each 1 to 100 characters) |
 | `version` | the package version, never a range |
 | `websiteUrl`, `icons` | the `FastMCP(website_url=, icons=)` values; Registry icons must be `https:` |
-| `_meta["ai.nimblebrain/host"]` | `{"host_version": "1.0", "placements": [...]}`, the card's placements (an app only) |
+| `_meta["ai.nimblebrain/host"]` | `{"hostVersion": "1.0", "placements": [...]}`, the card's placements (an app only) |
 | `remotes` | `[{"type": "streamable-http", "url": "<deployed URL>/mcp"}]` |
 | `packages` | for a package published to PyPI or npm (`references/packaging.md`) |
 
@@ -49,7 +49,7 @@ The card is built from code, so the code is the source. `server.json` restates t
   ],
   "_meta": {
     "ai.nimblebrain/host": {
-      "host_version": "1.0",
+      "hostVersion": "1.0",
       "placements": [
         { "slot": "sidebar.apps", "resourceUri": "ui://tickets/board", "label": "Tickets", "route": "tickets" }
       ]
@@ -64,7 +64,7 @@ Keep the two in agreement, in a test or a release step: with the server running,
 
 ## In a deployed NimbleBrain
 
-NimbleBrain connects only to an entry's `remotes`; an entry with only `packages` is not installable. An operator adds the record to the deployment's catalog directory, inside a `servers:` list (a catalog file is a list of `ServerDetail` records), and NimbleBrain reads its `title`, `icons` and `_meta["ai.nimblebrain/host"]`. The host block can carry more than placements (webhooks, notifications, admin-only tools); those are grants the operator reviews in the catalog entry, and a card's are ignored. The fields are in the [manifest reference](https://docs.nimblebrain.ai/host/manifest/). Use an HTTPS URL in `remotes`.
+NimbleBrain connects only to an entry's `remotes`; an entry with only `packages` is not installable. An operator adds the record to the deployment's catalog directory, inside a `servers:` list (a catalog file is a list of `ServerDetail` records), and NimbleBrain reads its `title`, `icons` and `_meta["ai.nimblebrain/host"]`. The host block can carry more than placements (webhooks, notifications, admin-only tools); those are grants the operator reviews in the catalog entry, and a card's are ignored. The fields are in the [manifest reference](https://docs.nimblebrain.ai/host/manifest/); the identifier `ai.nimblebrain/host` is kebab-case and every field inside it camelCase (`hostVersion`, `adminTools`). Use an HTTPS URL in `remotes`.
 
 ## On the official MCP Registry
 
