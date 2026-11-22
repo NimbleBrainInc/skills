@@ -22,6 +22,7 @@ how to read a failure, and the judgment around the commands.
 | Starting an installed Ollama, `help --json` | 0.4.0 |
 | `open` | 0.5.0 |
 | Each command's `answer` in `help --json` | 0.6.0 |
+| Finishing an install whose first start failed (`status.phase`, `INSTALL_INCOMPLETE`) | 0.8.0 |
 
 `npx` can run an older cached copy. When `--version` is below what you need, or a command
 answers `USAGE` for something this skill names, run it as `npx nimblebrain@latest`.
@@ -59,15 +60,19 @@ The rules on the model key, telemetry and `uninstall` are in `SKILL.md`. Beyond 
   every login), or the Linux service, never with `sudo`. At a terminal they ask first;
   with `--yes`, `--json` or no terminal they take the default, yes, so say so before
   running them. `doctor` starts it only on a person's yes. The CLI never installs Ollama.
-- **A second install** needs its own `--home` whose folder has another name, passed to
-  every command for it, and `--agent none`: the agent has one `nimblebrain` server, which
+- **A first start that failed** leaves the install `phase: "starting"`. `logs`, `down`,
+  `status` and `uninstall` work on it; the other commands answer `INSTALL_INCOMPLETE`. Run
+  `logs --json` to find why, and once that is addressed run `npx nimblebrain` again: it
+  finishes the same install, keeping its project, port, release, and any key already
+  entered.
+- **A second install** needs its own `--home`, passed to every command for it, and `--agent none`: the agent has one `nimblebrain` server, which
   a second install would take over and its `uninstall` would remove.
 
 Environment variables `help --json` does not list:
 
 | Variable | Effect |
 |---|---|
-| `DO_NOT_TRACK=1`, `NB_TELEMETRY_DISABLED=1` | Telemetry stays off and cannot be turned on (`TELEMETRY_LOCKED`). `DO_NOT_TRACK=1` also stops the update check. |
+| `DO_NOT_TRACK=1` | Telemetry stays off and cannot be turned on (`TELEMETRY_LOCKED`). `DO_NOT_TRACK=1` also stops the update check. |
 | `NIMBLEBRAIN_NO_UPDATE_CHECK=1`, or `CI` set | No update check, so no `updates` field and no notice. |
 
 ## Developing a server
