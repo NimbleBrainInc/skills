@@ -59,9 +59,8 @@ After the PyPI publish, in the same tag-triggered workflow:
 
 1. Lock the bundle: `uv lock --directory mcpb --refresh`, retried until PyPI serves the new version (its index can list an upload before it resolves).
 2. Start the bundle's own command from that lock (`uv run --directory mcpb --frozen --no-dev python -m <module>`) and check it answers.
-3. Pack it with [`NimbleBrainInc/mcpb-pack`](https://github.com/NimbleBrainInc/mcpb-pack) (`directory: mcpb`, `upload: false`, `announce: false`); a `uv` bundle vendors nothing.
-4. Create the GitHub release with the bundle and its `uv.lock`.
-5. If you want the bundle listed, run `mcpb-pack` again with `build: false`, `announce: true` and `announce-required: true`. It announces to the mpak registry with the job's OIDC token. `announce-required` defaults to `false`, under which a failed announce does not fail the job, so set it.
+3. Pack it with [`NimbleBrainInc/mcpb-pack`](https://github.com/NimbleBrainInc/mcpb-pack) (`directory: mcpb`, `upload: false`); a `uv` bundle vendors nothing. A pin older than v3.1.0 also needs `announce: false`.
+4. Create the GitHub release with the bundle and its `uv.lock`. Desktop users install the bundle from there.
 
 `mcpb-pack` v3 reads `manifest.json` only and does not read `server.json`. The server's `server.json` (`references/deploy.md`) is still kept, for deployment and the official MCP Registry: add the published package to its `packages`. Pin it and the other actions to a commit SHA in a release workflow.
 
