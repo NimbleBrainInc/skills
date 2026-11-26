@@ -58,8 +58,8 @@ On `"ok": false`, give the `fix` and stop. Common ones (Docker not running, Dock
 missing, a busy port) are in `references/troubleshooting.md`.
 
 Then say in two lines what will happen, and wait for a yes: it starts NimbleBrain in
-Docker on this machine at `http://127.0.0.1:27246` (about 2 GB of images the first
-time), and connects you to it. Then:
+Docker on this machine, by default at `http://127.0.0.1:27246` (about 2 GB of images the
+first time), and connects you to it. Then:
 
 ```bash
 npx nimblebrain --yes --agent <claude-code|cursor|codex|none> --json
@@ -125,7 +125,7 @@ its tools yet, say so and finish the report; the person reopens their agent to u
 
 Health shows the runtime is up, not that the model answers. If `model_source.source` is
 set (on an older CLI, `model_key` is `set` or `local_model` is not `null`), send one chat through the workspace's tools, or ask the
-person to open `http://127.0.0.1:27246`, send `What can you help me with?`, and tell
+person to open the install's `url`, send `What can you help me with?`, and tell
 you whether a reply came.
 
 Report briefly: the URL, the version, chat confirmed or not, and how to stop it
