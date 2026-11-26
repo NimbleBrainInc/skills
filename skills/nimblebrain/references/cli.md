@@ -23,6 +23,15 @@ how to read a failure, and the judgment around the commands.
 | `open` | 0.5.0 |
 | Each command's `answer` in `help --json` | 0.6.0 |
 | Finishing an install whose first start failed (`status.phase`, `INSTALL_INCOMPLETE`) | 0.8.0 |
+| `use`, `init --use`, `model_source`, running on a Claude or ChatGPT subscription | 0.9.0 |
+| `--model`, a second install's free port and its own agent server name (`port_moved`, `agent.server`) | 0.9.0 |
+| The numbered coding-agent question, a `timeline` line per turn in `agent-worker.log` | 0.9.0 |
+
+Until 0.9.0 is released, it is published as a pre-release under the `next` tag
+(`npx nimblebrain@next`). Running on a subscription also needs a runtime that passes the
+agent worker's settings, `v0.87.0` or newer (`v0.87.0-beta.2` while it is a pre-release,
+passed with `--runtime`); an older one answers `RUNTIME_UNSUPPORTED` from `use`, and
+`update` moves to a newer one.
 
 `npx` can run an older cached copy. When `--version` is below what you need, or a command
 answers `USAGE` for something this skill names, run it as `npx nimblebrain@latest`.
@@ -47,6 +56,12 @@ Fields that ask something of you:
 - `skill_update: "failed"` from `update`: refresh this skill with
   `npx skills update nimblebrain -g`.
 - `ollama_started`: tell the person what was started.
+- `model_source.ask` from `init`: nothing runs NimbleBrain's agents yet. Put the question
+  to the person with its `options` (`SKILL.md`), then run the `set` command it names with
+  their answer.
+- `port_moved`: the install is on another port than 27246. Tell the person, and use the
+  `url` the answer gives.
+- `billed_to` from `use`: tell the person what their turns are billed to.
 
 ## Judgment the CLI leaves to you
 
@@ -65,8 +80,22 @@ The rules on the model key, telemetry and `uninstall` are in `SKILL.md`. Beyond 
   `logs --json` to find why, and once that is addressed run `npx nimblebrain` again: it
   finishes the same install, keeping its project, port, release, and any key already
   entered.
-- **A second install** needs its own `--home`, passed to every command for it, and `--agent none`: the agent has one `nimblebrain` server, which
-  a second install would take over and its `uninstall` would remove.
+- **A subscription (`use claude|codex`)** bills the person's plan and counts against its
+  limits, so run it only on their say-so. It runs only on macOS for now
+  (`PLATFORM_UNSUPPORTED`, `HOST_LOOPBACK_UNREACHABLE` elsewhere). It starts a small agent
+  worker on `127.0.0.1` and installs a login item (`~/Library/LaunchAgents`) so the worker
+  starts at login and after a crash; `down`, `use api|local` and `uninstall` remove it.
+  Say so before running it. The CLI checks the agent's own CLI is signed in to a
+  subscription, not an API key, and refuses otherwise with the command that fixes it.
+  Claude turns run on Sonnet by default; `--model` picks another (`opus`, `haiku`, or a
+  full model id). A run with a spend budget still runs on NimbleBrain's own engine, so it
+  needs a key or a local model.
+- **A second install** needs its own `--home`, passed to every command for it. It picks a
+  free port when 27246 is taken (`port_moved`) and registers with the coding agent under
+  its own name (`nimblebrain-<folder>`), so it leaves the first install's registration
+  alone. An explicit `--port` that is taken is still `PORT_IN_USE`. On a CLI before 0.9.0,
+  pass `--port` and `--agent none` instead: there the agent has one `nimblebrain` server,
+  which a second install would take over.
 
 Environment variables `help --json` does not list:
 
