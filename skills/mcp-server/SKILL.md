@@ -107,7 +107,8 @@ both protocol eras (`2026-07-28` and `2025-11-25`), since a host may connect on 
 Record the advertised surface in golden files, one per protocol era, so a changed
 description, schema or annotation fails the test and shows in review
 (`references/python.md`). Then the whole check: format, lint, types, tests, and
-`uv sync --locked`. Do not move on with a failing check.
+`uv sync --locked` in Python, or `npm run check` in TypeScript. Do not move on with a
+failing check.
 
 ### 6. Serve it over HTTP, with a Server Card
 
