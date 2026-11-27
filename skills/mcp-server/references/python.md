@@ -1,4 +1,4 @@
-# Python: the template and nimblebrain-server-sdk
+# Python: a server on nimblebrain-server-sdk
 
 The default path. The server is a [FastMCP](https://gofastmcp.com) 4 server built on [`nimblebrain-server-sdk`](https://pypi.org/project/nimblebrain-server-sdk/), which gives it what an MCP host reads: tool annotations, one error contract, server-published skills, a Server Card, and test helpers that connect the way a host does. Nothing in it ties the server to NimbleBrain; any MCP host can connect to the result.
 
@@ -6,33 +6,45 @@ Guides, kept current with each release: [quickstart](https://docs.nimblebrain.ai
 
 ## Versions
 
-Python 3.13 or later, FastMCP 4.0 or later, `nimblebrain-server-sdk` 0.7 or later (`add_server_card` needs 0.8.0). The SDK is `0.x`: a minor release may change the Python API, so pin a minor range (`>=0.8,<0.9` for the card) and move it on purpose. Use whatever the template's `pyproject.toml` pins unless you need a newer feature. Tooling is `uv`, `ruff` and `ty`.
+Python 3.13 or later, FastMCP 4.0 or later, `nimblebrain-server-sdk` 0.7 or later (`add_server_card` needs 0.8.0). The SDK is `0.x`: a minor release may change the Python API, so pin a minor range (`>=0.8,<0.9` for the card) and move it on purpose. Tooling is `uv`, `ruff` and `ty`; commit `uv.lock` and install with `--locked` everywhere (`deploy.md`).
 
-## Start from the template
+## Start a repository
 
-[`NimbleBrainInc/mcp-server-template-python`](https://github.com/NimbleBrainInc/mcp-server-template-python) is a GitHub template: a working server with tests, lint, type checks and CI.
+Start from a new repository, and read a maintained server for how each part is done. Two
+public ones cover the range:
+
+- [**`NimbleBrainInc/todosforagents`**](https://github.com/NimbleBrainInc/todosforagents):
+  a server with a store, keyset paging, a board UI, prompts, a local runtime, and golden
+  records of its surface.
+- [**`NimbleBrainInc/mcp-careers`**](https://github.com/NimbleBrainInc/mcp-careers): a small
+  stateless server shipped as a container, with a person-confirmed write, Redis limits, and
+  the CI and release pipeline in `deploy.md`.
+
+Copy patterns, not a whole repository: a copied server brings its domain with it.
 
 ```bash
-gh repo create <owner>/mcp-<service> --template NimbleBrainInc/mcp-server-template-python --private --clone
-cd mcp-<service> && uv sync --dev && make check
+uv init --package mcp-<service> && cd mcp-<service>
+uv add "fastmcp>=4.2,<5" "nimblebrain-server-sdk>=0.8.1,<0.9" pydantic uvicorn
+uv add --dev pytest pytest-asyncio ruff ty
 ```
 
-`make check` passes before you change anything; if it does not, fix that first. Then rename:
-
-- the package `src/mcp_example` to `src/mcp_<service>`, and every `mcp_example` and `example` reference (`pyproject.toml`, `Makefile`, `manifest.json`, tests);
-- the skill directory `skills/example` and the `name` in its `SKILL.md`, together (the directory name must equal `name`);
-- the environment variable `EXAMPLE_API_KEY`.
-
-Layout:
+Set `asyncio_mode = "auto"` under `[tool.pytest.ini_options]`. Then build it in this layout:
 
 ```
 src/mcp_<service>/
+├── __init__.py      # __version__ = importlib.metadata.version("mcp-<service>")
 ├── server.py        # FastMCP server, tools, resources, entrypoints
-├── api_client.py    # async HTTP client for the upstream API; raises a typed error with the HTTP status
-├── api_models.py    # Pydantic models for upstream responses
+├── config.py        # every setting, read from the environment in one place
+├── api_client.py    # async client for the upstream; raises a typed error with the HTTP status
 └── skills/<service>/SKILL.md   # the server-published skill
-tests/               # unit tests, on both protocol eras
+tests/
+├── golden/          # the recorded surface, one file per protocol era
+└── test_*.py        # on both protocol eras
+server.json          # restates the Server Card, plus where it is deployed (deploy.md)
+Dockerfile           # when it ships as a container (deploy.md)
 ```
+
+Read the version from the installed package, so `pyproject.toml` is its one source.
 
 Logs go to stderr with the `logging` module. Never log to the client (`ctx.info`, `ctx.error`): MCP's logging capability is deprecated in the `2026-07-28` revision, and a failure the caller must see is a raised `ServiceError`.
 
@@ -65,6 +77,31 @@ from nimblebrain_server_sdk import ADDS, CHANGES, READS
 
 Every tool gets one. An unannotated tool reads to a client as a destructive write. The annotation describes; it enforces nothing.
 
+## Give every tool a title, a typed result and its hints
+
+```python
+from typing import Literal
+from pydantic import BaseModel, Field
+
+class SubmitResult(BaseModel):
+    status: Literal["awaiting_confirmation"]
+    confirm_url: str = Field(description="Give this to the person.")
+
+@mcp.tool(
+    title="Send an application",                       # for people; `name` is for the model
+    annotations=ADDS.model_copy(update={"idempotent_hint": False, "open_world_hint": False}),
+)
+async def acme_submit(...) -> SubmitResult: ...
+```
+
+- **`title`** is what a host shows a person. The model reasons about `name`.
+- **A Pydantic return type** becomes the tool's `outputSchema`, and FastMCP also returns the
+  JSON as text for clients that ignore structured content. A bare `dict` advertises nothing.
+- **`idempotent_hint` and `open_world_hint`** are worth setting when you know them: a read
+  is usually idempotent, and a tool that only touches its own store is closed-world.
+- **Every parameter is `Annotated[..., Field(description=...)]`**, with a default for each
+  optional one.
+
 ## Fail with the error contract
 
 A tool reports a failure by raising `ServiceError` with a code from the closed set; `add_error_contract(mcp)`, called once, returns it as an `isError: true` result with structured content `{"error": {"code", "retryable", "message"}}`.
@@ -87,6 +124,8 @@ async def get_ticket(ticket_id: str) -> dict[str, Any]:
 - `message` reaches the host and the model: generic and actionable. `detail` is logged, never sent: the upstream's own text goes there.
 - Never return a dict that describes an error. It has no `isError`, so the host and the model score it as a success.
 - Never raise `ValueError` for a caller's mistake; that is `BAD_INPUT`.
+- Start the message with its code (`"bad_input: …"`). The code also rides in structured content, but some clients show the model only the text, and a skill that tells the agent what to do per code needs the agent to see it.
+- Name the rule that failed and what to do next, not every rule the field has: `` `resume_url` must start with https:// `` beats a list of all four checks.
 - A resource read has no error result to carry the envelope: catch the `ServiceError` and raise FastMCP's `ResourceError(e.message)`.
 
 The codes and their retry semantics are on the [errors guide](https://docs.nimblebrain.ai/server-sdk/errors/).
@@ -146,15 +185,38 @@ async def test_an_empty_id_is_bad_input(mode: Mode) -> None:
 
 `assert_bounded_rows(rows, unbounded=("body",))` checks a listing; seed the unbounded field longer than its limit first. Set `asyncio_mode = "auto"` under `[tool.pytest.ini_options]`. Mock the upstream API in unit tests; keep tests against the real API in a separate directory that needs the key.
 
+## Record the surface in golden files
+
+A unit test checks behaviour; it does not notice that a description changed, a parameter
+lost its `description`, or an annotation flipped. Record what a host sees, once per
+protocol era, and fail on any difference:
+
+```python
+@pytest.mark.parametrize("mode", ["auto", "legacy"])
+async def test_the_surface_matches_the_golden_record(mode: Mode) -> None:
+    async with Client(mcp, mode=mode) as client:
+        record = {"tools": sorted((t.model_dump(mode="json", by_alias=True, exclude_none=True)
+                                   for t in await client.list_tools()), key=lambda t: t["name"]),
+                  "instructions": mcp.instructions}   # plus resources (with a digest of each), prompts, the Server Card
+    path = GOLDEN / f"{mode}.json"
+    actual = json.dumps(record, indent=2, sort_keys=True) + "\n"
+    if os.getenv("UPDATE_GOLDEN") == "1":
+        path.write_text(actual)
+    assert actual == path.read_text(), "surface changed: review, then UPDATE_GOLDEN=1"
+```
+
+An intended change regenerates the files in the same PR, so the reviewer sees the surface
+diff. Leave the version out of the record, or every release rewrites it.
+
 ## Serve over streamable HTTP
 
-The template exposes an ASGI app (`app = mcp.http_app()`, at `/mcp`) and a stdio entrypoint. For a host that connects by URL:
+Expose an ASGI app (`app = mcp.http_app()`, at `/mcp`), and a stdio entrypoint if anyone runs it locally. For a host that connects by URL:
 
 ```bash
 ACME_API_KEY=... uv run uvicorn mcp_acme.server:app --host 127.0.0.1 --port 8000
 ```
 
-The server is then at `http://127.0.0.1:8000/mcp`. The template's `make run-http` binds `0.0.0.0`, which also exposes the server to the network; use it only when you mean that (the Linux case in `SKILL.md`).
+The server is then at `http://127.0.0.1:8000/mcp`. Binding `0.0.0.0` also exposes the server to the network; use it only when you mean that (the Linux case in `SKILL.md`).
 
 ## Serve a Server Card
 
