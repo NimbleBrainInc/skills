@@ -165,7 +165,7 @@ agreement. Example, rules and publishing: `references/deploy.md`.
 
 A server a host reaches by URL ships as an image: a locked dependency set, digest-pinned
 images, build and push on merge with a staging roll, and releases that retag the image
-staging ran. After launch, a breaking change to a tool's inputs takes a new tool name,
+staging ran. Serve the MCP endpoint stateless, so any replica answers any request. After launch, a breaking change to a tool's inputs takes a new tool name,
 because connected clients keep old schemas. `references/deploy.md`.
 
 ### 11. Package it (optional)

@@ -21,6 +21,7 @@ the bytes staging ran.**
 | On a `vX.Y.Z` tag | Refuse a tag that disagrees with `server.json`; retag the staging image as the version, no rebuild; roll production | Production runs what staging ran, and a version number is never burned on a mismatch |
 | Renovate | A release wait on dependencies; the server SDK bumped only by hand | A v0.x SDK minor may break the API |
 | `/health` | Liveness only: touches no database or outside service | A slow dependency must not restart healthy pods |
+| The MCP endpoint | `mcp.http_app(stateless_http=True, json_response=True)` | A 2025-era client opens a session that lives in one pod's memory; behind more than one replica, a follow-up reaching another pod is refused `Session not found`. 2026-07-28 clients are sessionless already |
 
 ```dockerfile
 FROM python:3.13-slim@sha256:<digest>
@@ -35,7 +36,11 @@ RUN uv sync --locked --no-dev --no-editable --no-cache
 RUN useradd --uid 10001 --no-create-home app
 USER 10001
 CMD ["uvicorn", "mcp_<service>.server:app", "--host", "0.0.0.0", "--port", "8080"]
+# app = mcp.http_app(stateless_http=True, json_response=True), in server.py
 ```
+
+Test statelessness the way it fails: start two app instances (each with its lifespan), open
+on one, and send the follow-up to the other. A single-process test never sees the bug.
 
 Credentials that push images or change a deployment belong to CI environments limited to
 `main` or to `v*` tags, never to repository secrets a pull request can read. Jobs that need
