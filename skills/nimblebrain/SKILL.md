@@ -6,7 +6,7 @@ compatibility: Node.js 20+ (for `npx`). Docker Engine 24+ with Docker Compose v2
 allowed-tools: Read Bash AskUserQuestion
 metadata:
   area: nimblebrain
-  version: "0.2.0"
+  version: "0.2.1"
   author: NimbleBrain
 ---
 

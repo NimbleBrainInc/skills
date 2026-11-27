@@ -27,11 +27,10 @@ how to read a failure, and the judgment around the commands.
 | `--model`, a second install's free port and its own agent server name (`port_moved`, `agent.server`) | 0.9.0 |
 | The numbered coding-agent question, a `timeline` line per turn in `agent-worker.log` | 0.9.0 |
 
-Until 0.9.0 is released, it is published as a pre-release under the `next` tag
-(`npx nimblebrain@next`). Running on a subscription also needs a runtime that passes the
-agent worker's settings, `v0.87.0` or newer (`v0.87.0-beta.2` while it is a pre-release,
-passed with `--runtime`); an older one answers `RUNTIME_UNSUPPORTED` from `use`, and
-`update` moves to a newer one.
+Running on a subscription also needs a runtime that passes the agent worker's settings:
+`v0.87.0` or newer, and `v0.87.1` or newer for title and summary runs on the fast model
+and the model in the composer. An older runtime answers `RUNTIME_UNSUPPORTED` from `use`,
+and `update` moves to the newest.
 
 `npx` can run an older cached copy. When `--version` is below what you need, or a command
 answers `USAGE` for something this skill names, run it as `npx nimblebrain@latest`.
