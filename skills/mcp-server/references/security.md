@@ -49,6 +49,13 @@ Three traps worth checking specifically:
 - **Hand-rolled IP parsing.** The spec is blunt that attackers use octal, hex and IPv4-mapped IPv6 forms that custom parsers miss. A regex over the hostname is not a control.
 - **DNS rebinding.** A domain can resolve safely at validation and to an internal address at fetch time. Pin the resolution between check and use, or put an egress proxy in the path.
 
+**The cheapest guard is not to fetch.** Before validating a caller-supplied URL, ask whether
+the tool needs its contents. A URL that is only stored or shown to a person (a resume link,
+a homepage) is passed along as a link and never opened. Checking that such a link "works"
+is a fetch with all the risks above, and many sites (LinkedIn among them) refuse automated
+requests, so the check also turns away good input. Validate its form instead (scheme,
+host, no characters that break where it is shown), and ask the person to open it.
+
 ## State handle hijacking
 
 For any server that returns a handle — a cart, a job, a workflow, a session-ish id — and takes it back as a tool argument.
@@ -60,6 +67,27 @@ Note the condition in the quote — *that implement authorization*. The spec's d
 So the bar depends on the model. **Authenticated:** the `MUST`s above, plus `SHOULD`-level binding — handles from a secure random number generator, bound server-side to the authenticated user (key state as `<user_id>:<handle>` with the user id taken from the verified token, never from the request), rejected when presented by anyone else. **Unauthenticated:** binding is not available and not asked for; the bar is entropy and bounded lifetime.
 
 **Review move.** Find the handler that accepts the handle and confirm it re-derives the principal from the token and compares. A lookup keyed on the handle alone is the bug, and it reads as ordinary code.
+
+## A write from a caller you cannot identify
+
+A server with no sign-in cannot tell a person's agent from a script, and every agent is a
+bot by design, so a bot challenge on the MCP endpoint blocks the callers the server exists
+for. When a write must come from a person (an application, a signup, a message to a team),
+split it in two:
+
+1. The tool checks the input, holds it under a random, single-use token with a short
+   lifetime, and returns a link. It sends nothing.
+2. The person opens the link: a page that shows exactly what will be sent and runs a human
+   check (Cloudflare Turnstile, or similar). Only that page's submit performs the write.
+
+Elicitation is not a substitute. The client decides how to answer a server's form, and a
+script answers its own. A link works in every host; where a host supports URL-mode
+elicitation, it can open the same link from inside the conversation.
+
+Text a caller wrote that the write passes on (to a channel, a ticket, an email) stays inert
+there: escape the destination's control characters (`<`, `>` and `&` in Slack), so it cannot
+ping anyone, forge a link or close its own quote, and keep agents that act on messages out of
+that destination.
 
 ## Scope minimization
 

@@ -37,7 +37,7 @@ Give every Zod field a `.describe(...)`: that is the property `description` the 
 
 ## Errors
 
-A handler catches and returns `{ content: [{ type: "text", text }], isError: true }` (the template's `errorResponse`). Make the text actionable and safe: name what the caller should change, and keep the upstream's raw body, URLs and secrets out of it; log those to stderr. To match the shape the Python SDK sends, also return `structuredContent: { error: { code, retryable, message } }` with a code from the [error contract's set](https://docs.nimblebrain.ai/server-sdk/errors/#the-codes).
+A handler catches and returns `{ content: [{ type: "text", text }], isError: true }` (the template's `errorResponse`). Make the text actionable and safe: name what the caller should change, and keep the upstream's raw body, URLs and secrets out of it; log those to stderr. To match the shape the Python SDK sends, also return `structuredContent: { error: { code, retryable, message } }` with a code from the [error contract's set](https://docs.nimblebrain.ai/server-sdk/errors/#the-codes). Start the text with the code (`bad_input: …`): some clients show the model only the text.
 
 ## ES modules: no `__dirname`
 

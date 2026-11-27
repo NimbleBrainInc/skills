@@ -1,12 +1,12 @@
 ---
 name: mcp-server
-description: Builds an MCP server, or the server half of an MCP app, for NimbleBrain or any MCP host, and reviews an existing server's tools so a model calls them well. Starts from a template, designs the tools before code, implements them with nimblebrain-server-sdk, tests, serves over HTTP, and connects the server to a local NimbleBrain. Use to wrap an API or a system as MCP tools, add tools to a server, or audit a server's names, descriptions, schemas, annotations and boundary. Triggers include "build an MCP server for X", "wrap this API as MCP", "add a tool to my MCP server", "review this MCP server", "why won't the model call my tool".
+description: Builds an MCP server, or the server half of an MCP app, for NimbleBrain or any MCP host, and reviews an existing server's tools so a model calls them well. Designs the tools before code, implements them with nimblebrain-server-sdk, tests them on both protocol eras against a golden record, serves over HTTP, connects the server to a local NimbleBrain, and ships it as a container. Use to wrap an API or a system as MCP tools, add tools to a server, or audit a server's names, descriptions, schemas, annotations and boundary. Triggers include "build an MCP server for X", "wrap this API as MCP", "add a tool to my MCP server", "review this MCP server", "why won't the model call my tool".
 license: MIT
 compatibility: Python 3.13+ with uv (the default), or Node.js 24+ with npm (TypeScript). npx, for the MCP Inspector. Reviewing needs only a running server or its launch command, in any language.
 allowed-tools: Read Write Edit Bash Glob Grep WebFetch AskUserQuestion
 metadata:
   area: build
-  version: "0.1.0"
+  version: "0.2.0"
   author: NimbleBrain
 ---
 
@@ -38,16 +38,19 @@ nothing is thrown away.
 Also settle: the system or API it wraps, how it authenticates (API key, OAuth, none),
 and whether its data is one person's or shared.
 
-### 2. Start from the template
+### 2. Start a repository, with maintained servers as the reference
 
-Python is the default: [`NimbleBrainInc/mcp-server-template-python`](https://github.com/NimbleBrainInc/mcp-server-template-python),
-a working server with tests, lint and CI on FastMCP 4 and `nimblebrain-server-sdk`.
-TypeScript is the fallback, for a person who asks for it or a Node codebase:
-[`NimbleBrainInc/mcp-server-template-typescript`](https://github.com/NimbleBrainInc/mcp-server-template-typescript).
+Python with `nimblebrain-server-sdk` is the default. Start a new repository
+(`references/python.md` has the commands and the layout), and read two maintained public
+servers for how each part is done, rather than copying a template that drifts:
 
-Create the repository from the template, install, and run its checks before changing
-anything. Then rename the example names. The steps are in `references/python.md` or
-`references/typescript.md`; read the one for the language now.
+- [`NimbleBrainInc/todosforagents`](https://github.com/NimbleBrainInc/todosforagents): a
+  store, paging, a UI, prompts, a local runtime, golden records of its surface.
+- [`NimbleBrainInc/mcp-careers`](https://github.com/NimbleBrainInc/mcp-careers): a small
+  stateless server shipped as a container, with a person-confirmed write.
+
+TypeScript is the fallback, for a person who asks for it or a Node codebase
+(`references/typescript.md`). Read the reference for the language now.
 
 ### 3. Propose the tools, then design them
 
@@ -83,9 +86,16 @@ With `nimblebrain-server-sdk` (`references/python.md`):
   `add_error_contract(mcp)` once. Never return a dict that describes an error.
 - **Bound listings.** `listing_row` turns an unbounded field into a preview, and each row
   carries a `uri` that a resource template reads back whole.
+- **Give every tool a `title`, a typed result and its hints.** A Pydantic return type
+  becomes the `outputSchema`; set `idempotent_hint` and `open_world_hint` when you know them.
+- **Start every error message with its code** (`bad_input: …`) and name the rule that
+  failed. Some clients show the model only the text.
 - **Publish a skill** for the agent: a `skills/<name>/SKILL.md` registered with
   `add_skills`, served at `skill://<name>/SKILL.md`. Never register `skill://` resources
   by hand.
+- **A write that must come from a person** (an application, a signup) returns a
+  confirmation link instead of writing; the person confirms on a page with a human check.
+  Never fetch a caller's URL you only pass along. `references/security.md`.
 
 In TypeScript, write the same four against the protocol (`references/typescript.md`).
 
@@ -94,8 +104,10 @@ In TypeScript, write the same four against the protocol (`references/typescript.
 Unit tests with the upstream mocked, every tool's success and failure paths, run on
 both protocol eras (`2026-07-28` and `2025-11-25`), since a host may connect on either
 (TypeScript: `2025-11-25` only, per `references/typescript.md`).
-Then the template's whole check (`make check`, or `npm run check`). Do not move on with a
-failing check.
+Record the advertised surface in golden files, one per protocol era, so a changed
+description, schema or annotation fails the test and shows in review
+(`references/python.md`). Then the whole check: format, lint, types, tests, and
+`uv sync --locked`. Do not move on with a failing check.
 
 ### 6. Serve it over HTTP, with a Server Card
 
@@ -125,8 +137,11 @@ The [CLI guide](https://docs.nimblebrain.ai/cli/nimblebrain/#developing-a-server
 details.
 
 Ask the agent in that workspace to do a real task with the tools, including a write. Then
-review the live surface: run the review flow below against the running server, and fix
-every finding before calling the build done.
+smoke-test it with a fresh agent: a subagent with no context, told only the server's URL
+and a persona, follows the server's own skill end to end, including failure cases, and
+reports where the skill, descriptions or errors left it guessing. Then review the live
+surface: run the review flow below against the running server, and fix every finding
+before calling the build done.
 
 ### 8. An app: hand off to `synapse`
 
@@ -146,7 +161,14 @@ and what `mcp-publisher` lists on the official MCP Registry. The code is the one
 of metadata: compare `curl -s <url>/server-card` with `server.json` and keep them in
 agreement. Example, rules and publishing: `references/deploy.md`.
 
-### 10. Package it (optional)
+### 10. Ship it as a container
+
+A server a host reaches by URL ships as an image: a locked dependency set, digest-pinned
+images, build and push on merge with a staging roll, and releases that retag the image
+staging ran. After launch, a breaking change to a tool's inputs takes a new tool name,
+because connected clients keep old schemas. `references/deploy.md`.
+
+### 11. Package it (optional)
 
 Only if people will run it on their own machine: publish the package to PyPI or npm,
 then wrap it in a bundle for desktop hosts. `references/packaging.md`. Add the package
@@ -155,8 +177,9 @@ to `server.json`'s `packages` once it is published.
 ### Done
 
 Report: the repository, the tools and their kinds, the checks that passed, the URL it
-serves on, its `server.json` (in agreement with the card), that it is connected in NimbleBrain and which task the agent completed with
-it, and the review's findings and how each was resolved.
+serves on, its `server.json` (in agreement with the card), that it is connected in
+NimbleBrain and which task the agent completed with it, what the fresh-agent smoke test
+found, and the review's findings and how each was resolved.
 
 ## Review a server
 
@@ -216,9 +239,9 @@ host's behaviour changes, not by how many rules a fix touches.
 
 - `references/design.md`: the rungs, reading the surface with the Inspector, the completion criterion
 - `references/spec-citations.md`: MCP `2026-07-28` and vendor rules to quote in findings
-- `references/security.md`: the boundary rules (tokens, SSRF, state handles, scopes, local servers)
+- `references/security.md`: the boundary rules (tokens, SSRF, state handles, person-confirmed writes, scopes, local servers)
 - `references/resources-and-prompts.md`: field, URI-scheme and error rules for those primitives
-- `references/python.md`: the Python template and `nimblebrain-server-sdk`
+- `references/python.md`: starting a repository, `nimblebrain-server-sdk`, and golden records
 - `references/typescript.md`: the TypeScript template, and writing the same against the protocol
-- `references/deploy.md`: the server's `server.json`, a catalog entry, and the official MCP Registry
+- `references/deploy.md`: shipping as a container, changing a live server safely, `server.json`, a catalog entry, and the official MCP Registry
 - `references/packaging.md`: publishing the package, and a `uv` bundle for desktop hosts
